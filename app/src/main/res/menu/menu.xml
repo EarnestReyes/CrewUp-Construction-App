@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/Home"
+        android:icon="@drawable/outline_add_home_work_24"
+        android:title="Home"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/workers"
+        android:icon="@drawable/baseline_people_24"
+        android:title="Workers"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/posts"
+        android:icon="@drawable/baseline_post_add_24"
+        android:title="Posts"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/Activity"
+        android:icon="@drawable/baseline_precision_manufacturing_24"
+        android:title="Activity"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/mess"
+        android:icon="@drawable/outline_3p_24"
+        android:title="Messages"
+        app:showAsAction="always" />
+</menu>
