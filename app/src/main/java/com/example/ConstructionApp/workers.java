@@ -64,24 +64,8 @@ public class workers extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_workers, container, false);
 
-        requireActivity().getWindow().getInsetsController().setSystemBarsAppearance(
-                WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS,
-                WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
-        );
-
-        View main = view.findViewById(R.id.main);
-
-        ViewCompat.setOnApplyWindowInsetsListener(main, (v, insets) -> {
-            int topInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
-            v.setPadding(
-                    v.getPaddingLeft(),
-                    topInset,
-                    v.getPaddingRight(),
-                    v.getPaddingBottom()
-            );
-            return insets;
-        });
 
         return view;
     }
+
 }

@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,7 +34,6 @@ public class Home extends Fragment {
     public Home() {
         // Required empty public constructor
     }
-
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,62 +49,51 @@ public class Home extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_home, container, false);
 
-        requireActivity().getWindow().getInsetsController().setSystemBarsAppearance(
-                WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS,
-                WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
-        );
-
-        View main = view.findViewById(R.id.main);
-
-        ViewCompat.setOnApplyWindowInsetsListener(main, (v, insets) -> {
-            int topInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
-            v.setPadding(
-                    v.getPaddingLeft(),
-                    topInset,
-                    v.getPaddingRight(),
-                    v.getPaddingBottom()
-            );
-            return insets;
-        });
-
-        // RecyclerView setup
+        // RecyclerView
         recyclerPosts = view.findViewById(R.id.recyclerPosts);
         recyclerPosts.setLayoutManager(new LinearLayoutManager(requireContext()));
 
+        // IMPORTANT: adapter uses the SAME list
         adapter = new PostAdapter(posts);
         recyclerPosts.setAdapter(adapter);
 
-        // Firestore
-        db = FirebaseFirestore.getInstance();
-        posts = new ArrayList<>();
-
+        // Firestore listener
         db.collection("posts")
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .addSnapshotListener((value, error) -> {
-                    if (error != null || value == null) return;
+
+                    if (error != null) {
+                        Log.e("FIRESTORE", "Listen failed", error);
+                        return;
+                    }
+
+                    if (value == null || value.isEmpty()) {
+                        Log.d("FIRESTORE", "No posts found");
+                        return;
+                    }
 
                     posts.clear();
+
                     for (QueryDocumentSnapshot doc : value) {
                         String title = doc.getString("title");
                         String content = doc.getString("content");
-                        long timestamp = doc.getLong("timestamp") != null
-                                ? doc.getLong("timestamp")
-                                : 0;
+
+                        Long time = doc.getLong("timestamp");
+                        long timestamp = time != null ? time : 0;
 
                         posts.add(new Post(
                                 "Earnest Reyes",
-                                title,
-                                content,
+                                title != null ? title : "",
+                                content != null ? content : "",
                                 formatTimestamp(timestamp)
                         ));
                     }
+
                     adapter.notifyDataSetChanged();
                 });
 
         return view;
     }
-
-
 
 
     // Helper to format timestamp nicely
