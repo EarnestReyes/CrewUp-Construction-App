@@ -1,5 +1,9 @@
 package com.example.ConstructionApp;
 
+import static android.content.Intent.getIntent;
+import static android.content.Intent.getIntentOld;
+
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -73,31 +77,56 @@ public class Posts extends Fragment {
         btnSend = view.findViewById(R.id.btnSend);
         txtcontent = view.findViewById(R.id.edtPost);
 
-        btnSend.setOnClickListener(v -> openPostDialog());
+        String content = txtcontent.getText().toString().trim();
+
+        if (content.isEmpty()){
+            btnSend.setOnClickListener(v -> openPostDialog());
+        }
 
         return view;
     }
 
-    private void openPostDialog() {
-        // For simplicity, let's just simulate a post creation
-        Map<String, Object> post = new HashMap<>();
-        post.put("title", ""); // Title empty since quick post
-        post.put("content", txtcontent.getText().toString().trim());
-        post.put("timestamp", System.currentTimeMillis());
-        post.put("userId", FirebaseAuth.getInstance().getCurrentUser().getUid());
 
-        db.collection("posts")
-                .add(post)
+
+    private void openPostDialog() {
+
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return;
+
+        String uid = user.getUid();
+
+        FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(uid)
+                .get()
                 .addOnSuccessListener(doc -> {
-                    if (!isAdded()) return;
-                    Toast.makeText(requireContext(), "Post created", Toast.LENGTH_SHORT).show();
-                    txtcontent.setText(null);
-                })
-                .addOnFailureListener(e -> {
-                    if (!isAdded()) return;
-                    Toast.makeText(requireContext(), "Failed to post", Toast.LENGTH_SHORT).show();
+
+                    if (!doc.exists()) return;
+
+                    String username = doc.getString("username");
+
+                    Map<String, Object> post = new HashMap<>();
+                    post.put("Username", username);
+                    post.put("content", txtcontent.getText().toString().trim());
+                    post.put("timestamp", System.currentTimeMillis());
+                    post.put("userId", uid);
+
+                    db.collection("posts")
+                            .add(post)
+                            .addOnSuccessListener(d -> {
+                                if (!isAdded()) return;
+                                Toast.makeText(requireContext(),
+                                        "Post created", Toast.LENGTH_SHORT).show();
+                                txtcontent.setText(null);
+                            })
+                            .addOnFailureListener(e -> {
+                                if (!isAdded()) return;
+                                Toast.makeText(requireContext(),
+                                        "Failed to post", Toast.LENGTH_SHORT).show();
+                            });
                 });
     }
+
 
     private void loadPosts() {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();

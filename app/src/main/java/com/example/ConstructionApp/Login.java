@@ -2,6 +2,7 @@ package com.example.ConstructionApp;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowInsetsController;
 import android.widget.Button;
@@ -10,23 +11,17 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.textfield.TextInputEditText;
-import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class Login extends AppCompatActivity {
 
     FirebaseAuth mAuth;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,7 +58,7 @@ public class Login extends AppCompatActivity {
             return insets;
         });
 
-        TextInputEditText edtEmail = findViewById(R.id.edtEmail);
+        TextInputEditText edtusername = findViewById(R.id.edtUsername);
         TextInputEditText edtpass = findViewById(R.id.edtPassword);
         TextView signup = findViewById(R.id.txtSignup);
         TextView forgot = findViewById(R.id.txtForgot);
@@ -76,33 +71,45 @@ public class Login extends AppCompatActivity {
 
         login.setOnClickListener(view -> {
 
-                String emailTxt = edtEmail.getText().toString().trim();
+                String usernamelTxt = edtusername.getText().toString().trim();
                 String passTxt = edtpass.getText().toString().trim();
 
-                if (emailTxt.isEmpty() || passTxt.isEmpty()) {
-                    Toast.makeText(Login.this, "All fields are required", Toast.LENGTH_SHORT).show();
-                    return;
-                }
+            if (usernamelTxt.isEmpty() || passTxt.isEmpty()) {
+                Toast.makeText(this, "All fields are required", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-                mAuth.signInWithEmailAndPassword(emailTxt, passTxt)
-                        .addOnCompleteListener(Login.this, task -> {
-                            if (task.isSuccessful()) {
+            FirebaseFirestore.getInstance()
+                    .collection("users")
+                    .whereEqualTo("username", usernamelTxt)
+                    .limit(1)
+                    .get()
+                    .addOnSuccessListener(query -> {
 
-                                Toast.makeText(Login.this,
-                                        "Login Successfully!",
-                                        Toast.LENGTH_SHORT).show();
+                        if (query.getDocuments().get(0).getString("email") == null) {
+                            Toast.makeText(this, "Account data is corrupted", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
 
-                                startActivity(new Intent(Login.this, MainActivity.class));
-                                finish();
+                        mAuth.signInWithEmailAndPassword(query.getDocuments().get(0).getString("email"), passTxt)
+                                .addOnCompleteListener(task -> {
 
-                            } else {
-                                Toast.makeText(Login.this,
-                                        task.getException() != null
-                                                ? task.getException().getMessage()
-                                                : "Login failed",
-                                        Toast.LENGTH_LONG).show();
-                            }
-                        });
+                                    if (task.isSuccessful()) {
+                                        Toast.makeText(this, "Login Successful!", Toast.LENGTH_SHORT).show();
+                                        startActivity(new Intent(Login.this, MainActivity.class));
+                                        finish();
+                                    } else {
+
+                                        Toast.makeText(this,
+                                                task.getException() != null
+                                                        ? task.getException().getMessage()
+                                                        : "Login failed",
+                                                Toast.LENGTH_LONG).show();
+                                    }
+                                });
+                    })
+                    .addOnFailureListener(e ->
+                            Toast.makeText(this, "Login Failed!", Toast.LENGTH_SHORT).show());
             });
 
         signup.setOnClickListener(view-> {

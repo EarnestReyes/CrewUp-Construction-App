@@ -75,14 +75,15 @@ public class Home extends Fragment {
                     posts.clear();
 
                     for (QueryDocumentSnapshot doc : value) {
-                        String title = doc.getString("title");
+                        String username = doc.getString("Username");
+                        String title  = doc.getString("title");
                         String content = doc.getString("content");
 
                         Long time = doc.getLong("timestamp");
                         long timestamp = time != null ? time : 0;
 
                         posts.add(new Post(
-                                "Earnest Reyes",
+                                username != null ? username : "",
                                 title != null ? title : "",
                                 content != null ? content : "",
                                 formatTimestamp(timestamp)

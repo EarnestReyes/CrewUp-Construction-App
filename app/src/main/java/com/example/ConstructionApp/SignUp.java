@@ -4,14 +4,12 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Intent;
-import android.media.Image;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.view.WindowInsetsController;
 import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -25,17 +23,24 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class SignUp extends AppCompatActivity {
 
     FirebaseAuth mAuth;
-
+    private FirebaseFirestore db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_sign_up);
+
+        db = FirebaseFirestore.getInstance();
+
         getWindow().getInsetsController().setSystemBarsAppearance(
                 WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS,
                 WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
@@ -75,12 +80,12 @@ public class SignUp extends AppCompatActivity {
 
         signin.setOnClickListener(view -> {
             progressBar.setVisibility(View.VISIBLE);
-
+            String user = username.getText().toString().trim();
             String emailTxt = email.getText().toString().trim();
             String passTxt = password.getText().toString().trim();
             String confirmTxt = confirmpass.getText().toString().trim();
 
-            if (emailTxt.isEmpty() || passTxt.isEmpty() || confirmTxt.isEmpty()) {
+            if (user.isEmpty() || emailTxt.isEmpty() || passTxt.isEmpty() || confirmTxt.isEmpty()) {
                 progressBar.setVisibility(View.GONE);
                 Toast.makeText(this, "All fields are required", Toast.LENGTH_SHORT).show();
                 return;
@@ -102,6 +107,7 @@ public class SignUp extends AppCompatActivity {
                     .addOnCompleteListener(task -> {
                         progressBar.setVisibility(View.GONE);
                         if (task.isSuccessful()) {
+                            saveUserToFirestore(user, emailTxt, passTxt);
                             Toast.makeText(SignUp.this, "Registered Successfully!", Toast.LENGTH_SHORT).show();
 
                             Intent intent = new Intent(this, MainActivity.class);
@@ -113,14 +119,14 @@ public class SignUp extends AppCompatActivity {
                             manager.cancel(1);
 
                             if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
-                                NotificationChannel channel = new NotificationChannel("test", "Simple Notification", NotificationManager.IMPORTANCE_DEFAULT);
+                                NotificationChannel channel = new NotificationChannel("Crew Up", "Account Created Succesfully!", NotificationManager.IMPORTANCE_DEFAULT);
                                 manager.createNotificationChannel(channel);
                             }
 
                             NotificationCompat.Builder builder = new NotificationCompat.Builder(this,"test")
                                     .setSmallIcon(R.drawable.crewup_logo)
                                     .setContentTitle("Account Created Succesfully!")
-                                    .setContentText("Welcome " + username + " enjoy your journey with us!")
+                                    .setContentText("Welcome " + user + ", enjoy your journey with us!")
                                     .setStyle(new NotificationCompat.BigTextStyle()
                                             .bigText("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."))
                                     .setPriority(NotificationCompat.PRIORITY_DEFAULT);
@@ -141,4 +147,19 @@ public class SignUp extends AppCompatActivity {
             startActivity(in);
         });
     }
+
+    private void saveUserToFirestore(String username, String email, String password) {
+        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+        Map<String, Object> user = new HashMap<>();
+        user.put("username", username);
+        user.put("email", email);
+        user.put("Password", password);
+        user.put("createdAt", System.currentTimeMillis());
+
+        db.collection("users")
+                .document(uid)
+                .set(user);
+    }
+
 }
