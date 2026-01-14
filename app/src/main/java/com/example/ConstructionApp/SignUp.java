@@ -1,7 +1,11 @@
 package com.example.ConstructionApp;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.media.Image;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.view.WindowInsetsController;
@@ -14,6 +18,7 @@ import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NotificationCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -98,6 +103,30 @@ public class SignUp extends AppCompatActivity {
                         progressBar.setVisibility(View.GONE);
                         if (task.isSuccessful()) {
                             Toast.makeText(SignUp.this, "Registered Successfully!", Toast.LENGTH_SHORT).show();
+
+                            Intent intent = new Intent(this, MainActivity.class);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent,
+                                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+                            NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+                            manager.cancel(1);
+
+                            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+                                NotificationChannel channel = new NotificationChannel("test", "Simple Notification", NotificationManager.IMPORTANCE_DEFAULT);
+                                manager.createNotificationChannel(channel);
+                            }
+
+                            NotificationCompat.Builder builder = new NotificationCompat.Builder(this,"test")
+                                    .setSmallIcon(R.drawable.crewup_logo)
+                                    .setContentTitle("Account Created Succesfully!")
+                                    .setContentText("Welcome " + username + " enjoy your journey with us!")
+                                    .setStyle(new NotificationCompat.BigTextStyle()
+                                            .bigText("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."))
+                                    .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+
+                            manager.notify(1, builder.build());
+
                         } else {
                             Toast.makeText(SignUp.this,
                                     task.getException().getMessage(),
