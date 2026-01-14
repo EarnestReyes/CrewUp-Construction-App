@@ -126,16 +126,17 @@
         android:id="@+id/btnLogin"
         android:layout_width="0dp"
         android:layout_height="50dp"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="44dp"
+        android:backgroundTint="#F4B400"
         android:text="Log In"
         android:textAllCaps="false"
         android:textColor="#000000"
         android:textSize="16sp"
         android:textStyle="bold"
-        android:backgroundTint="#F4B400"
-        app:layout_constraintTop_toBottomOf="@id/txtForgot"
+        app:layout_constraintEnd_toEndOf="@id/guidelineEnd"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="@id/guidelineStart"
-        app:layout_constraintEnd_toEndOf="@id/guidelineEnd"/>
+        app:layout_constraintTop_toBottomOf="@id/txtForgot" />
 
     <TextView
         android:id="@+id/txtSignup"
