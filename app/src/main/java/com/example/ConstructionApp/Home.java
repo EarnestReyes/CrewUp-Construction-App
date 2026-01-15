@@ -61,7 +61,6 @@ public class Home extends Fragment {
 
         txtLocation = view.findViewById(R.id.txtLocation);
 
-        // ✅ CALL LOCATION FETCH HERE
         getUserLocationFromDatabase();
 
         recyclerPosts = view.findViewById(R.id.recyclerPosts);
@@ -100,8 +99,6 @@ public class Home extends Fragment {
         return view;
     }
 
-
-    // Helper to format timestamp nicely
     private String formatTimestamp(long millis) {
         if (millis == 0) return "";
         SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy • hh:mm a", Locale.getDefault());
@@ -125,7 +122,7 @@ public class Home extends Fragment {
                     if (userLocation != null && !userLocation.isEmpty()) {
                         txtLocation.setText(userLocation);
                     } else {
-                        txtLocation.setText("Location not set");
+                        txtLocation.setText("Location not specified");
                     }
                 })
                 .addOnFailureListener(e ->

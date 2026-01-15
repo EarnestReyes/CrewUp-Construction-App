@@ -15,7 +15,6 @@
             android:name=".ChatActivity"
             android:exported="false" />
         <activity
-
             android:name=".ForgotPass"
             android:exported="false" />
         <activity
@@ -23,13 +22,16 @@
             android:exported="false" />
         <activity
             android:name=".Login"
-            android:exported="false" /> <!-- LAUNCHER ACTIVITY -->
+            android:exported="false" />
         <activity
             android:name=".GetStartedActivity"
-            android:exported="true">
+            android:exported="false" />
+        <activity
+            android:name=".Splash_activity"
+            android:exported="true"
+            android:theme="@style/Theme.Material3.DayNight.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>

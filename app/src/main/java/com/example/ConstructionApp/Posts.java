@@ -14,6 +14,8 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.view.ViewCompat;
@@ -45,9 +47,24 @@ public class Posts extends Fragment {
     private ArrayList<Post> posts;
     private PostAdapter adapter;
     private RecyclerView recyclerview;
+    private ActivityResultLauncher<String> imagePickerLauncher;
 
     public Posts() {
 
+
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        imagePickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.GetContent(),
+                uri -> {
+                    if (uri != null) {
+                        imgProfile.setImageURI(uri);
+                    }
+                }
+        );
 
     }
 
@@ -82,6 +99,12 @@ public class Posts extends Fragment {
         if (content.isEmpty()){
             btnSend.setOnClickListener(v -> openPostDialog());
         }
+
+        imgProfile = view.findViewById(R.id.imgProfile);
+
+        imgProfile.setOnClickListener(v -> {
+            imagePickerLauncher.launch("image/*");
+        });
 
         return view;
     }

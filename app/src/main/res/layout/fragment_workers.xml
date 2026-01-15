@@ -48,11 +48,11 @@
                 android:id="@+id/txtLocation"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Coral Way, Pasay"
-                android:textSize="14sp"
+                android:layout_marginStart="6dp"
+                android:text="Location not specified"
                 android:textColor="#FFFFFF"
-                android:textStyle="bold"
-                android:layout_marginStart="6dp"/>
+                android:textSize="14sp"
+                android:textStyle="bold" />
 
             <ImageView
                 android:layout_width="16dp"

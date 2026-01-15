@@ -6,10 +6,16 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowInsetsController;
+import android.widget.TextView;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -26,6 +32,11 @@ public class workers extends Fragment {
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
+    private FirebaseFirestore db;
+
+    private String userLocation = "";
+
+    private TextView txtLocation;
 
     public workers() {
         // Required empty public constructor
@@ -52,9 +63,11 @@ public class workers extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        db = FirebaseFirestore.getInstance();
         if (getArguments() != null) {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
+
         }
     }
 
@@ -63,9 +76,35 @@ public class workers extends Fragment {
                              Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_workers, container, false);
+        txtLocation = view.findViewById(R.id.txtLocation);
+        getUserLocationFromDatabase();
 
 
         return view;
+    }
+
+    private void getUserLocationFromDatabase() {
+
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return;
+
+        db.collection("users")
+                .document(user.getUid())
+                .get()
+                .addOnSuccessListener(document -> {
+
+                    if (!isAdded() || document == null || !document.exists()) return;
+
+                    userLocation = document.getString("location");
+
+                    if (userLocation != null && !userLocation.isEmpty()) {
+                        txtLocation.setText(userLocation);
+                    } else {
+                        txtLocation.setText("Location not specified");
+                    }
+                })
+                .addOnFailureListener(e ->
+                        Log.e("FIRESTORE", "Failed to get location", e));
     }
 
 }
