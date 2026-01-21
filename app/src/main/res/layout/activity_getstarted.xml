@@ -16,7 +16,7 @@
         android:layout_marginTop="388dp"
         android:gravity="start"
         android:text="Let’s\nget started"
-        android:textColor="#000000"
+        android:textColor="@color/text_primary"
         android:textSize="32sp"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
@@ -29,28 +29,10 @@
         android:layout_marginStart="24dp"
         android:layout_marginTop="8dp"
         android:text="Work Made Easy."
-        android:textColor="#666666"
+        android:textColor="@color/text_secondary"
         android:textSize="14sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/txtTitle" />
-
-    <Button
-        android:id="@+id/btnSignUp"
-        android:layout_width="0dp"
-        android:layout_height="50dp"
-        android:layout_marginStart="32dp"
-        android:layout_marginTop="12dp"
-        android:layout_marginEnd="32dp"
-        android:backgroundTint="#5A5A5A"
-        android:text="Sign Up"
-        android:textAllCaps="false"
-        android:textColor="#FFFFFF"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/btnLogin" />
 
     <Button
         android:id="@+id/btnLogin"
@@ -59,16 +41,32 @@
         android:layout_marginStart="32dp"
         android:layout_marginTop="28dp"
         android:layout_marginEnd="32dp"
-        android:backgroundTint="#F4B400"
+        android:backgroundTint="@color/primary"
         android:text="Log In"
         android:textAllCaps="false"
-        android:textColor="#000000"
+        android:textColor="@color/on_primary"
         android:textSize="16sp"
         android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/txtSubtitle" />
+
+    <Button
+        android:id="@+id/btnSignUp"
+        android:layout_width="0dp"
+        android:layout_height="50dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="32dp"
+        android:backgroundTint="@color/button_secondary"
+        android:text="Sign Up"
+        android:textAllCaps="false"
+        android:textColor="@color/on_secondary"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btnLogin" />
 
     <ImageView
         android:id="@+id/imageView3"
@@ -76,11 +74,12 @@
         android:layout_height="52dp"
         android:layout_marginStart="16dp"
         android:layout_marginTop="336dp"
-        app:layout_constraintBottom_toTopOf="@+id/txtTitle"
+        app:layout_constraintBottom_toTopOf="@id/txtTitle"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.0"
-        app:srcCompat="@drawable/crewup_logo" />
+        app:srcCompat="@drawable/crewup_logo"
+        android:contentDescription="CrewUp Logo" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
+
 

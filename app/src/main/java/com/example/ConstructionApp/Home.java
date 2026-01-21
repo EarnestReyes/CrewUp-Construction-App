@@ -35,8 +35,6 @@ public class Home extends Fragment {
     private PostAdapter adapter;
     private FirebaseFirestore db;
 
-    private String userLocation = "";
-
     private TextView txtLocation;
 
     public Home() {
@@ -58,10 +56,6 @@ public class Home extends Fragment {
             Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_home, container, false);
-
-        txtLocation = view.findViewById(R.id.txtLocation);
-
-        getUserLocationFromDatabase();
 
         recyclerPosts = view.findViewById(R.id.recyclerPosts);
         recyclerPosts.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -105,27 +99,5 @@ public class Home extends Fragment {
         return sdf.format(new Date(millis));
     }
 
-    private void getUserLocationFromDatabase() {
 
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user == null) return;
-
-        db.collection("users")
-                .document(user.getUid())
-                .get()
-                .addOnSuccessListener(document -> {
-
-                    if (!isAdded() || document == null || !document.exists()) return;
-
-                    userLocation = document.getString("location");
-
-                    if (userLocation != null && !userLocation.isEmpty()) {
-                        txtLocation.setText(userLocation);
-                    } else {
-                        txtLocation.setText("Location not specified");
-                    }
-                })
-                .addOnFailureListener(e ->
-                        Log.e("FIRESTORE", "Failed to get location", e));
-    }
 }

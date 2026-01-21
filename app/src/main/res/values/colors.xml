@@ -1,6 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#6200EE</color> <!-- your preferred color -->
-    <color name="colorPrimaryVariant">#3700B3</color>
-    <color name="colorOnPrimary">#FFFFFF</color>
+    <color name="primary">#F4B400</color>
+    <color name="on_primary">#000000</color>
+
+    <!-- Text -->
+    <color name="text_primary">#000000</color>
+    <color name="text_secondary">#666666</color>
+
+    <!-- Backgrounds -->
+    <color name="bg_color">#FFFFFF</color>
+
+    <!-- Buttons -->
+    <color name="button_secondary">#5A5A5A</color>
+    <color name="on_secondary">#FFFFFF</color>
+    <color name="card_color">#FFFFFF</color>
+    <color name="divider_color">#DDDDDD</color>
+
+    <color name="icon_like">#F40F0F</color>
+    <color name="icon_comment">#4CAF50</color>
+    <color name="icon_share">#3F51B5</color>
 </resources>
