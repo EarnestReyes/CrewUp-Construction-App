@@ -128,7 +128,7 @@ public class SignUp extends AppCompatActivity {
                     .addOnCompleteListener(task -> {
                         progressBar.setVisibility(View.GONE);
                         if (task.isSuccessful()) {
-                            saveUserToFirestore(user, emailTxt, passTxt);
+                            saveUserToFirestore(user, emailTxt);
                             Toast.makeText(SignUp.this, "Registered Successfully!", Toast.LENGTH_SHORT).show();
                             Intent intent = new Intent(this, MainActivity.class);
                             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -261,14 +261,14 @@ public class SignUp extends AppCompatActivity {
         return "Unknown location";
     }
 
-    private void saveUserToFirestore(String username, String email, String password) {
+    private void saveUserToFirestore(String username, String email) {
         String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
         Map<String, Object> user = new HashMap<>();
         user.put("username", username);
         user.put("email", email);
         user.put("createdAt", System.currentTimeMillis());
-        user.put("Location", userAddress);
+        user.put("location", userAddress);
 
         db.collection("users")
                 .document(uid)

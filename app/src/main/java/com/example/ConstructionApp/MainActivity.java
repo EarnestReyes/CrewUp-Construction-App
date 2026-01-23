@@ -1,10 +1,12 @@
 package com.example.ConstructionApp;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowInsetsController;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
@@ -25,6 +27,7 @@ public class MainActivity extends AppCompatActivity {
     // Bottom nav buttons
     ImageButton navHome, navBell, navAdd, navChat, navProfile;
     TextView txtNewsFeed;
+    ImageView btnSearch;
     private FirebaseFirestore db;
 
     private String userLocation = "";
@@ -58,7 +61,17 @@ public class MainActivity extends AppCompatActivity {
         navChat = findViewById(R.id.navChat);
         navProfile = findViewById(R.id.navProfile);
         txtNewsFeed = findViewById(R.id.txtNewsfeed);
+        btnSearch = findViewById(R.id.btnSearch);
 
+        btnSearch.setOnClickListener(v -> {
+            Intent in = new Intent(MainActivity.this, SearchUserActivity.class);
+            startActivity(in);
+        });
+
+        navChat.setOnClickListener(v -> {
+            Intent in = new Intent(MainActivity.this, ChatActivity.class);
+            startActivity(in);
+        });
 
         // Load default fragment
         if (savedInstanceState == null) {
@@ -82,10 +95,15 @@ public class MainActivity extends AppCompatActivity {
             highlight(null);
         });
 
+/*
         navChat.setOnClickListener(v -> {
-            loadFragment(new Messages());
+            loadFragment(new ChatFragment());
             highlight(navChat);
         });
+
+ */
+
+
 
         navProfile.setOnClickListener(v -> {
             loadFragment(new Activity());

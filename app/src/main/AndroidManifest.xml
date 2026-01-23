@@ -15,6 +15,9 @@
             android:name=".ChatActivity"
             android:exported="false" />
         <activity
+            android:name=".SearchUserActivity"
+            android:exported="false" />
+        <activity
             android:name=".ForgotPass"
             android:exported="false" />
         <activity

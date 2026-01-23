@@ -3,8 +3,6 @@ package com.example.ConstructionApp;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -13,12 +11,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowInsetsController;
-import android.widget.TextView;
-import android.widget.Toast;
 
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -35,8 +28,6 @@ public class Home extends Fragment {
     private PostAdapter adapter;
     private FirebaseFirestore db;
 
-    private TextView txtLocation;
-
     public Home() {
         // Required empty public constructor
     }
@@ -46,7 +37,6 @@ public class Home extends Fragment {
         super.onCreate(savedInstanceState);
         db = FirebaseFirestore.getInstance();
         posts = new ArrayList<>();
-
     }
 
     @Override
@@ -63,25 +53,35 @@ public class Home extends Fragment {
         adapter = new PostAdapter(posts);
         recyclerPosts.setAdapter(adapter);
 
+        loadPosts();
+
+        return view;
+    }
+
+    private void loadPosts() {
         db.collection("posts")
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .addSnapshotListener((value, error) -> {
 
-                    if (error != null || value == null) return;
+                    if (error != null) {
+                        Log.e("HOME_POSTS", "Firestore error", error);
+                        return;
+                    }
+
+                    if (value == null) return;
 
                     posts.clear();
 
                     for (QueryDocumentSnapshot doc : value) {
-                        String username = doc.getString("Username");
-                        String title = doc.getString("title");
+                        String username = doc.getString("Username"); // MUST match Firestore
                         String content = doc.getString("content");
 
                         Long time = doc.getLong("timestamp");
                         long timestamp = time != null ? time : 0;
 
                         posts.add(new Post(
-                                username != null ? username : "",
-                                title != null ? title : "",
+                                username != null ? username : "Unknown",
+                                "", // no title (field does not exist)
                                 content != null ? content : "",
                                 formatTimestamp(timestamp)
                         ));
@@ -89,15 +89,12 @@ public class Home extends Fragment {
 
                     adapter.notifyDataSetChanged();
                 });
-
-        return view;
     }
 
     private String formatTimestamp(long millis) {
         if (millis == 0) return "";
-        SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy • hh:mm a", Locale.getDefault());
+        SimpleDateFormat sdf =
+                new SimpleDateFormat("MMM dd, yyyy • hh:mm a", Locale.getDefault());
         return sdf.format(new Date(millis));
     }
-
-
 }

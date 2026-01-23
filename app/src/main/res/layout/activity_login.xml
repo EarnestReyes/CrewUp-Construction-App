@@ -81,7 +81,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:foregroundTint="#1F1E1E"
-            android:hint="Username"
+            android:hint="Email"
             android:inputType="textEmailAddress"
             android:textColor="#000000" />
     </com.google.android.material.textfield.TextInputLayout>

@@ -53,10 +53,17 @@ dependencies {
     implementation("pl.droidsonroids.gif:android-gif-drawable:1.2.23")
     implementation(libs.recyclerview)
     implementation("com.google.android.gms:play-services-location:21.0.1")
+    implementation(libs.firebase.storage)
+    implementation(libs.firebase.messaging)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+
+    //ADDED 1/23/26
+    implementation("com.firebaseui:firebase-ui-firestore:8.0.2")
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
 
 
 }

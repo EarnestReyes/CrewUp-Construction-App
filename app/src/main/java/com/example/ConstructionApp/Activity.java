@@ -55,35 +55,10 @@ public class Activity extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        getUserLocationFromDatabase();
-
         View view = inflater.inflate(R.layout.fragment_activity, container, false);
-
-        txtLocation = view.findViewById(R.id.txtLocation);
+;
         return view;
     }
 
-    private void getUserLocationFromDatabase() {
 
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user == null) return;
-
-        db.collection("users")
-                .document(user.getUid())
-                .get()
-                .addOnSuccessListener(document -> {
-
-                    if (!isAdded() || document == null || !document.exists()) return;
-
-                    userLocation = document.getString("location");
-
-                    if (userLocation != null && !userLocation.isEmpty()) {
-                        txtLocation.setText(userLocation);
-                    } else {
-                        txtLocation.setText("Location not specified");
-                    }
-                })
-                .addOnFailureListener(e ->
-                        Log.e("FIRESTORE", "Failed to get location", e));
-    }
 }
