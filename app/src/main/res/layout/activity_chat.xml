@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
     tools:context=".ChatActivity">
 
     <RelativeLayout
@@ -11,27 +12,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/bg_color"
-        android:padding="10dp">
-
-        <TextView
-            android:id="@+id/other_username"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:layout_marginStart="10dp"
-            android:layout_toRightOf="@id/profile_pic_layout"
-            android:text="Username"
-            android:textColor="@color/text_primary"
-            android:textSize="22sp"
-            android:textStyle="bold" />
-
-        <include
-            android:id="@+id/profile_pic_layout"
-            layout="@layout/profile_pic_view"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_marginStart="10dp"
-            android:layout_toRightOf="@id/back_btn" />
+        android:padding="10dp"
+        android:paddingTop="50sp">
 
         <ImageButton
             android:id="@+id/back_btn"
@@ -42,59 +24,76 @@
             android:src="@drawable/ic_back"
             app:tint="@color/bottom_nav_icon" />
 
+        <include
+            android:id="@+id/profile_pic_layout"
+            layout="@layout/profile_pic_view"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="10dp"
+            android:layout_toEndOf="@id/back_btn" />
+
+        <TextView
+            android:id="@+id/other_username"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="10dp"
+            android:layout_toEndOf="@id/profile_pic_layout"
+            android:text="Username"
+            android:textColor="@color/text_primary"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
     </RelativeLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/chat_recycler_view"
         android:layout_width="match_parent"
-        android:layout_height="489dp"
+        android:layout_height="match_parent"
         android:layout_above="@id/bottom_layout"
         android:layout_below="@id/toolbar"
-        android:layout_marginTop="26dp"
-        android:layout_marginBottom="43dp" />
+        android:padding="8dp"
+        android:clipToPadding="false" />
 
+    <!-- 🔹 MESSAGE INPUT -->
     <RelativeLayout
         android:id="@+id/bottom_layout"
         android:layout_width="match_parent"
-        android:layout_height="80dp"
+        android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:layout_marginBottom="43dp"
+        android:background="@color/bg_color"
         android:padding="8dp">
-
-        <EditText
-            android:id="@+id/chat_message_input"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:layout_marginStart="10dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginEnd="10dp"
-            android:layout_marginRight="34dp"
-            android:layout_marginBottom="10dp"
-            android:layout_toLeftOf="@id/message_send_btn"
-            android:background="@drawable/bg_light_gray_rounded"
-            android:elevation="4dp"
-            android:hint="Write message here"
-            android:padding="10dp" />
 
         <ImageButton
             android:id="@+id/message_send_btn"
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:layout_alignParentEnd="true"
-            android:layout_centerInParent="true"
-            android:layout_marginStart="10dp"
+            android:layout_centerVertical="true"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:padding="8dp"
             android:src="@drawable/ic_send"
             app:tint="@color/icon_like" />
 
+        <EditText
+            android:id="@+id/chat_message_input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_toStartOf="@id/message_send_btn"
+            android:background="@drawable/bg_light_gray_rounded"
+            android:hint="Write message here"
+            android:minHeight="48dp"
+            android:padding="10dp"
+            android:textColor="@color/on_primary"
+            android:textColorHint="@color/text_secondary" />
+
     </RelativeLayout>
 
-
 </RelativeLayout>
-
-
 
 
 
