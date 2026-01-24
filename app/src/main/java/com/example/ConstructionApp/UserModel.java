@@ -2,6 +2,7 @@ package com.example.ConstructionApp;
 
 public class UserModel {
 
+    private String userId;
     private String username;
     private String email;
     private String location;
@@ -13,9 +14,14 @@ public class UserModel {
     private Long locationUpdatedAt;
 
     // REQUIRED empty constructor for Firestore
-    public UserModel() {}
+    public UserModel() {
+    }
 
     // Getters
+    public String getUserId() {
+        return userId;
+    }
+
     public String getUsername() {
         return username;
     }

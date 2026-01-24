@@ -87,17 +87,20 @@ public class RecentChatRecyclerAdapter
 
                     // ✅ Open chat
                     holder.itemView.setOnClickListener(v -> {
-                        Intent intent =
-                                new Intent(context, ChatActivity.class);
+                        Intent intent = new Intent(context, ChatActivity.class);
+
                         AndroidUtil.passUserModelAsIntent(
                                 intent,
-                                otherUserModel
+                                otherUserModel,
+                                otherUserModel.getUserId()
                         );
+
                         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                         context.startActivity(intent);
                     });
                 });
     }
+
 
     @NonNull
     @Override

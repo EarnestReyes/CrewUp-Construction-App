@@ -39,7 +39,7 @@ public class ChatActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
 
-        // ✅ Get userId from intent
+        //Get userId from intent
         otherUserId = getIntent().getStringExtra("userId");
 
         if (otherUserId == null) {
@@ -111,26 +111,24 @@ public class ChatActivity extends AppCompatActivity {
 
     private void sendMessageToUser(String message) {
 
-        if (chatroomId == null || chatroomId.isEmpty()) return;
         if (message.trim().isEmpty()) return;
 
         FirebaseUtil.getChatroomReference(chatroomId).get()
                 .addOnSuccessListener(snapshot -> {
 
-                    ChatroomModel model = snapshot.toObject(ChatroomModel.class);
                     Timestamp now = Timestamp.now();
+                    ChatroomModel model = snapshot.toObject(ChatroomModel.class);
 
                     if (model == null) {
-                        // ✅ create chatroom correctly
                         model = new ChatroomModel(
                                 chatroomId,
                                 Arrays.asList(
                                         FirebaseUtil.currentUserId(),
                                         otherUserId
                                 ),
-                                message,                       // lastMessage
-                                FirebaseUtil.currentUserId(),  // senderId
-                                now                            // timestamp
+                                message,
+                                FirebaseUtil.currentUserId(),
+                                now
                         );
                     } else {
                         model.setLastMessage(message);
@@ -138,22 +136,26 @@ public class ChatActivity extends AppCompatActivity {
                         model.setLastMessageTimestamp(now);
                     }
 
-                    chatroomModel = model;
-                    FirebaseUtil.getChatroomReference(chatroomId).set(model);
+                    FirebaseUtil.getChatroomReference(chatroomId)
+                            .set(model)
+                            .addOnSuccessListener(unused -> {
 
-                    // ✅ Send message
-                    ChatMessageModel chatMessage =
-                            new ChatMessageModel(
-                                    message,
-                                    FirebaseUtil.currentUserId(),
-                                    now
-                            );
+                                ChatMessageModel chatMessage =
+                                        new ChatMessageModel(
+                                                message,
+                                                FirebaseUtil.currentUserId(),
+                                                now
+                                        );
 
-                    FirebaseUtil.getChatroomMessageReference(chatroomId)
-                            .add(chatMessage)
-                            .addOnSuccessListener(ref -> messageInput.setText(""));
+                                FirebaseUtil.getChatroomMessageReference(chatroomId)
+                                        .add(chatMessage)
+                                        .addOnSuccessListener(ref ->
+                                                messageInput.setText("")
+                                        );
+                            });
                 });
     }
+
 
 
 
@@ -170,7 +172,7 @@ public class ChatActivity extends AppCompatActivity {
                                         FirebaseUtil.currentUserId(),
                                         otherUserId
                                 ),
-                                "",                         // lastMessage
+                                "",              // lastMessage
                                 "",                         // senderId
                                 Timestamp.now()             // timestamp
                         );
@@ -180,5 +182,18 @@ public class ChatActivity extends AppCompatActivity {
                     }
                 });
     }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (adapter != null) adapter.startListening();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (adapter != null) adapter.stopListening();
+    }
+
 
 }

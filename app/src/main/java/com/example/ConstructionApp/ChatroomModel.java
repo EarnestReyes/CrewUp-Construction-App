@@ -11,11 +11,9 @@ public class ChatroomModel {
     private String lastMessageSenderId;
     private String lastMessage;
 
-    // ✅ REQUIRED by Firestore
     public ChatroomModel() {
     }
 
-    // ✅ CORRECT constructor (matches your app logic)
     public ChatroomModel(
             String chatroomId,
             List<String> userIds,
