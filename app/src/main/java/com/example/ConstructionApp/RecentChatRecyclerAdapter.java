@@ -13,9 +13,12 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.google.android.gms.tasks.Task;
 import com.firebase.ui.firestore.FirestoreRecyclerAdapter;
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class RecentChatRecyclerAdapter
         extends FirestoreRecyclerAdapter<ChatroomModel, RecentChatRecyclerAdapter.ChatroomModelViewHolder> {
@@ -37,68 +40,75 @@ public class RecentChatRecyclerAdapter
             @NonNull ChatroomModel model
     ) {
 
-        // 🔒 Always reset click (RecyclerView reuse)
         holder.itemView.setOnClickListener(null);
+        holder.profilePic.setImageResource(
+                R.drawable.ic_profile_placeholder_foreground
+        );
 
-        if (FirebaseUtil.getOtherUserFromChatroom(model.getUserIds()) == null) {
-            return;
-        }
+        DocumentReference otherUserRef =
+                FirebaseUtil.getOtherUserFromChatroom(model.getUserIds());
 
-        FirebaseUtil.getOtherUserFromChatroom(model.getUserIds())
-                .get()
-                .addOnSuccessListener(snapshot -> {
+        if (otherUserRef == null) return;
 
-                    UserModel otherUserModel = snapshot.toObject(UserModel.class);
-                    if (otherUserModel == null) return;
+        otherUserRef.get().addOnSuccessListener(snapshot -> {
 
-                    otherUserModel.setUserId(snapshot.getId());
+            if (!snapshot.exists()) return;
 
-                    holder.usernameText.setText(otherUserModel.getUsername());
+            UserModel otherUserModel = snapshot.toObject(UserModel.class);
+            if (otherUserModel == null) return;
 
-                    boolean lastMessageSentByMe =
-                            model.getLastMessageSenderId() != null &&
-                                    model.getLastMessageSenderId()
-                                            .equals(FirebaseUtil.currentUserId());
+            String otherUserId = snapshot.getId();
+            otherUserModel.setUserId(otherUserId);
 
-                    holder.lastMessageText.setText(
-                            lastMessageSentByMe
-                                    ? "You: " + model.getLastMessage()
-                                    : model.getLastMessage()
-                    );
+            holder.usernameText.setText(otherUserModel.getUsername());
 
-                    holder.lastMessageTime.setText(
-                            FirebaseUtil.timestampToString(
-                                    model.getLastMessageTimestamp()
-                            )
-                    );
+            boolean lastMessageSentByMe =
+                    model.getLastMessageSenderId() != null &&
+                            model.getLastMessageSenderId()
+                                    .equals(FirebaseUtil.currentUserId());
 
-                    String otherUserId = otherUserModel.getUserId();
+            holder.lastMessageText.setText(
+                    lastMessageSentByMe
+                            ? "You: " + model.getLastMessage()
+                            : model.getLastMessage()
+            );
 
-                    if (otherUserId != null && !otherUserId.isEmpty()) {
-                        FirebaseUtil.getOtherProfilePicStorageRef(otherUserId)
-                                .getDownloadUrl()
-                                .addOnSuccessListener(uri ->
-                                        AndroidUtil.setProfilePic(
-                                                context,
-                                                uri,
-                                                holder.profilePic
-                                        )
-                                );
-                    }
+            holder.lastMessageTime.setText(
+                    FirebaseUtil.timestampToString(
+                            model.getLastMessageTimestamp()
+                    )
+            );
 
-                    holder.itemView.setOnClickListener(v -> {
-                        Intent intent = new Intent(context, ChatActivity.class);
-
-                        AndroidUtil.passUserModelAsIntent(
-                                intent,
-                                otherUserModel,
-                                otherUserModel.getUserId()
-                        );
-                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        context.startActivity(intent);
+            FirebaseFirestore.getInstance()
+                    .collection("users")
+                    .document(otherUserId)
+                    .get()
+                    .addOnSuccessListener(userSnap -> {
+                        if (userSnap.exists()) {
+                            String url = userSnap.getString("profilePicUrl");
+                            if (url != null && !url.isEmpty()) {
+                                Glide.with(context)
+                                        .load(url)
+                                        .placeholder(R.drawable.ic_profile_placeholder_foreground)
+                                        .circleCrop()
+                                        .into(holder.profilePic);
+                            }
+                        }
                     });
-                });
+
+            holder.itemView.setOnClickListener(v -> {
+                Intent intent = new Intent(context, ChatActivity.class);
+                AndroidUtil.passUserModelAsIntent(
+                        intent,
+                        otherUserModel,
+                        otherUserId
+                );
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(intent);
+            });
+        });
     }
+
 
     @NonNull
     @Override

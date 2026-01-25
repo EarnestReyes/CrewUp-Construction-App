@@ -1,10 +1,20 @@
 package com.example.ConstructionApp;
 
+import android.content.Context;
+import android.net.Uri;
+import android.widget.ImageView;
+import android.widget.Toast;
+
+import com.bumptech.glide.Glide;
+import com.cloudinary.android.MediaManager;
+import com.cloudinary.android.callback.ErrorInfo;
+import com.cloudinary.android.callback.UploadCallback;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
@@ -99,13 +109,78 @@ public class FirebaseUtil {
                 .child(uid);
     }
 
-    public static StorageReference getOtherProfilePicStorageRef(String otherUserId) {
-        if (otherUserId == null || otherUserId.isEmpty()) return null;
+    public static void uploadProfilePic(
+            Context context,
+            Uri imageUri
+    ) {
 
-        return FirebaseStorage.getInstance()
-                .getReference()
-                .child("profile_pic")
-                .child(otherUserId);
+        String uid = currentUserId();
+        if (uid == null || imageUri == null) return;
+
+        MediaManager.get().upload(imageUri)
+                .unsigned("CrewUp") // 👈 your upload preset
+                .option("folder", "profile_pictures")
+                .callback(new UploadCallback() {
+
+                    @Override
+                    public void onStart(String requestId) {
+                        Toast.makeText(context, "Uploading profile picture…", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onProgress(String requestId, long bytes, long totalBytes) {
+                    }
+
+                    @Override
+                    public void onSuccess(String requestId, Map resultData) {
+
+                        String imageUrl = resultData.get("secure_url").toString();
+
+                        Map<String, Object> data = new HashMap<>();
+                        data.put("profilePicUrl", imageUrl);
+
+                        FirebaseFirestore.getInstance()
+                                .collection("users")
+                                .document(uid)
+                                .set(data, SetOptions.merge());
+                    }
+
+                    @Override
+                    public void onError(String requestId, ErrorInfo error) {
+                        Toast.makeText(context, "Upload failed", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onReschedule(String requestId, ErrorInfo error) {
+                    }
+                })
+                .dispatch();
+    }
+
+    public static void listenToProfilePic(
+            Context context,
+            ImageView imageView,
+            String userId
+    ) {
+        if (userId == null) return;
+
+        FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(userId)
+                .addSnapshotListener((snapshot, e) -> {
+
+                    if (e != null || snapshot == null || !snapshot.exists()) return;
+
+                    String url = snapshot.getString("profilePicUrl");
+                    if (url != null && !url.isEmpty()) {
+
+                        Glide.with(context)
+                                .load(url)
+                                .placeholder(R.drawable.ic_profile_placeholder_foreground)
+                                .circleCrop()
+                                .into(imageView);
+                    }
+                });
     }
 
     /* ---------------- LOGOUT ---------------- */
@@ -116,8 +191,6 @@ public class FirebaseUtil {
 
     /* ---------------- RECENT SEARCH ---------------- */
 
-    // 🔹 RECENT SEARCH
-
     public static void addToRecentSearch(UserModel user, String userId) {
 
         String currentUid = currentUserId();
@@ -126,15 +199,9 @@ public class FirebaseUtil {
         Map<String, Object> data = new HashMap<>();
         data.put("userId", userId);
         data.put("username", user.getUsername());
+        data.put("email", user.getEmail());   // ✅ kept
+        data.put("location", user.getLocation());
         data.put("timestamp", Timestamp.now());
-
-        if (user.getEmail() != null) {
-            data.put("email", user.getEmail());
-        }
-
-        if (user.getLocation() != null) {
-            data.put("location", user.getLocation());
-        }
 
         FirebaseFirestore.getInstance()
                 .collection("users")
@@ -174,5 +241,6 @@ public class FirebaseUtil {
                 });
     }
 }
+
 
 

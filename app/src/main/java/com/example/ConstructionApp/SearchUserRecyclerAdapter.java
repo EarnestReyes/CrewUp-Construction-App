@@ -11,8 +11,10 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
+import com.bumptech.glide.Glide;
 import com.firebase.ui.firestore.FirestoreRecyclerAdapter;
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.StorageReference;
 
 public class SearchUserRecyclerAdapter
@@ -66,22 +68,31 @@ public class SearchUserRecyclerAdapter
                 R.drawable.ic_profile_placeholder_foreground
         );
 
-        StorageReference picRef =
-                FirebaseUtil.getOtherProfilePicStorageRef(userId);
-
-        if (picRef != null) {
-            picRef.getDownloadUrl()
-                    .addOnSuccessListener(uri ->
-                            AndroidUtil.setProfilePic(
-                                    context, uri, holder.profilePic
-                            )
-                    )
-                    .addOnFailureListener(e ->
+        FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(userId)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    if (snapshot != null && snapshot.exists()) {
+                        String url = snapshot.getString("profilePicUrl");
+                        if (url != null && !url.isEmpty()) {
+                            Glide.with(context)
+                                    .load(url)
+                                    .placeholder(R.drawable.ic_profile_placeholder_foreground)
+                                    .circleCrop()
+                                    .into(holder.profilePic);
+                        } else {
                             holder.profilePic.setImageResource(
                                     R.drawable.ic_profile_placeholder_foreground
-                            )
-                    );
-        }
+                            );
+                        }
+                    }
+                })
+                .addOnFailureListener(e ->
+                        holder.profilePic.setImageResource(
+                                R.drawable.ic_profile_placeholder_foreground
+                        )
+                );
 
         /* ---------- CLICK → OPEN CHAT + SAVE RECENT ---------- */
         holder.itemView.setOnClickListener(v -> {

@@ -1,25 +1,15 @@
 package com.example.ConstructionApp;
 
-import static android.content.Intent.getIntent;
-import static android.content.Intent.getIntentOld;
-
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowInsetsController;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -40,159 +30,150 @@ import java.util.Map;
 
 public class Posts extends Fragment {
 
-    private ImageView imgProfile;
-    private TextInputEditText txtcontent;
+    private RecyclerView recyclerView;
+    private TextInputEditText txtContent;
     private ImageButton btnSend;
+    private ImageView imgProfile;
+
     private FirebaseFirestore db;
     private ArrayList<Post> posts;
     private PostAdapter adapter;
-    private RecyclerView recyclerview;
-    private ActivityResultLauncher<String> imagePickerLauncher;
+    private String currentUserProfilePicUrl;
 
-    public Posts() {
-
-
-    }
-
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        imagePickerLauncher = registerForActivityResult(
-                new ActivityResultContracts.GetContent(),
-                uri -> {
-                    if (uri != null) {
-                        imgProfile.setImageURI(uri);
-                    }
-                }
-        );
-
-    }
-
-    @Nullable
     @Override
     public View onCreateView(
             @NonNull LayoutInflater inflater,
             @Nullable ViewGroup container,
             @Nullable Bundle savedInstanceState) {
 
-
         View view = inflater.inflate(R.layout.fragment_post, container, false);
 
         db = FirebaseFirestore.getInstance();
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null) {
+            db.collection("users")
+                    .document(user.getUid())
+                    .get()
+                    .addOnSuccessListener(snapshot -> {
 
-        recyclerview = view.findViewById(R.id.recyclerview);
-        recyclerview.setLayoutManager(new LinearLayoutManager(requireContext()));
+                        currentUserProfilePicUrl =
+                                snapshot.getString("profilePicUrl");
+                        loadPosts();
+                    });
+        }
+
+
+        recyclerView = view.findViewById(R.id.recyclerview);
+        imgProfile = view.findViewById(R.id.imgProfile);
+        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
 
         posts = new ArrayList<>();
+        adapter = new PostAdapter(requireContext(), posts);
+        recyclerView.setAdapter(adapter);
 
-        adapter = new PostAdapter(posts);
-        recyclerview.setAdapter(adapter);
+        txtContent = view.findViewById(R.id.edtPost);
+        btnSend = view.findViewById(R.id.btnSend);
+
+        btnSend.setOnClickListener(v -> createPost());
 
         loadPosts();
 
-        imgProfile = view.findViewById(R.id.imgProfile);
-        btnSend = view.findViewById(R.id.btnSend);
-        txtcontent = view.findViewById(R.id.edtPost);
-
-        String content = txtcontent.getText().toString().trim();
-
-        if (content.isEmpty()){
-            btnSend.setOnClickListener(v -> openPostDialog());
+        String uid = FirebaseUtil.currentUserId();
+        if (uid != null && isAdded()) {
+            FirebaseUtil.listenToProfilePic(
+                    requireContext(),
+                    imgProfile,
+                    uid
+            );
         }
-
-        imgProfile = view.findViewById(R.id.imgProfile);
-
-        imgProfile.setOnClickListener(v -> {
-            imagePickerLauncher.launch("image/*");
-        });
-
         return view;
     }
 
-
-
-    private void openPostDialog() {
+    private void createPost() {
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) return;
 
+        String content = txtContent.getText().toString().trim();
+        if (content.isEmpty()) return;
+
         String uid = user.getUid();
 
-        FirebaseFirestore.getInstance()
-                .collection("users")
+        db.collection("users")
                 .document(uid)
                 .get()
-                .addOnSuccessListener(doc -> {
+                .addOnSuccessListener(userDoc -> {
 
-                    if (!doc.exists()) return;
-                    String username = doc.getString("username");
+                    String userName = userDoc.getString("username");
+
                     Map<String, Object> post = new HashMap<>();
-                    post.put("Username", username);
-                    post.put("content", txtcontent.getText().toString().trim());
-                    post.put("timestamp", System.currentTimeMillis());
                     post.put("userId", uid);
+                    post.put("userName", userName);
+                    post.put("content", content);
+                    post.put("timestamp", System.currentTimeMillis());
 
-                    db.collection("posts")
-                            .add(post)
-                            .addOnSuccessListener(d -> {
-                                if (!isAdded()) return;
-                                Toast.makeText(requireContext(),
-                                        "Post created", Toast.LENGTH_SHORT).show();
-                                txtcontent.setText(null);
-                            })
-                            .addOnFailureListener(e -> {
-                                if (!isAdded()) return;
-                                Toast.makeText(requireContext(),
-                                        "Failed to post", Toast.LENGTH_SHORT).show();
-                            });
+                    db.collection("posts").add(post);
+
+
+                    txtContent.setText("");
+                    Toast.makeText(requireContext(),
+                            "Post created", Toast.LENGTH_SHORT).show();
                 });
     }
 
-
     private void loadPosts() {
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser == null) return;
 
-        String userId = currentUser.getUid();
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return;
 
         db.collection("posts")
-                .whereEqualTo("userId", userId)
+                .whereEqualTo("userId", user.getUid())
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .addSnapshotListener((value, error) -> {
-                    if (error != null || value == null) return;
+
+                    if (value == null) return;
 
                     posts.clear();
 
                     for (QueryDocumentSnapshot doc : value) {
-                        String title = doc.getString("title");
+
                         String content = doc.getString("content");
 
-                        long timestamp = doc.getLong("timestamp") != null
-                                ? doc.getLong("timestamp")
-                                : 0;
+                        Object rawTime = doc.get("timestamp");
+                        String time;
 
-                        String time = formatTimestamp(timestamp);
+                        if (rawTime instanceof com.google.firebase.Timestamp) {
+                            time = formatTimestamp(
+                                    ((com.google.firebase.Timestamp) rawTime)
+                                            .toDate().getTime()
+                            );
+                        } else if (rawTime instanceof Long) {
+                            time = formatTimestamp((Long) rawTime);
+                        } else {
+                            time = "Just now";
+                        }
 
-                        String name = currentUser.getDisplayName() != null
-                                ? currentUser.getDisplayName()
-                                : "You";
+                        Post post = new Post(
+                                user.getUid(),
+                                "You",
+                                "",
+                                content != null ? content : "",
+                                time,
+                                currentUserProfilePicUrl // ✅ THIS FIXES IT
+                        );
 
-                        posts.add(new Post(
-                                name,
-                                title,
-                                content,
-                                time
-                        ));
+                        posts.add(post);
                     }
 
                     adapter.notifyDataSetChanged();
                 });
     }
 
+
     private String formatTimestamp(long millis) {
-        if (millis == 0) return "";
-        SimpleDateFormat sdf =
-                new SimpleDateFormat("MMM dd, yyyy • hh:mm a", Locale.getDefault());
-        return sdf.format(new Date(millis));
+        return new SimpleDateFormat(
+                "MMM dd, yyyy • hh:mm a",
+                Locale.getDefault()
+        ).format(new Date(millis));
     }
 }

@@ -38,11 +38,12 @@
                 android:layout_marginTop="-60dp">
 
                 <ImageView
+                    android:id="@+id/imgProfile"
                     android:layout_width="120dp"
                     android:layout_height="120dp"
                     android:background="@drawable/circle_bg"
-                    android:src="@drawable/ic_profile_placeholder_foreground"
-                    android:scaleType="centerCrop"/>
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_profile_placeholder_foreground" />
 
                 <ImageView
                     android:id="@+id/btnEditPhoto"

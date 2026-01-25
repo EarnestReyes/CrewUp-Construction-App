@@ -1,6 +1,7 @@
 package com.example.ConstructionApp;
 
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.view.WindowInsetsController;
@@ -17,6 +18,7 @@ import androidx.core.view.WindowInsetsCompat;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 public class Login extends AppCompatActivity {
 
@@ -30,11 +32,13 @@ public class Login extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
-        if (getWindow().getInsetsController() != null) {
-            getWindow().getInsetsController().setSystemBarsAppearance(
-                    WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS,
-                    WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
-            );
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (getWindow().getInsetsController() != null) {
+                getWindow().getInsetsController().setSystemBarsAppearance(
+                        WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS,
+                        WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
+                );
+            }
         }
 
         View main = findViewById(R.id.main);

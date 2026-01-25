@@ -37,9 +37,6 @@ android {
 }
 
 dependencies {
-
-
-
     // AndroidX
     implementation(libs.appcompat)
     implementation(libs.material)
@@ -55,6 +52,7 @@ dependencies {
     implementation("com.google.android.gms:play-services-location:21.0.1")
     implementation(libs.firebase.storage)
     implementation(libs.firebase.messaging)
+    implementation("com.google.firebase:firebase-messaging:24.0.0")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
@@ -62,8 +60,8 @@ dependencies {
 
     //ADDED 1/23/26
     implementation("com.firebaseui:firebase-ui-firestore:8.0.2")
+    implementation("com.cloudinary:cloudinary-android:2.3.1")
     implementation("com.github.bumptech.glide:glide:4.16.0")
     annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
-
 
 }

@@ -1,10 +1,9 @@
 package com.example.ConstructionApp;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.EditText;
@@ -13,6 +12,12 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NotificationCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.bumptech.glide.Glide;
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.Query;
@@ -25,7 +30,6 @@ public class ChatActivity extends AppCompatActivity {
     private UserModel otherUser;
 
     private String chatroomId;
-    private ChatroomModel chatroomModel;
     private ChatRecyclerAdapter adapter;
 
     private EditText messageInput;
@@ -39,19 +43,16 @@ public class ChatActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
 
-        // 🔑 Get userId from Intent
         otherUserId = getIntent().getStringExtra("userId");
 
         Log.d("CHAT_DEBUG", "ChatActivity started with userId=" + otherUserId);
 
-        // 🚨 HARD STOP — prevents ALL Firestore crashes
         if (otherUserId == null || otherUserId.isEmpty()) {
             Toast.makeText(this, "User not found", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
-        // 🔧 Initialize views
         messageInput = findViewById(R.id.chat_message_input);
         sendMessageBtn = findViewById(R.id.message_send_btn);
         backBtn = findViewById(R.id.back_btn);
@@ -59,12 +60,8 @@ public class ChatActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.chat_recycler_view);
         profilePic = findViewById(R.id.profile_pic_image_view);
 
-        backBtn.setOnClickListener(v -> {
-            Intent in = new Intent(this, Home.class);
-            startActivity(in);
-        });
+        backBtn.setOnClickListener(v -> finish());
 
-        // 🔗 Chatroom ID
         chatroomId = FirebaseUtil.getChatroomId(
                 FirebaseUtil.currentUserId(),
                 otherUserId
@@ -82,7 +79,8 @@ public class ChatActivity extends AppCompatActivity {
         });
     }
 
-    // 🔍 Load other user's data
+    /* ---------------- LOAD USER ---------------- */
+
     private void loadOtherUser() {
         FirebaseUtil.getUserReference(otherUserId)
                 .get()
@@ -96,17 +94,26 @@ public class ChatActivity extends AppCompatActivity {
                     otherUser = snapshot.toObject(UserModel.class);
                     if (otherUser == null) return;
 
+                    otherUser.setUserId(snapshot.getId());
                     otherUsername.setText(otherUser.getUsername());
 
-                    FirebaseUtil.getOtherProfilePicStorageRef(otherUserId)
-                            .getDownloadUrl()
-                            .addOnSuccessListener(uri ->
-                                    AndroidUtil.setProfilePic(this, uri, profilePic)
-                            );
+                    String url = snapshot.getString("profilePicUrl");
+                    if (url != null && !url.isEmpty()) {
+                        Glide.with(this)
+                                .load(url)
+                                .placeholder(R.drawable.ic_profile_placeholder_foreground)
+                                .circleCrop()
+                                .into(profilePic);
+                    } else {
+                        profilePic.setImageResource(
+                                R.drawable.ic_profile_placeholder_foreground
+                        );
+                    }
                 });
     }
 
-    // 💬 Messages list
+    /* ---------------- CHAT LIST ---------------- */
+
     private void setupChatRecyclerView() {
         Query query = FirebaseUtil.getChatroomMessageReference(chatroomId)
                 .orderBy("timestamp", Query.Direction.DESCENDING);
@@ -123,10 +130,10 @@ public class ChatActivity extends AppCompatActivity {
 
         recyclerView.setLayoutManager(manager);
         recyclerView.setAdapter(adapter);
-        adapter.startListening();
     }
 
-    // ✉️ Send message
+    /* ---------------- SEND MESSAGE ---------------- */
+
     private void sendMessageToUser(String message) {
         Timestamp now = Timestamp.now();
 
@@ -173,15 +180,14 @@ public class ChatActivity extends AppCompatActivity {
                 });
     }
 
-    // 🏗 Create chatroom if missing
+    /* ---------------- CREATE CHATROOM ---------------- */
+
     private void getOrCreateChatroomModel() {
         FirebaseUtil.getChatroomReference(chatroomId)
                 .get()
                 .addOnSuccessListener(snapshot -> {
-                    chatroomModel = snapshot.toObject(ChatroomModel.class);
-
-                    if (chatroomModel == null) {
-                        chatroomModel = new ChatroomModel(
+                    if (!snapshot.exists()) {
+                        ChatroomModel chatroomModel = new ChatroomModel(
                                 chatroomId,
                                 Arrays.asList(
                                         FirebaseUtil.currentUserId(),
@@ -198,6 +204,35 @@ public class ChatActivity extends AppCompatActivity {
                 });
     }
 
+    /* ---------------- NOTIFICATION ---------------- */
+
+    public void notifications(String user, String message) {
+        NotificationManager manager =
+                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel =
+                    new NotificationChannel(
+                            "CrewUp",
+                            "CrewUp Notifications",
+                            NotificationManager.IMPORTANCE_DEFAULT
+                    );
+            manager.createNotificationChannel(channel);
+        }
+
+        NotificationCompat.Builder builder =
+                new NotificationCompat.Builder(this, "CrewUp")
+                        .setSmallIcon(R.drawable.crewup_logo)
+                        .setContentTitle(user)
+                        .setContentText(message)
+                        .setStyle(new NotificationCompat.BigTextStyle().bigText(message))
+                        .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+
+        manager.notify(1, builder.build());
+    }
+
+    /* ---------------- LIFECYCLE ---------------- */
+
     @Override
     protected void onStart() {
         super.onStart();
@@ -210,3 +245,4 @@ public class ChatActivity extends AppCompatActivity {
         if (adapter != null) adapter.stopListening();
     }
 }
+

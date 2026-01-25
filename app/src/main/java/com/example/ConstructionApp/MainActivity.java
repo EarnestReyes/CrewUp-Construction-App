@@ -8,14 +8,18 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -48,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         getUserLocationFromDatabase();
+        getFCMToken();
 
         // Init buttons
         navHome = findViewById(R.id.navHome);
@@ -57,7 +62,6 @@ public class MainActivity extends AppCompatActivity {
         navProfile = findViewById(R.id.navProfile);
         txtNewsFeed = findViewById(R.id.txtNewsfeed);
         btnSearch = findViewById(R.id.btnSearch);
-
 
         btnSearch.setOnClickListener(v -> {
             Intent in = new Intent(MainActivity.this, SearchUserActivity.class);
@@ -69,7 +73,6 @@ public class MainActivity extends AppCompatActivity {
             startActivity(in);
         });
 
-        // Load default fragment
         if (savedInstanceState == null) {
             loadFragment(new Home());
             highlight(navHome);
@@ -96,15 +99,12 @@ public class MainActivity extends AppCompatActivity {
             highlight(navChat);
         });
 
-
-
-
-
         navProfile.setOnClickListener(v -> {
             loadFragment(new ProfileFragment());
             highlight(navProfile);
         });
     }
+
 
     // Fragment loader
     private void loadFragment(Fragment fragment) {
@@ -148,6 +148,18 @@ public class MainActivity extends AppCompatActivity {
                 })
                 .addOnFailureListener(e ->
                         Log.e("FIRESTORE", "Failed to get location", e));
+    }
+
+    void getFCMToken(){
+        FirebaseMessaging.getInstance().getToken().addOnCompleteListener(new OnCompleteListener<String>() {
+            @Override
+            public void onComplete(@NonNull Task<String> task) {
+               if(task.isSuccessful()){
+                   String token = task.getResult();
+                   Log.i("My Token : ", token);
+               }
+            }
+        });
     }
 }
 
