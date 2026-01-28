@@ -2,6 +2,7 @@ package adapters;
 
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,23 +13,23 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-
-import clients.chat.ChatActivity;
-import data.AndroidUtil;
-import models.ChatroomModel;
-import data.FirebaseUtil;
-import models.UserModel;
-
 import com.example.ConstructionApp.R;
 import com.firebase.ui.firestore.FirestoreRecyclerAdapter;
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;
-import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+
+import clients.chat.ChatActivity;
+import data.AndroidUtil;
+import data.FirebaseUtil;
+import models.ChatroomModel;
+import models.UserModel;
 
 public class RecentChatRecyclerAdapter
         extends FirestoreRecyclerAdapter<ChatroomModel, RecentChatRecyclerAdapter.ChatroomModelViewHolder> {
 
     private final Context context;
+    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
     public RecentChatRecyclerAdapter(
             @NonNull FirestoreRecyclerOptions<ChatroomModel> options,
@@ -45,75 +46,90 @@ public class RecentChatRecyclerAdapter
             @NonNull ChatroomModel model
     ) {
 
+        // Reset UI (important for RecyclerView reuse)
+        holder.usernameText.setText("");
+        holder.lastMessageText.setText("");
+        holder.lastMessageTime.setText("");
+        holder.profilePic.setImageResource(R.drawable.ic_profile_placeholder_foreground);
         holder.itemView.setOnClickListener(null);
-        holder.profilePic.setImageResource(
-                R.drawable.ic_profile_placeholder_foreground
-        );
 
-        DocumentReference otherUserRef =
-                FirebaseUtil.getOtherUserFromChatroom(model.getUserIds());
+        Log.e("CHAT_DEBUG", "currentUserId = " + FirebaseUtil.currentUserId());
 
-        if (otherUserRef == null) return;
+        String otherUserId = FirebaseUtil.getOtherUserId(model.getUserIds());
+        if (otherUserId == null) return;
 
-        otherUserRef.get().addOnSuccessListener(snapshot -> {
-
-            if (!snapshot.exists()) return;
-
-            UserModel otherUserModel = snapshot.toObject(UserModel.class);
-            if (otherUserModel == null) return;
-
-            String otherUserId = snapshot.getId();
-            otherUserModel.setUserId(otherUserId);
-
-            holder.usernameText.setText(otherUserModel.getUsername());
-
-            boolean lastMessageSentByMe =
-                    model.getLastMessageSenderId() != null &&
-                            model.getLastMessageSenderId()
-                                    .equals(FirebaseUtil.currentUserId());
-
-            holder.lastMessageText.setText(
-                    lastMessageSentByMe
-                            ? "You: " + model.getLastMessage()
-                            : model.getLastMessage()
-            );
-
-            holder.lastMessageTime.setText(
-                    FirebaseUtil.timestampToString(
-                            model.getLastMessageTimestamp()
-                    )
-            );
-
-            FirebaseFirestore.getInstance()
-                    .collection("users")
-                    .document(otherUserId)
-                    .get()
-                    .addOnSuccessListener(userSnap -> {
-                        if (userSnap.exists()) {
-                            String url = userSnap.getString("profilePicUrl");
-                            if (url != null && !url.isEmpty()) {
-                                Glide.with(context)
-                                        .load(url)
-                                        .placeholder(R.drawable.ic_profile_placeholder_foreground)
-                                        .circleCrop()
-                                        .into(holder.profilePic);
-                            }
-                        }
-                    });
-
-            holder.itemView.setOnClickListener(v -> {
-                Intent intent = new Intent(context, ChatActivity.class);
-                AndroidUtil.passUserModelAsIntent(
-                        intent,
-                        otherUserModel,
-                        otherUserId
-                );
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                context.startActivity(intent);
-            });
-        });
+        // Try USERS first
+        db.collection("users")
+                .document(otherUserId)
+                .get()
+                .addOnSuccessListener(userSnap -> {
+                    if (userSnap.exists()) {
+                        bindUser(holder, model, userSnap, otherUserId);
+                    } else {
+                        // Fallback to WORKERS
+                        db.collection("workers")
+                                .document(otherUserId)
+                                .get()
+                                .addOnSuccessListener(workerSnap -> {
+                                    if (workerSnap.exists()) {
+                                        bindUser(holder, model, workerSnap, otherUserId);
+                                    }
+                                });
+                    }
+                });
     }
 
+    /**
+     * Binds user or worker data to the chat row
+     */
+    private void bindUser(
+            ChatroomModelViewHolder holder,
+            ChatroomModel model,
+            DocumentSnapshot snap,
+            String otherUserId
+    ) {
+        UserModel user = snap.toObject(UserModel.class);
+        if (user == null) return;
+
+        user.setUserId(otherUserId);
+
+        // Username
+        holder.usernameText.setText(user.getUsername());
+
+        // Last message
+        boolean sentByMe =
+                model.getLastMessageSenderId() != null &&
+                        model.getLastMessageSenderId().equals(FirebaseUtil.currentUserId());
+
+        holder.lastMessageText.setText(
+                sentByMe
+                        ? "You: " + model.getLastMessage()
+                        : model.getLastMessage()
+        );
+
+        // Time
+        holder.lastMessageTime.setText(
+                FirebaseUtil.timestampToString(model.getLastMessageTimestamp())
+        );
+
+        // Profile picture
+        String profilePicUrl = snap.getString("profilePicUrl");
+        if (profilePicUrl != null && !profilePicUrl.isEmpty()) {
+            Glide.with(context)
+                    .load(profilePicUrl)
+                    .placeholder(R.drawable.ic_profile_placeholder_foreground)
+                    .circleCrop()
+                    .into(holder.profilePic);
+        }
+
+        // Click → open chat
+        holder.itemView.setOnClickListener(v -> {
+            Intent intent = new Intent(context, ChatActivity.class);
+            AndroidUtil.passUserModelAsIntent(intent, user, otherUserId);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+        });
+    }
 
     @NonNull
     @Override
@@ -135,7 +151,7 @@ public class RecentChatRecyclerAdapter
 
         public ChatroomModelViewHolder(@NonNull View itemView) {
             super(itemView);
-            usernameText = itemView.findViewById(R.id.txtName);
+            usernameText = itemView.findViewById(R.id.workertxtName);
             lastMessageText = itemView.findViewById(R.id.txtLastMessage);
             lastMessageTime = itemView.findViewById(R.id.txtTime);
             profilePic = itemView.findViewById(R.id.imgProfile);

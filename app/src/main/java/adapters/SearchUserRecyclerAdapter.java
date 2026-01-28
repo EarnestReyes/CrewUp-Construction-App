@@ -18,12 +18,12 @@ import com.firebase.ui.firestore.FirestoreRecyclerOptions;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import clients.chat.ChatActivity;
+import clients.profile.UserProfile;
 import data.AndroidUtil;
 import data.FirebaseUtil;
 import models.UserModel;
 
-public class SearchUserRecyclerAdapter
-        extends FirestoreRecyclerAdapter<UserModel, SearchUserRecyclerAdapter.UserViewHolder> {
+public class SearchUserRecyclerAdapter extends FirestoreRecyclerAdapter<UserModel, SearchUserRecyclerAdapter.UserViewHolder> {
 
     private final Context context;
     private final boolean isRecent;
@@ -100,10 +100,10 @@ public class SearchUserRecyclerAdapter
                 );
 
         /* ---------- CLICK → OPEN CHAT + SAVE RECENT ---------- */
-        holder.itemView.setOnClickListener(v -> {
+            holder.itemView.setOnClickListener(v -> {
             FirebaseUtil.addToRecentSearch(model, userId);
 
-            Intent intent = new Intent(context, ChatActivity.class);
+            Intent intent = new Intent(context, UserProfile.class);
             AndroidUtil.passUserModelAsIntent(intent, model, userId);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(intent);

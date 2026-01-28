@@ -1,4 +1,4 @@
-package app;
+package workers.app;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -15,16 +15,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
-import clients.Notifications;
-import clients.chat.ChatActivity;
-import clients.chat.ChatFragment;
-import data.FirebaseUtil;
-import clients.home.Home;
-import clients.posts.Posts;
-import clients.profile.ProfileFragment;
 import com.example.ConstructionApp.R;
-import clients.home.SearchUserActivity;
-import clients.workers.workers;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
@@ -35,12 +26,22 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import java.util.HashMap;
 import java.util.Map;
 
+import clients.chat.ChatActivity;
+import clients.home.Home;
+import clients.home.SearchUserActivity;
+import clients.posts.Posts;
+import data.FirebaseUtil;
+import workers.chat.WorkersChat;
+import workers.messages.Chat;
+import workers.profile.WorkerProfile;
+import workers.works.works;
+
 public class MainActivity extends AppCompatActivity {
 
     // Bottom nav buttons
     ImageButton navHome, navBell, navAdd, navChat, navProfile;
     TextView txtNewsFeed;
-    ImageView btnSearch, notification;
+    ImageView btnSearch;
     private FirebaseFirestore db;
 
     private String userLocation = "";
@@ -50,7 +51,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_main2);
         db = FirebaseFirestore.getInstance();
 
         View main = findViewById(R.id.main);
@@ -93,8 +94,6 @@ public class MainActivity extends AppCompatActivity {
         navProfile = findViewById(R.id.navProfile);
         txtNewsFeed = findViewById(R.id.txtNewsfeed);
         btnSearch = findViewById(R.id.btnSearch);
-        notification = findViewById(R.id.btnBell);
-
 
         btnSearch.setOnClickListener(v -> {
             Intent in = new Intent(MainActivity.this, SearchUserActivity.class);
@@ -105,12 +104,6 @@ public class MainActivity extends AppCompatActivity {
             Intent in = new Intent(MainActivity.this, ChatActivity.class);
             startActivity(in);
         });
-
-        notification.setOnClickListener(v -> {
-            Intent in = new Intent(this, Notifications.class);
-            startActivity(in);
-        });
-
 
         if (savedInstanceState == null) {
             loadFragment(new Home());
@@ -124,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         navBell.setOnClickListener(v -> {
-            loadFragment(new workers());
+            loadFragment(new works());
             highlight(navBell);
         });
 
@@ -134,12 +127,12 @@ public class MainActivity extends AppCompatActivity {
         });
 
         navChat.setOnClickListener(v -> {
-            loadFragment(new ChatFragment());
+            loadFragment(new WorkersChat());
             highlight(navChat);
         });
 
         navProfile.setOnClickListener(v -> {
-            loadFragment(new ProfileFragment());
+            loadFragment(new WorkerProfile());
             highlight(navProfile);
         });
     }
@@ -169,25 +162,6 @@ public class MainActivity extends AppCompatActivity {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) return;
 
-        db.collection("users")
-                .document(user.getUid())
-                .get()
-                .addOnSuccessListener(document -> {
-
-                    if (isFinishing() || isDestroyed() || document == null || !document.exists())
-                        return;
-
-                    userLocation = document.getString("location");
-
-                    if (userLocation != null && !userLocation.isEmpty()) {
-                        txtNewsFeed.setText(userLocation);
-                    } else {
-                        txtNewsFeed.setText("Location not specified");
-                    }
-                })
-                .addOnFailureListener(e ->
-                        Log.e("FIRESTORE", "Failed to get location", e));
-
         db.collection("workers")
                 .document(user.getUid())
                 .get()
@@ -208,30 +182,23 @@ public class MainActivity extends AppCompatActivity {
                         Log.e("FIRESTORE", "Failed to get location", e));
     }
 
-    void getFCMToken(){
-        FirebaseMessaging.getInstance().getToken().addOnCompleteListener(new OnCompleteListener<String>() {
-            @Override
-            public void onComplete(@NonNull Task<String> task) {
-                task.addOnCompleteListener(taskResult -> {
-                    if (!taskResult.isSuccessful()) {
-                        return;
-                    }
+    public void getFCMToken() {
 
-                    String token = taskResult.getResult();
+        FirebaseMessaging.getInstance().getToken()
+                .addOnSuccessListener(token -> {
+
                     FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-
                     if (user == null) return;
 
-                    String userId = user.getUid();
-                    Map<String, Object> updates = new HashMap<>();
-                    updates.put("fcmToken", token);
-                    updates.put("userId", userId);
+                    String uid = user.getUid();
 
-                    FirebaseUtil.currentUserDetails().update(updates);
+                    Map<String, Object> data = new HashMap<>();
+                    data.put("userId", uid);
+
+                    db.collection("workers")
+                            .document(user.getUid())
+                            .update(data);
                 });
-
-            }
-        });
     }
 }
 

@@ -8,6 +8,9 @@ public class Post {
     private String content;
     private String timestamp;
     private String profilePicUrl;
+    private int likeCount;
+    private boolean likedByMe;
+    private String postId;
 
     // Required empty constructor (Firestore)
     public Post() {}
@@ -52,4 +55,27 @@ public class Post {
     public void setProfilePicUrl(String profilePicUrl) {
         this.profilePicUrl = profilePicUrl;
     }
+    public int getLikeCount() {
+        return likeCount;
+    }
+
+    public void setLikeCount(int likeCount) {
+        this.likeCount = likeCount;
+    }
+
+    public boolean isLikedByMe() {
+        return likedByMe;
+    }
+
+    public void setLikedByMe(boolean likedByMe) {
+        this.likedByMe = likedByMe;
+    }
+    public String getPostId() {
+        return postId;
+    }
+
+    public void setPostId(String postId) {
+        this.postId = postId;
+    }
+
 }

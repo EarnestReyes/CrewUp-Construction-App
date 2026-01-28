@@ -1,4 +1,4 @@
-package clients.profile;
+package workers.profile;
 
 import android.content.Intent;
 import android.net.Uri;
@@ -20,7 +20,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import data.FirebaseUtil;
 import com.example.ConstructionApp.R;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -29,9 +28,12 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.messaging.FirebaseMessaging;
 
+import app.MainActivity;
 import app.Splash_activity;
+import auth.GetStartedActivity;
+import data.FirebaseUtil;
 
-public class ProfileFragment extends Fragment {
+public class WorkerProfile extends Fragment {
 
     private FirebaseFirestore db;
     private Button logout;
@@ -52,7 +54,7 @@ public class ProfileFragment extends Fragment {
                                     .into(imgProfile);
 
                             // Upload to Cloudinary
-                            FirebaseUtil.uploadProfilePic(
+                            FirebaseUtil.uploadProfilePicworkers(
                                     requireContext(),
                                     uri
                             );
@@ -60,7 +62,7 @@ public class ProfileFragment extends Fragment {
                     }
             );
 
-    public ProfileFragment() {
+    public WorkerProfile() {
 
     }
 
@@ -76,7 +78,7 @@ public class ProfileFragment extends Fragment {
             ViewGroup container,
             Bundle savedInstanceState
     ) {
-        View view = inflater.inflate(R.layout.fragment_profile, container, false);
+        View view = inflater.inflate(R.layout.fragment_worker_profile, container, false);
 
         logout = view.findViewById(R.id.logout_btn);
         imgProfile = view.findViewById(R.id.imgProfile);
@@ -86,7 +88,7 @@ public class ProfileFragment extends Fragment {
 
         String uid = FirebaseUtil.currentUserId();
         if (uid != null && isAdded()) {
-            FirebaseUtil.listenToProfilePic(
+            FirebaseUtil.workerlistenToProfilePic(
                     requireContext(),
                     imgProfile,
                     uid
@@ -95,7 +97,7 @@ public class ProfileFragment extends Fragment {
 
         imgProfile.setOnClickListener(v -> {
 
-            //add permisions first
+            //permission muna
             imagePickerLauncher.launch("image/*");
         });
 
@@ -103,8 +105,8 @@ public class ProfileFragment extends Fragment {
         logout.setOnClickListener(v -> {
             logout();
         });
-            return view;
-        }
+        return view;
+    }
 
     private void loadUsername() {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
@@ -112,7 +114,7 @@ public class ProfileFragment extends Fragment {
 
         String userId = currentUser.getUid();
 
-        db.collection("users")
+        db.collection("workers")
                 .document(userId)
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
@@ -120,9 +122,12 @@ public class ProfileFragment extends Fragment {
                         String name = documentSnapshot.getString("username");
                         if (name != null) {
                             username.setText(name);
+                        } else {
+                            username.setText("Lang name");
                         }
-      }});
+                    }});
     }
+
     private void logout() {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Account Logout")
@@ -134,7 +139,7 @@ public class ProfileFragment extends Fragment {
                         public void onComplete(@NonNull Task<Void> task) {
                             if(task.isSuccessful()){
                                 FirebaseUtil.logout();
-                                Intent intent = new Intent(getContext(), Splash_activity.class);
+                                Intent intent = new Intent(getContext(), GetStartedActivity.class);
                                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                                 startActivity(intent);
                             }

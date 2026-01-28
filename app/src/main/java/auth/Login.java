@@ -20,6 +20,7 @@ import app.CreateAccount;
 import com.example.ConstructionApp.R;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import app.MainActivity;
 
@@ -81,20 +82,15 @@ public class Login extends AppCompatActivity {
             mAuth.signInWithEmailAndPassword(emailTxt, passTxt)
                     .addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
-                            Toast.makeText(this, "Login Successful!", Toast.LENGTH_SHORT).show();
-                            startActivity(new Intent(this, MainActivity.class));
-                            finish();
+                            //check if exist
+                            checkUserRole();
                         } else {
-                            Toast.makeText(
-                                    this,
-                                    task.getException() != null
-                                            ? task.getException().getMessage()
-                                            : "Login failed",
-                                    Toast.LENGTH_LONG
-                            ).show();
+
+                            Toast.makeText(this, "Login failed", Toast.LENGTH_SHORT).show();
+
                         }
                     });
-        });
+                 });
 
 
         signup.setOnClickListener(v ->
@@ -103,4 +99,27 @@ public class Login extends AppCompatActivity {
         forgot.setOnClickListener(v ->
                 startActivity(new Intent(this, ForgotPass.class)));
     }
+
+    private void checkUserRole() {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+        db.collection("workers")
+                .document(uid)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    if (doc.exists()) {
+                        Toast.makeText(this, "Welcome Worker!", Toast.LENGTH_SHORT).show();
+                        startActivity(new Intent(this, workers.app.MainActivity.class));
+                        finish();
+                    } else {
+                        startActivity(new Intent(this, MainActivity.class));
+                        finish();
+                    }
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show()
+                );
+    }
 }
+

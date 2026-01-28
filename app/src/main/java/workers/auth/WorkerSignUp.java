@@ -1,4 +1,4 @@
-package auth;
+package workers.auth;
 
 import android.Manifest;
 import android.app.NotificationChannel;
@@ -43,8 +43,9 @@ import java.util.Locale;
 import java.util.Map;
 
 import app.MainActivity;
+import auth.Login;
 
-public class SignUp extends AppCompatActivity {
+public class WorkerSignUp extends AppCompatActivity {
 
     FirebaseAuth mAuth;
     private FirebaseFirestore db;
@@ -59,7 +60,7 @@ public class SignUp extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_sign_up);
+        setContentView(R.layout.activity_worker_sign_up);
 
         db = FirebaseFirestore.getInstance();
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
@@ -140,7 +141,7 @@ public class SignUp extends AppCompatActivity {
                     .addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
                             saveUserToFirestore(user, emailTxt);
-                            Toast.makeText(SignUp.this, "Registered Successfully!", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(WorkerSignUp.this, "Registered Successfully!", Toast.LENGTH_SHORT).show();
                             Intent intent = new Intent(this, MainActivity.class);
                             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                             PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent,
@@ -172,7 +173,7 @@ public class SignUp extends AppCompatActivity {
                             confirmpass.setText(null);
 
                         } else {
-                            Toast.makeText(SignUp.this,
+                            Toast.makeText(WorkerSignUp.this,
                                     task.getException().getMessage(),
                                     Toast.LENGTH_LONG).show();
                         }
@@ -274,7 +275,7 @@ public class SignUp extends AppCompatActivity {
 
     private void saveUserToFirestore(String username, String email) {
         String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        String status = getIntent().getStringExtra("client");
+        String status = getIntent().getStringExtra("worker");
 
         Map<String, Object> user = new HashMap<>();
         user.put("username", username);
@@ -284,7 +285,7 @@ public class SignUp extends AppCompatActivity {
         user.put("username_lower", username.toLowerCase());
         user.put("Role", status);
 
-        db.collection("users")
+        db.collection("workers")
                 .document(uid)
                 .set(user);
     }
@@ -300,7 +301,7 @@ public class SignUp extends AppCompatActivity {
         data.put("lng", lng);
         data.put("locationUpdatedAt", System.currentTimeMillis());
 
-        db.collection("users")
+        db.collection("workers")
                 .document(user.getUid())
                 .update(data);
     }

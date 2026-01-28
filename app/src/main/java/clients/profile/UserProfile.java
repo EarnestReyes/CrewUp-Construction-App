@@ -1,19 +1,24 @@
-package clients.home;
+package clients.profile;
 
+import static androidx.core.content.ContentProviderCompat.requireContext;
+
+import android.content.Intent;
 import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
+import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import data.FirebaseUtil;
-import models.Post;
-import adapters.PostAdapter;
+import com.bumptech.glide.Glide;
 import com.example.ConstructionApp.R;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
@@ -28,53 +33,104 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-public class Home extends Fragment {
+import adapters.PostAdapter;
+import clients.chat.ChatActivity;
+import data.FirebaseUtil;
+import models.Post;
+import models.UserModel;
 
-    private RecyclerView recyclerPosts;
+public class UserProfile extends AppCompatActivity {
+
+    public RecyclerView recyclerPosts;
+    public PostAdapter adapter;
     private ArrayList<Post> posts;
-    private PostAdapter adapter;
-    private FirebaseFirestore db;
-
     private final Map<String, String> profileCache = new HashMap<>();
+    TextView username;
+    ImageView profile;
+    ImageButton backBtn;
+    Button button;
+
+    FirebaseFirestore db;
 
     @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
+        setContentView(R.layout.activity_user_profile);
+
         db = FirebaseFirestore.getInstance();
+
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
+
+        username = findViewById(R.id.workertxtName);
+        profile = findViewById(R.id.imgProfile);
+        button = findViewById(R.id.btnMessage);
+        backBtn = findViewById(R.id.back_btn);
+
+        backBtn.setOnClickListener(v -> finish());
+
+        String userId = getIntent().getStringExtra("userId");
+        if (userId == null) {
+            finish();
+            return;
+        }
+
         posts = new ArrayList<>();
-    }
-
-    @Override
-    public View onCreateView(
-            @NonNull LayoutInflater inflater,
-            ViewGroup container,
-            Bundle savedInstanceState) {
-
-        View view = inflater.inflate(R.layout.fragment_home, container, false);
-
-        recyclerPosts = view.findViewById(R.id.recyclerPosts);
-        recyclerPosts.setLayoutManager(new LinearLayoutManager(requireContext()));
-
-        adapter = new PostAdapter(requireContext(), posts);
-        recyclerPosts.setAdapter(adapter);
 
         loadPosts();
-        return view;
+
+        FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(userId)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    if (!doc.exists()) return;
+
+                    username.setText(doc.getString("username"));
+
+                    String url = doc.getString("profilePicUrl");
+                    if (url != null && !url.isEmpty()) {
+                        Glide.with(this)
+                                .load(url)
+                                .placeholder(R.drawable.ic_profile_placeholder_foreground)
+                                .circleCrop()
+                                .into(profile);
+                    }
+                });
+
+        button.setOnClickListener(v -> {
+            Intent intent = new Intent(this, ChatActivity.class);
+            intent.putExtra("userId", userId);
+            startActivity(intent);
+        });
     }
 
     private void loadPosts() {
 
+        String profileUserId = getIntent().getStringExtra("userId");
+        if (profileUserId == null) return;
+
+        recyclerPosts = findViewById(R.id.recyclerPosts);
+        recyclerPosts.setLayoutManager(new LinearLayoutManager(this));
+
+        posts.clear();
+        adapter = new PostAdapter(this, posts);
+        recyclerPosts.setAdapter(adapter);
+
+        String currentUserId = FirebaseAuth.getInstance().getUid();
+
         db.collection("posts")
+                .whereEqualTo("userId", profileUserId)
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .addSnapshotListener((value, error) -> {
 
                     if (error != null || value == null) return;
 
                     posts.clear();
-                    adapter.notifyDataSetChanged();
-
-                    String currentUserId =
-                            FirebaseAuth.getInstance().getUid();
 
                     for (DocumentSnapshot postDoc : value.getDocuments()) {
 
@@ -90,8 +146,7 @@ public class Home extends Fragment {
 
                         if (rawTime instanceof Timestamp) {
                             time = formatTimestamp(
-                                    ((Timestamp) rawTime)
-                                            .toDate().getTime()
+                                    ((Timestamp) rawTime).toDate().getTime()
                             );
                         } else if (rawTime instanceof Long) {
                             time = formatTimestamp((Long) rawTime);
@@ -103,26 +158,27 @@ public class Home extends Fragment {
                         Long likes = postDoc.getLong("likeCount");
                         int likeCount = likes != null ? likes.intValue() : 0;
 
-                        // ================= CACHED USER =================
-                        if (profileCache.containsKey(userId)) {
+                        // ---- cached profile ----
+                        String cachedName = profileCache.get(userId + "_name");
+                        String cachedPic = profileCache.get(userId);
+
+                        if (cachedName != null) {
 
                             Post post = new Post(
                                     userId,
-                                    profileCache.get(userId + "_name"),
+                                    cachedName,
                                     title != null ? title : "",
                                     content != null ? content : "",
                                     time,
-                                    profileCache.get(userId)
+                                    cachedPic
                             );
 
-                            // 🔥 REQUIRED FOR LIKES
                             post.setPostId(postDoc.getId());
                             post.setLikeCount(likeCount);
 
                             posts.add(post);
-                            adapter.notifyItemInserted(posts.size() - 1);
 
-                            // 🔥 CHECK IF CURRENT USER LIKED
+                            // 🔥 check if liked by current user
                             if (currentUserId != null) {
                                 db.collection("posts")
                                         .document(post.getPostId())
@@ -137,7 +193,6 @@ public class Home extends Fragment {
                             continue;
                         }
 
-                        // ================= LOAD USER =================
                         FirebaseUtil.getUserReference(userId)
                                 .get()
                                 .addOnSuccessListener(userSnap -> {
@@ -167,9 +222,8 @@ public class Home extends Fragment {
                                     post.setLikeCount(likeCount);
 
                                     posts.add(post);
-                                    adapter.notifyItemInserted(posts.size() - 1);
 
-                                    // 🔥 CHECK IF CURRENT USER LIKED
+                                    // 🔥 check if liked by current user
                                     if (currentUserId != null) {
                                         db.collection("posts")
                                                 .document(post.getPostId())
@@ -181,8 +235,12 @@ public class Home extends Fragment {
                                                     adapter.notifyDataSetChanged();
                                                 });
                                     }
+
+                                    adapter.notifyDataSetChanged();
                                 });
                     }
+
+                    adapter.notifyDataSetChanged();
                 });
     }
 
@@ -192,4 +250,5 @@ public class Home extends Fragment {
                 Locale.getDefault()
         ).format(new Date(millis));
     }
+
 }

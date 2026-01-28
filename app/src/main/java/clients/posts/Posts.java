@@ -144,6 +144,7 @@ public class Posts extends Fragment {
 
                         String content = doc.getString("content");
 
+                        // ----- TIMESTAMP -----
                         Object rawTime = doc.get("timestamp");
                         String time;
 
@@ -164,8 +165,27 @@ public class Posts extends Fragment {
                                 "",
                                 content != null ? content : "",
                                 time,
-                                currentUserProfilePicUrl // ✅ THIS FIXES IT
+                                currentUserProfilePicUrl
                         );
+
+                        // 🔥 REQUIRED FOR LIKES
+                        post.setPostId(doc.getId());
+
+                        // 🔥 LIKE COUNT
+                        Long likes = doc.getLong("likeCount");
+                        post.setLikeCount(likes != null ? likes.intValue() : 0);
+
+                        // 🔥 CHECK IF CURRENT USER LIKED
+                        String currentUserId = user.getUid();
+                        db.collection("posts")
+                                .document(post.getPostId())
+                                .collection("likes")
+                                .document(currentUserId)
+                                .get()
+                                .addOnSuccessListener(likeSnap -> {
+                                    post.setLikedByMe(likeSnap.exists());
+                                    adapter.notifyDataSetChanged();
+                                });
 
                         posts.add(post);
                     }
@@ -173,6 +193,7 @@ public class Posts extends Fragment {
                     adapter.notifyDataSetChanged();
                 });
     }
+
 
 
     private String formatTimestamp(long millis) {

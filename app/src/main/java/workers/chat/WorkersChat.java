@@ -1,4 +1,6 @@
-package clients.chat;
+package workers.chat;
+
+import androidx.fragment.app.Fragment;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -7,7 +9,6 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -18,12 +19,12 @@ import adapters.RecentChatRecyclerAdapter;
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;
 import com.google.firebase.firestore.Query;
 
-public class ChatFragment extends Fragment {
+public class WorkersChat extends Fragment {
 
     private RecyclerView recyclerView;
     private RecentChatRecyclerAdapter adapter;
 
-    public ChatFragment() {
+    public WorkersChat() {
 
     }
 

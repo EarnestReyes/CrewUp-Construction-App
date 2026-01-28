@@ -98,7 +98,7 @@ public class SearchUserActivity extends AppCompatActivity {
 
     private void loadSearchResults(String text) {
         Query query = FirebaseFirestore.getInstance()
-                .collection("users")
+                .collection("users")//edit to all users
                 .orderBy("username_lower")
                 .startAt(text)
                 .endAt(text + "\uf8ff");

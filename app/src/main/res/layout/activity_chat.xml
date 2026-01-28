@@ -83,10 +83,22 @@
         android:background="@color/bg_color"
         android:padding="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
+        <!-- HIRE BUTTON -->
+        <ImageButton
+            android:id="@+id/hire_btn"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_hire"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@color/icon_comment" />
+
+        <!-- MESSAGE INPUT -->
         <EditText
             android:id="@+id/chat_message_input"
             android:layout_width="0dp"
@@ -100,23 +112,24 @@
             android:padding="10dp"
             android:textColor="@color/on_primary"
             android:textColorHint="@color/text_secondary"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginHorizontal="8dp"
+            app:layout_constraintStart_toEndOf="@id/hire_btn"
             app:layout_constraintEnd_toStartOf="@id/message_send_btn"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.0" />
+            app:layout_constraintBottom_toBottomOf="parent"/>
 
+        <!-- SEND BUTTON -->
         <ImageButton
             android:id="@+id/message_send_btn"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_send"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:tint="@color/icon_like"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:tint="@color/icon_like" />
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

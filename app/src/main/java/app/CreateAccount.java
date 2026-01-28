@@ -3,7 +3,6 @@ package app;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.view.WindowInsetsController;
 import android.widget.ImageButton;
 
 import androidx.activity.EdgeToEdge;
@@ -15,6 +14,7 @@ import androidx.core.view.WindowInsetsCompat;
 import com.example.ConstructionApp.R;
 
 import auth.SignUp;
+import workers.auth.WorkerSignUp;
 
 public class CreateAccount extends AppCompatActivity {
 
@@ -29,11 +29,6 @@ public class CreateAccount extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-
-        getWindow().getInsetsController().setSystemBarsAppearance(
-                WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS,
-                WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
-        );
 
         View main = findViewById(R.id.main);
         ViewCompat.setOnApplyWindowInsetsListener(main, (v, insets) -> {
@@ -57,11 +52,14 @@ public class CreateAccount extends AppCompatActivity {
 
         client.setOnClickListener(view -> {
             Intent in = new Intent(this, SignUp.class);
+            in.putExtra("client", "client");
             startActivity(in);
         });
 
         worker.setOnClickListener(view -> {
-
+            Intent in = new Intent(CreateAccount.this, WorkerSignUp.class);
+            in.putExtra("worker", "worker");
+            startActivity(in);
         });
     }
 }
