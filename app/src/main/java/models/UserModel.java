@@ -9,6 +9,7 @@ public class UserModel implements Serializable {
     private String email;
     private String location;
     private String fcmToken;
+    private String Role;
 
     public UserModel() {}
 
@@ -17,6 +18,9 @@ public class UserModel implements Serializable {
     public String getEmail() { return email; }
     public String getLocation() { return location; }
     public String getFcmToken() { return fcmToken; }
+    public String getRole(){
+        return Role;
+    }
 
     public void setUserId(String userId) { this.userId = userId; }
     public void setUsername(String username) { this.username = username; }

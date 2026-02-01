@@ -1,12 +1,15 @@
 package adapters;
 
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -16,6 +19,9 @@ import com.example.ConstructionApp.R;
 import com.firebase.ui.firestore.FirestoreRecyclerAdapter;
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;
 
+import clients.profile.UserProfile;
+import data.AndroidUtil;
+import models.UserModel;
 import models.WorkerModel;
 
 public class WorkersRecyclerAdapter
@@ -54,6 +60,16 @@ public class WorkersRecyclerAdapter
                     .circleCrop()
                     .into(holder.imgProfile);
         }
+
+        holder.worker_field.setOnClickListener(v -> {
+            Toast.makeText(context, "User " + model.getUsername() + "Is clicked!" , Toast.LENGTH_SHORT).show();
+            String userId = getSnapshots().getSnapshot(position).getId();
+            Intent intent = new Intent(context, UserProfile.class);
+
+            AndroidUtil.passUserModelAsIntent(intent, new UserModel(), userId);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+        });
     }
 
     @NonNull
@@ -70,6 +86,7 @@ public class WorkersRecyclerAdapter
     static class WorkerViewHolder extends RecyclerView.ViewHolder {
         ImageView imgProfile;
         TextView txtName, txtRole, txtRating, txtDistance;
+        LinearLayout worker_field;
 
         WorkerViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -78,6 +95,7 @@ public class WorkersRecyclerAdapter
             txtRole = itemView.findViewById(R.id.txtRole);
             txtRating = itemView.findViewById(R.id.txtRating);
             txtDistance = itemView.findViewById(R.id.txtDistance);
+            worker_field = itemView.findViewById(R.id.worker_field);
         }
     }
 }

@@ -197,9 +197,9 @@ public class ProfileFragment extends Fragment {
                         Toast.makeText(requireContext(), "Your wish is my command", Toast.LENGTH_SHORT).show())
                 .show();
     }
-    private void  permission(ActivityResultLauncher act) {
+    private void permission(ActivityResultLauncher act) {
         new AlertDialog.Builder(requireContext())
-                .setTitle("Location Permission")
+                .setTitle("Media Permission")
                 .setMessage("Allow app to access your gallery?")
                 .setCancelable(false)
                 .setPositiveButton("Yes", (d, w) -> act.launch("image/*"))

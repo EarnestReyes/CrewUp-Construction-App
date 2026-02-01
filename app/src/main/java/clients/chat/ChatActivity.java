@@ -1,13 +1,18 @@
 package clients.chat;
 
+import static android.view.View.GONE;
+
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -42,7 +47,7 @@ public class ChatActivity extends AppCompatActivity {
     private String chatroomId;
     private ChatRecyclerAdapter adapter;
     private EditText messageInput;
-    private ImageButton sendMessageBtn, backBtn;
+    private ImageButton sendMessageBtn, backBtn, hire_btn;
     private TextView otherUsername;
     private RecyclerView recyclerView;
     private ImageView profilePic;
@@ -71,6 +76,7 @@ public class ChatActivity extends AppCompatActivity {
         otherUsername = findViewById(R.id.other_username);
         recyclerView = findViewById(R.id.chat_recycler_view);
         profilePic = findViewById(R.id.profile_pic_image_view);
+        hire_btn = findViewById(R.id.hire_btn);
 
         View root = findViewById(R.id.main);
         View bottomLayout = findViewById(R.id.bottom_layout);
@@ -124,10 +130,12 @@ public class ChatActivity extends AppCompatActivity {
             return insets;
         });
 
-        // 🔙 Back button
         backBtn.setOnClickListener((v) -> finish());
 
-        // ✅ Chat setup (THIS WAS MISSING)
+        hire_btn.setOnClickListener(view -> {
+            permission("Clarification", "Are you sure you want to hire " + otherUser.getUsername() + "?", "Thank you!");
+        });
+
         chatroomId = FirebaseUtil.getChatroomId(
                 FirebaseUtil.currentUserId(),
                 otherUserId
@@ -137,7 +145,6 @@ public class ChatActivity extends AppCompatActivity {
         setupChatRecyclerView();
         getOrCreateChatroomModel();
 
-        // 📤 Send message
         sendMessageBtn.setOnClickListener(v -> {
             String message = messageInput.getText().toString().trim();
             if (!message.isEmpty()) {
@@ -164,6 +171,14 @@ public class ChatActivity extends AppCompatActivity {
                     otherUser.setUserId(snapshot.getId());
                     otherUsername.setText(otherUser.getUsername());
 
+                    String otherUserRole = otherUser.getRole();
+
+                    if ("worker".equalsIgnoreCase(otherUserRole)) {
+                        hire_btn.setVisibility(View.VISIBLE);
+                    } else {
+                        hire_btn.setVisibility(GONE);
+                    }
+
                     String url = snapshot.getString("profilePicUrl");
                     if (url != null && !url.isEmpty()) {
                         Glide.with(this)
@@ -173,6 +188,7 @@ public class ChatActivity extends AppCompatActivity {
                     }
                 });
     }
+
 
 
     /* ---------------- CHAT LIST ---------------- */
@@ -297,15 +313,6 @@ public class ChatActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    public void onBackPressed() {
-        View view = getCurrentFocus();
-        if (view != null) {
-            view.clearFocus();
-        }
-        super.onBackPressed();
-    }
-
     void sendNotification(String message) {
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
@@ -320,5 +327,26 @@ public class ChatActivity extends AppCompatActivity {
         FirebaseFirestore.getInstance()
                 .collection("notifications")
                 .add(notif);
+    }
+
+    private void permission(String title, String message, String toastText) {
+        new AlertDialog.Builder(this)
+                .setTitle(title)
+                .setMessage(message)
+                .setCancelable(false)
+                .setPositiveButton("Yes", (dialog, which) -> {
+                    hire_btn.setVisibility(GONE);
+                    Toast.makeText(this, "Hiring worker, please wait...", Toast.LENGTH_SHORT).show();
+                    try{
+                        Thread.sleep(2000);
+                    } catch (Exception e){
+
+                    }
+                    Toast.makeText(this, "User " +  otherUser.getUsername() + " is hired!", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("No", (dialog, which) -> {
+                    Toast.makeText(this, toastText, Toast.LENGTH_SHORT).show();
+                })
+                .show();
     }
 }
