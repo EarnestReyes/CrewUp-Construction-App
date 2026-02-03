@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/main"
+    android:background="#1F1F1F">
+
+    <!-- TOP BAR -->
+
+    <!-- BACK BUTTON -->
+
+    <!-- TITLE -->
+    <View
+        android:id="@+id/topBar"
+        android:layout_width="0dp"
+        android:layout_height="56dp"
+        android:background="#F5B400"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/btnBack"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:contentDescription="Back"
+        android:src="@drawable/ic_back"
+        app:layout_constraintBottom_toBottomOf="@+id/bottomButtons"
+        app:layout_constraintEnd_toEndOf="@+id/topBar"
+        app:layout_constraintHorizontal_bias="0.041"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.023" />
+
+    <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Review Details"
+        android:textStyle="bold"
+        android:textSize="18sp"
+        android:textColor="#000000"
+        app:layout_constraintTop_toTopOf="@id/topBar"
+        app:layout_constraintBottom_toBottomOf="@id/topBar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <!-- SCROLL VIEW -->
+    <ScrollView
+        android:id="@+id/scrollView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        app:layout_constraintTop_toBottomOf="@id/topBar"
+        app:layout_constraintBottom_toTopOf="@id/bottomButtons"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp">
+
+            <!-- CARD -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/formCard"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_margin="16dp"
+                app:cardCornerRadius="16dp"
+                app:cardBackgroundColor="#2A2A2A"
+                app:cardElevation="6dp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <!-- LOGO -->
+                <TextView
+                    android:id="@+id/tvCrewUp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="CrewUp"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:textColor="#F5B400"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"/>
+
+                <!-- PERSONAL INFO HEADER -->
+                <TextView
+                    android:id="@+id/tvPersonalHeader"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="PERSONAL INFORMATION"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="#F5B400"
+                    android:layout_marginTop="16dp"
+                    app:layout_constraintTop_toBottomOf="@id/tvCrewUp"
+                    app:layout_constraintStart_toStartOf="parent"/>
+
+                <!-- PERSONAL INFO -->
+                <TextView
+                    android:id="@+id/tvPersonalInfo"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp"
+                    android:layout_marginTop="8dp"
+                    android:text="Full Name:\nCarl Joshua C. Dolera\n\nMobile No:\n09123456789\n\nHome Address:\nBlk. 27, Lot. 27, Phase 2, Villa de Primarosa, Buhay na Tubig, Imus City, Cavite"
+                    app:layout_constraintTop_toBottomOf="@id/tvPersonalHeader"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"/>
+
+                <!-- SERVICE HEADER -->
+                <TextView
+                    android:id="@+id/tvServiceHeader"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="SERVICE INFORMATION"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="#F5B400"
+                    android:layout_marginTop="16dp"
+                    app:layout_constraintTop_toBottomOf="@id/tvPersonalInfo"
+                    app:layout_constraintStart_toStartOf="parent"/>
+
+                <!-- SERVICE INFO -->
+                <TextView
+                    android:id="@+id/tvServiceInfo"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp"
+                    android:layout_marginTop="8dp"
+                    android:text="Site Address:\nBlk. 1, Lot. 15, Camella Pristina, Buhay na Tubig, Imus City, Cavite\n\nPreferred Date and Time:\nJanuary 25, 2026\n\nBudget Range:\n1000-1500\n\nShort Description of the Job"
+                    app:layout_constraintTop_toBottomOf="@id/tvServiceHeader"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"/>
+
+                <!-- DESCRIPTION BOX -->
+                <TextView
+                    android:id="@+id/tvDescription"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:padding="10dp"
+                    android:textColor="#FFFFFF"
+                    android:textSize="13sp"
+                    android:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+                    app:layout_constraintTop_toBottomOf="@id/tvServiceInfo"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"/>
+
+                <!-- PHOTOS LABEL -->
+                <TextView
+                    android:id="@+id/tvPhotos"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Photos"
+                    android:textStyle="bold"
+                    android:textColor="#FFFFFF"
+                    android:layout_marginTop="16dp"
+                    app:layout_constraintTop_toBottomOf="@id/tvDescription"
+                    app:layout_constraintStart_toStartOf="parent"/>
+
+                <!-- PHOTO GRID -->
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/photoContainer"
+                    android:layout_width="0dp"
+                    android:layout_height="140dp"
+                    android:layout_marginTop="8dp"
+                    app:layout_constraintTop_toBottomOf="@id/tvPhotos"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent">
+
+                    <View
+                        android:id="@+id/photoLeftTop"
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:background="@drawable/example_photo"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toTopOf="@id/photoLeftBottom"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toStartOf="@id/photoRight"
+                        app:layout_constraintWidth_percent="0.48"/>
+
+                    <View
+                        android:id="@+id/photoLeftBottom"
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:background="@drawable/example_photo"
+                        app:layout_constraintTop_toBottomOf="@id/photoLeftTop"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toStartOf="@id/photoRight"/>
+
+                    <View
+                        android:id="@+id/photoRight"
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:background="@drawable/example_photo"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@id/photoLeftTop"/>
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
+
+    <!-- BOTTOM BUTTONS -->
+    <LinearLayout
+        android:id="@+id/bottomButtons"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:padding="16dp"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btnPrevious"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:text="Previous"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#2C2C2C"
+        android:layout_marginStart="16dp"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/btnSubmit"
+        app:layout_constraintWidth_percent="0.45"/>
+
+    <!-- Next Button -->
+    <Button
+        android:id="@+id/btnSubmit"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:backgroundTint="#F6B000"
+        android:text="Submit"
+        android:textColor="#000000"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/btnPrevious"
+        app:layout_constraintWidth_percent="0.45" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

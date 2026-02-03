@@ -13,13 +13,13 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.ConstructionApp.R;
 
-public class BookingPersonalInfo extends AppCompatActivity {
+public class Permission extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_booking_personal_info);
+        setContentView(R.layout.activity_permission);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -33,10 +33,8 @@ public class BookingPersonalInfo extends AppCompatActivity {
         });
 
         approved.setOnClickListener(v -> {
-            Intent in = new Intent(this, ServiceInfo.class);//palitan mo to to bookperson
+            Intent in = new Intent(this, BookingPersonalInfo.class);
             startActivity(in);
         });
-
-
     }
 }

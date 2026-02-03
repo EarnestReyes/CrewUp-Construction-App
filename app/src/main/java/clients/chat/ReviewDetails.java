@@ -3,6 +3,7 @@ package clients.chat;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 
 import androidx.activity.EdgeToEdge;
@@ -13,30 +14,34 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.ConstructionApp.R;
 
-public class BookingPersonalInfo extends AppCompatActivity {
+public class ReviewDetails extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_booking_personal_info);
+        setContentView(R.layout.activity_review_details);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+        Button nxt = findViewById(R.id.btnSubmit);
+        nxt.setOnClickListener(v -> {
+            Intent in = new Intent(this, ServiceBreakdown.class);
+            startActivity(in);
+        });
 
-        Button approved = findViewById(R.id.btnSubmit);
+        Button prv = findViewById(R.id.btnPrevious);
+        prv.setOnClickListener(v -> {
+            Intent in = new Intent(this, ServiceInfo.class);
+            startActivity(in);
+        });
+
         ImageView back = findViewById(R.id.btnBack);
         back.setOnClickListener(v -> {
             finish();
         });
-
-        approved.setOnClickListener(v -> {
-            Intent in = new Intent(this, ServiceInfo.class);//palitan mo to to bookperson
-            startActivity(in);
-        });
-
 
     }
 }

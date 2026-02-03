@@ -6,6 +6,21 @@
     android:id="@+id/main"
     android:layout_height="match_parent">
 
+    <ImageButton
+    android:id="@+id/btnBack"
+    android:layout_width="49dp"
+    android:layout_height="42dp"
+    android:layout_marginStart="4dp"
+    android:background="?attr/selectableItemBackgroundBorderless"
+    android:contentDescription="Back"
+    android:scaleType="centerInside"
+    android:src="@drawable/ic_back"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent"
+    app:layout_constraintVertical_bias="0.01"
+    app:tint="#000000" />
+
     <VideoView
         android:id="@+id/videoBg"
         android:layout_width="0dp"

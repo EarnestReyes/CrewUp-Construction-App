@@ -4,6 +4,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.Toolbar;
 import android.widget.VideoView;
 import android.content.Intent;
 
@@ -32,8 +33,8 @@ public class WelcomeBookingPage extends AppCompatActivity {
         Button btnProceed = findViewById(R.id.btnProceed);
 
         btnProceed.setOnClickListener(v -> {
-          Intent in = new Intent(this, BookingPersonalInfo.class);
-          startActivity(in);
+            Intent in = new Intent(this, Permission.class);
+            startActivity(in);
         });
 
         VideoView videoView = findViewById(R.id.videoBg);

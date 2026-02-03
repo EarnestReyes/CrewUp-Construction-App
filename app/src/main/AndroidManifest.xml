@@ -17,7 +17,19 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Fragments_Reyes">
         <activity
+            android:name="clients.chat.ServiceBreakdown"
+            android:exported="false" />
+        <activity
+            android:name="clients.chat.ReviewDetails"
+            android:exported="false" />
+        <activity
+            android:name="clients.chat.ServiceInfo"
+            android:exported="false" />
+        <activity
             android:name="clients.chat.BookingPersonalInfo"
+            android:exported="false" />
+        <activity
+            android:name="clients.chat.Permission"
             android:exported="false" />
         <activity
             android:name="clients.chat.WelcomeBookingPage"
@@ -36,12 +48,6 @@
             android:exported="false" />
         <activity
             android:name="clients.profile.UserProfile"
-            android:exported="false" />
-        <activity
-            android:name="workers.home.WorkersSearchActivity"
-            android:exported="false" />
-        <activity
-            android:name="workers.home.UserSearchActivity"
             android:exported="false" />
         <activity
             android:name="workers.auth.WorkerSignUp"
