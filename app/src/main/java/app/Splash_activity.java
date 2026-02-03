@@ -16,6 +16,8 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 public class Splash_activity extends AppCompatActivity {
 
+    //TEST
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

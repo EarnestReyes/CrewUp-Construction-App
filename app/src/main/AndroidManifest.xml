@@ -17,6 +17,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Fragments_Reyes">
         <activity
+            android:name="clients.chat.BookingPersonalInfo"
+            android:exported="false" />
+        <activity
+            android:name="clients.chat.WelcomeBookingPage"
+            android:exported="false" />
+        <activity
             android:name="auth.UserDetails"
             android:exported="false" />
         <activity

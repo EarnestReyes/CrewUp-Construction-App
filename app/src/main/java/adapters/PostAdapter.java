@@ -1,14 +1,10 @@
 package adapters;
 
-import static androidx.core.content.ContextCompat.startActivity;
-
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -28,7 +24,6 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
-
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -54,8 +49,6 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
 
         View view = LayoutInflater.from(context)
                 .inflate(R.layout.item_post_card, parent, false);
-
-
 
         return new PostViewHolder(view);
     }
@@ -114,14 +107,12 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             BottomSheetDialog bottomSheetDialog =
                     new BottomSheetDialog(context, R.style.BottomSheetTheme);
 
-            // ✅ ONE sheetView ONLY
             View sheetView = LayoutInflater.from(context)
                     .inflate(R.layout.comment_layout, null);
 
             bottomSheetDialog.setContentView(sheetView);
             bottomSheetDialog.show();
 
-            // Expand like Facebook
             bottomSheetDialog.setOnShowListener(dialog -> {
                 BottomSheetDialog d = (BottomSheetDialog) dialog;
                 View bottomSheet =
@@ -137,7 +128,6 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
                 }
             });
 
-            // ✅ RecyclerView (ONE TIME)
             RecyclerView recyclerView =
                     sheetView.findViewById(R.id.comment_recycler);
 
@@ -148,7 +138,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             recyclerView.setLayoutManager(new LinearLayoutManager(context));
             recyclerView.setAdapter(adapter);
 
-            // 🔥 LOAD COMMENTS (THIS WAS MISSING EFFECTIVELY)
+            //LOAD COMMENTS (THIS WAS MISSING EFFECTIVELY)
             FirebaseFirestore.getInstance()
                     .collection("posts")
                     .document(post.getPostId())
@@ -168,7 +158,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
                         adapter.notifyDataSetChanged();
                     });
 
-            // ✅ INPUT + SEND BUTTON
+            //INPUT + SEND BUTTON
             EditText commentInput =
                     sheetView.findViewById(R.id.comment_input);
             ImageButton sendBtn =
@@ -209,7 +199,6 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
                         });
             });
         });
-
 
         holder.sharebtn.setOnClickListener(v -> {
             Intent in = new Intent(Intent.ACTION_SEND);
@@ -274,13 +263,10 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             );
         });
     }
-
     static class PostViewHolder extends RecyclerView.ViewHolder {
-
         ImageView imgProfile, buttonLike;
         TextView txtName, txtTime, txtContent, txtLikeCount;
         LinearLayout sharebtn, btnLike, comment;
-
         public PostViewHolder(@NonNull View itemView) {
             super(itemView);
             imgProfile = itemView.findViewById(R.id.imgProfile);

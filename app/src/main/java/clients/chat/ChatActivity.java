@@ -2,6 +2,7 @@ package clients.chat;
 
 import static android.view.View.GONE;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -337,6 +338,8 @@ public class ChatActivity extends AppCompatActivity {
                 .setPositiveButton("Yes", (dialog, which) -> {
                     hire_btn.setVisibility(GONE);
                     Toast.makeText(this, "Hiring worker, please wait...", Toast.LENGTH_SHORT).show();
+                    Intent in = new Intent(this, WelcomeBookingPage.class);
+                    startActivity(in);
                     try{
                         Thread.sleep(2000);
                     } catch (Exception e){
