@@ -8,6 +8,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -17,6 +18,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.ConstructionApp.R;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 
@@ -70,7 +72,7 @@ public class ServiceInfo extends AppCompatActivity {
 
         nxt.setOnClickListener(v -> {
             Intent in = new Intent(this, ReviewDetails.class);
-            saveUserToFirestore();
+            saveUserToFirestore(getIntent().getStringExtra("projectId"));
             startActivity(in);
         });
 
@@ -81,19 +83,18 @@ public class ServiceInfo extends AppCompatActivity {
 
     }
 
-    private void saveUserToFirestore() {
-        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+    private void saveUserToFirestore(String projectId) {
 
         Map<String, Object> user = new HashMap<>();
         user.put("Service Type", type.getText().toString().trim());
         user.put("Site_Address", etAddress.getText().toString().trim());
         user.put("Date & Time", etDateTime.getText().toString().trim());
         user.put("Description", etDescription.getText().toString().trim());
-        user.put("Photo", "Image // put image here"); //put image here
+        user.put("Photo", "Image // put image here");
         user.put("Budget", etBudget.getText().toString().trim());
 
         db.collection("BookingOrder")
-                .document(uid)
+                .document(projectId)
                 .set(user, SetOptions.merge());
     }
 }

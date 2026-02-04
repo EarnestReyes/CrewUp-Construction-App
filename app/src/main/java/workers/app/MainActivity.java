@@ -130,8 +130,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         navBell.setOnClickListener(v -> {
-            loadFragment(new works());
-            highlight(navBell);
+            Toast.makeText(this, "Put Function", Toast.LENGTH_SHORT).show();
         });
 
         navAdd.setOnClickListener(v -> {
@@ -150,8 +149,9 @@ public class MainActivity extends AppCompatActivity {
         });
 
         navActivity.setOnClickListener(v -> {
+            loadFragment(new works());
+            highlight(navBell);
 
-            Toast.makeText(this, "Put Function", Toast.LENGTH_SHORT).show();
         });
 
 

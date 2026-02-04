@@ -155,12 +155,10 @@ public class MainActivity extends AppCompatActivity {
             loadFragment(new ProfileFragment());
         });
         navActivity.setOnClickListener(v -> {
-
+            //add function list of projects of user
             Toast.makeText(this, "Put Function", Toast.LENGTH_SHORT).show();
         });
     }
-
-
     private void loadFragment(Fragment fragment) {
         getSupportFragmentManager()
                 .beginTransaction()
