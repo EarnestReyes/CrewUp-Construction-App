@@ -1,5 +1,6 @@
 package app;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -7,6 +8,7 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -38,9 +40,9 @@ import java.util.Map;
 public class MainActivity extends AppCompatActivity {
 
     // Bottom nav buttons
-    ImageButton navHome, navBell, navAdd, navChat, navProfile;
+    ImageButton navHome, navBell, navAdd, navChat, navActivity;
     TextView txtNewsFeed;
-    ImageView btnSearch, notification;
+    ImageView btnSearch, notification, Profile ;
     private FirebaseFirestore db;
 
     private String userLocation = "";
@@ -49,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
 
 
 
+    @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -100,10 +103,11 @@ public class MainActivity extends AppCompatActivity {
         navBell = findViewById(R.id.navBell);
         navAdd = findViewById(R.id.navAdd);
         navChat = findViewById(R.id.navChat);
-        navProfile = findViewById(R.id.navProfile);
+        navActivity = findViewById(R.id.navActivity);
         txtNewsFeed = findViewById(R.id.txtNewsfeed);
         btnSearch = findViewById(R.id.btnSearch);
         notification = findViewById(R.id.btnBell);
+        Profile = findViewById((R.id.Profile));
 
 
         btnSearch.setOnClickListener(v -> {
@@ -115,7 +119,6 @@ public class MainActivity extends AppCompatActivity {
             Intent in = new Intent(MainActivity.this, ChatActivity.class);
             startActivity(in);
         });
-
         notification.setOnClickListener(v -> {
             Intent in = new Intent(this, Notifications.class);
             startActivity(in);
@@ -148,14 +151,16 @@ public class MainActivity extends AppCompatActivity {
             highlight(navChat);
         });
 
-        navProfile.setOnClickListener(v -> {
+        Profile.setOnClickListener(v -> {
             loadFragment(new ProfileFragment());
-            highlight(navProfile);
+        });
+        navActivity.setOnClickListener(v -> {
+
+            Toast.makeText(this, "Put Function", Toast.LENGTH_SHORT).show();
         });
     }
 
 
-    // Fragment loader
     private void loadFragment(Fragment fragment) {
         getSupportFragmentManager()
                 .beginTransaction()
@@ -168,7 +173,7 @@ public class MainActivity extends AppCompatActivity {
         navHome.setColorFilter(getColor(R.color.text_secondary));
         navBell.setColorFilter(getColor(R.color.text_secondary));
         navChat.setColorFilter(getColor(R.color.text_secondary));
-        navProfile.setColorFilter(getColor(R.color.text_secondary));
+        navActivity.setColorFilter(getColor(R.color.text_secondary));
 
         if (selected != null) {
             selected.setColorFilter(getColor(R.color.primary));

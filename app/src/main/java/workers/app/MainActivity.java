@@ -7,8 +7,8 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -16,8 +16,6 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.ConstructionApp.R;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -31,19 +29,17 @@ import clients.chat.ChatActivity;
 import clients.home.Home;
 import clients.home.SearchUserActivity;
 import clients.posts.Posts;
-import data.FirebaseUtil;
 import workers.chat.WorkersChat;
 import workers.home.NotificationsWorker;
-import workers.messages.Chat;
 import workers.profile.WorkerProfile;
 import workers.works.works;
 
 public class MainActivity extends AppCompatActivity {
 
     // Bottom nav buttons
-    ImageButton navHome, navBell, navAdd, navChat, navProfile;
+    ImageButton navHome, navBell, navAdd, navChat, navActivity;
     TextView txtNewsFeed;
-    ImageView btnSearch, Notification;
+    ImageView btnSearch, Notification, Profile;
     private FirebaseFirestore db;
 
     private String userLocation = "";
@@ -101,10 +97,11 @@ public class MainActivity extends AppCompatActivity {
         navBell = findViewById(R.id.navBell);
         navAdd = findViewById(R.id.navAdd);
         navChat = findViewById(R.id.navChat);
-        navProfile = findViewById(R.id.navProfile);
+        Profile = findViewById(R.id.Profile);
         txtNewsFeed = findViewById(R.id.txtNewsfeed);
         btnSearch = findViewById(R.id.btnSearch);
         Notification = findViewById(R.id.btnBell);
+        navActivity = findViewById(R.id.navActivity);
 
         Notification.setOnClickListener(v -> {
             Intent in = new Intent(this, NotificationsWorker.class);
@@ -147,11 +144,19 @@ public class MainActivity extends AppCompatActivity {
             highlight(navChat);
         });
 
-        navProfile.setOnClickListener(v -> {
+        Profile.setOnClickListener(v -> {
             loadFragment(new WorkerProfile());
-            highlight(navProfile);
+
         });
+
+        navActivity.setOnClickListener(v -> {
+
+            Toast.makeText(this, "Put Function", Toast.LENGTH_SHORT).show();
+        });
+
+
     }
+
 
 
     // Fragment loader
@@ -167,7 +172,7 @@ public class MainActivity extends AppCompatActivity {
         navHome.setColorFilter(getColor(R.color.text_secondary));
         navBell.setColorFilter(getColor(R.color.text_secondary));
         navChat.setColorFilter(getColor(R.color.text_secondary));
-        navProfile.setColorFilter(getColor(R.color.text_secondary));
+        navActivity.setColorFilter(getColor(R.color.text_secondary));
 
         if (selected != null) {
             selected.setColorFilter(getColor(R.color.primary));

@@ -2,7 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="1dp">
+    android:padding="2dp">
 
     <LinearLayout
         android:id="@+id/left_chat_layout"
@@ -12,15 +12,21 @@
         android:background="@drawable/bg_bottom_nav"
         android:backgroundTint="@color/bottom_nav_icon"
         android:orientation="vertical"
-        android:padding="8dp">
+        android:padding="8dp"
+
+        >
 
         <TextView
             android:id="@+id/left_chat_textview"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:fontFamily="sans-serif"
+            android:paddingLeft="3dp"
+            android:paddingRight="3dp"
             android:text="Hello"
             android:textColor="@color/text_primary"
-            android:textSize="18sp" />
+
+            android:textSize="17sp" />
     </LinearLayout>
 
     <LinearLayout
@@ -29,15 +35,19 @@
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
         android:layout_marginStart="100dp"
+        android:padding="8dp"
         android:background="@drawable/bg_light_gray_rounded"
-        android:backgroundTint="@color/primary"
-        android:padding="5dp">
+        android:backgroundTint="@color/primary">
 
         <TextView
             android:id="@+id/right_chat_textview"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:fontFamily="sans-serif"
+            android:paddingLeft="3dp"
+            android:paddingRight="3dp"
+            android:text="Hi"
             android:textColor="@color/text_primary"
-            android:textSize="20sp" />
+            android:textSize="17sp" />
     </LinearLayout>
 </RelativeLayout>
