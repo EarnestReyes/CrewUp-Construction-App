@@ -99,7 +99,7 @@
                     android:textColor="@color/text_primary"
                     android:textSize="13sp" />
 
-                <Spinner
+                <AutoCompleteTextView
                     android:id="@+id/spServiceType"
                     android:layout_width="match_parent"
                     android:layout_height="48dp"

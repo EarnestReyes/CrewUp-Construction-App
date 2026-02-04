@@ -108,6 +108,7 @@
                         android:textColorHighlight="@color/text_primary" />
 
                     <EditText
+                        android:id="@+id/lastname"
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
                         android:background="@drawable/bg_input_yellow"
@@ -122,6 +123,7 @@
                         android:textColor="@color/text_primary" />
 
                     <EditText
+                        android:id="@+id/firstname"
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
                         android:background="@drawable/bg_input_yellow"
@@ -136,6 +138,7 @@
                         android:textColor="@color/text_primary" />
 
                     <EditText
+                        android:id="@+id/initial"
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
                         android:background="@drawable/bg_input_yellow"
@@ -150,6 +153,7 @@
                         android:textColor="@color/text_primary" />
 
                     <EditText
+                        android:id="@+id/mobilenum"
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
                         android:background="@drawable/bg_input_yellow"
@@ -165,6 +169,7 @@
                         android:textColor="@color/text_primary" />
 
                     <EditText
+                        android:id="@+id/email"
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
                         android:background="@drawable/bg_input_yellow"
@@ -180,6 +185,7 @@
                         android:textColor="@color/text_primary" />
 
                     <EditText
+                        android:id="@+id/location"
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
                         android:background="@drawable/bg_input_yellow"

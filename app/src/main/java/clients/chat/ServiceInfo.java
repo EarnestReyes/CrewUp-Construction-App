@@ -2,8 +2,12 @@ package clients.chat;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Spinner;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -12,12 +16,25 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.ConstructionApp.R;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class ServiceInfo extends AppCompatActivity {
+
+    FirebaseFirestore db;
+    FirebaseAuth mAuth;
+    AutoCompleteTextView type;
+    EditText etAddress, etDateTime, etDescription, etBudget;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        db = FirebaseFirestore.getInstance();
+        mAuth = FirebaseAuth.getInstance();
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_service_info);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
@@ -26,8 +43,34 @@ public class ServiceInfo extends AppCompatActivity {
             return insets;
         });
         Button nxt = findViewById(R.id.btnSubmit);
+        type = findViewById(R.id.spServiceType);
+        etAddress = findViewById(R.id.etAddress);
+        etDateTime = findViewById(R.id.etDateTime);
+        etDescription = findViewById(R.id.etDescription);
+        etBudget = findViewById(R.id.etBudget);
+
+        type.setOnClickListener(v -> type.showDropDown());
+
+        String[] Options = {
+                "Construction",
+                "Plumbing",
+                "Cement fix",
+                "Custom :"
+        };
+
+        ArrayAdapter<String> adapter =
+                new ArrayAdapter<>(
+                        this,
+                        android.R.layout.simple_dropdown_item_1line,
+                        Options
+                );
+
+        type.setAdapter(adapter);
+        type.setKeyListener(null);
+
         nxt.setOnClickListener(v -> {
-            Intent in = new Intent(this, ReviewDetails.class);//palitan mo to to permission
+            Intent in = new Intent(this, ReviewDetails.class);
+            saveUserToFirestore();
             startActivity(in);
         });
 
@@ -36,5 +79,21 @@ public class ServiceInfo extends AppCompatActivity {
             finish();
         });
 
+    }
+
+    private void saveUserToFirestore() {
+        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+        Map<String, Object> user = new HashMap<>();
+        user.put("Service Type", type.getText().toString().trim());
+        user.put("Site_Address", etAddress.getText().toString().trim());
+        user.put("Date & Time", etDateTime.getText().toString().trim());
+        user.put("Description", etDescription.getText().toString().trim());
+        user.put("Photo", "Image // put image here"); //put image here
+        user.put("Budget", etBudget.getText().toString().trim());
+
+        db.collection("BookingOrder")
+                .document(uid)
+                .set(user, SetOptions.merge());
     }
 }
