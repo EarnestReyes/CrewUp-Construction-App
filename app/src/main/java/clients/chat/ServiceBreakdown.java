@@ -1,6 +1,8 @@
 package clients.chat;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.widget.ImageView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -22,5 +24,15 @@ public class ServiceBreakdown extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+        ImageView close = findViewById(R.id.btnClose);
+
+        close.setOnClickListener(v -> {
+            Intent in = new Intent(this, BookingPersonalInfo.class);
+            startActivity(in);
+        });
+
+
+
     }
 }

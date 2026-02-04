@@ -26,11 +26,13 @@ public class BookingPersonalInfo extends AppCompatActivity {
             return insets;
         });
 
-        Button approved = findViewById(R.id.btnSubmit);
+        Button approved = findViewById(R.id.btnNext);
         ImageView back = findViewById(R.id.btnBack);
+
         back.setOnClickListener(v -> {
             finish();
         });
+
 
         approved.setOnClickListener(v -> {
             Intent in = new Intent(this, ServiceInfo.class);//palitan mo to to bookperson

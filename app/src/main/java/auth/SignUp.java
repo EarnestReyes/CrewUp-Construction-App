@@ -93,7 +93,6 @@ public class SignUp extends AppCompatActivity {
         txtLogin.setOnClickListener(v ->
                 startActivity(new Intent(this, Login.class)));
     }
-
     private void registerUser() {
 
         String rawName = username.getText().toString().trim();
@@ -138,7 +137,6 @@ public class SignUp extends AppCompatActivity {
                     }
                 });
     }
-
     private String formatName(String name) {
         String[] parts = name.split("\\s+");
         for (int i = 0; i < parts.length && i < 2; i++) {
@@ -147,7 +145,6 @@ public class SignUp extends AppCompatActivity {
         }
         return String.join(" ", parts);
     }
-
     private void saveUserToFirestore(String username, String email) {
 
         FirebaseUser user = mAuth.getCurrentUser();
@@ -167,7 +164,6 @@ public class SignUp extends AppCompatActivity {
                 .document(user.getUid())
                 .set(data);
     }
-
     private void showLocationDialog() {
         new AlertDialog.Builder(this)
                 .setTitle("Location Permission")
@@ -177,7 +173,6 @@ public class SignUp extends AppCompatActivity {
                 .setNegativeButton("No", (d, w) -> goToUserDetails())
                 .show();
     }
-
     private void requestLocationPermission() {
         if (ContextCompat.checkSelfPermission(
                 this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -191,7 +186,6 @@ public class SignUp extends AppCompatActivity {
             getUserLocation();
         }
     }
-
     private void getUserLocation() {
         if (ActivityCompat.checkSelfPermission(
                 this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -209,7 +203,6 @@ public class SignUp extends AppCompatActivity {
                     goToUserDetails();
                 });
     }
-
     private String getAddressFromLocation(double lat, double lng) {
         Geocoder geocoder = new Geocoder(this, Locale.getDefault());
         try {
