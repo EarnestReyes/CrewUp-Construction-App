@@ -235,6 +235,7 @@ public class ChatActivity extends AppCompatActivity {
                         model = new ChatroomModel(
                                 chatroomId,
                                 Arrays.asList(
+
                                         FirebaseUtil.currentUserId(),
                                         otherUserId
                                 ),
