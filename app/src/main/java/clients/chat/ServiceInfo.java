@@ -10,6 +10,13 @@ import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
+
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Locale;
+
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
@@ -50,6 +57,54 @@ public class ServiceInfo extends AppCompatActivity {
         etDateTime = findViewById(R.id.etDateTime);
         etDescription = findViewById(R.id.etDescription);
         etBudget = findViewById(R.id.etBudget);
+
+        Calendar selectedDateTime = Calendar.getInstance();
+
+        etDateTime.setOnClickListener(v -> {
+
+            Calendar now = Calendar.getInstance();
+
+            // 📅 DATE PICKER
+            new DatePickerDialog(
+                    this,
+                    (view, year, month, dayOfMonth) -> {
+
+                        selectedDateTime.set(Calendar.YEAR, year);
+                        selectedDateTime.set(Calendar.MONTH, month);
+                        selectedDateTime.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+
+                        // ⏰ TIME PICKER (opens after date)
+                        new TimePickerDialog(
+                                this,
+                                (timeView, hourOfDay, minute) -> {
+
+                                    selectedDateTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                                    selectedDateTime.set(Calendar.MINUTE, minute);
+
+                                    // Format like real apps
+                                    SimpleDateFormat sdf =
+                                            new SimpleDateFormat(
+                                                    "MMMM dd, yyyy • h:mm a",
+                                                    Locale.getDefault()
+                                            );
+
+                                    etDateTime.setText(
+                                            sdf.format(selectedDateTime.getTime())
+                                    );
+
+                                },
+                                now.get(Calendar.HOUR_OF_DAY),
+                                now.get(Calendar.MINUTE),
+                                false   // false = 12-hour clock (AM/PM)
+                        ).show();
+
+                    },
+                    now.get(Calendar.YEAR),
+                    now.get(Calendar.MONTH),
+                    now.get(Calendar.DAY_OF_MONTH)
+            ).show();
+        });
+
 
         type.setOnClickListener(v -> type.showDropDown());
 
