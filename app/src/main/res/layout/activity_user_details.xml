@@ -41,14 +41,15 @@
         android:id="@+id/txtSubtitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="You can skip this step for now"
-        android:textSize="14sp"
-        android:textColor="?attr/colorOnBackground"
-        android:layout_marginTop="4dp"
         android:layout_marginHorizontal="16dp"
-        app:layout_constraintTop_toBottomOf="@id/txtTitle"
+        android:layout_marginTop="4dp"
+        android:textStyle="bold"
+        android:text="just a few more details to set up your CrewUp account."
+        android:textColor="?attr/colorOnBackground"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintTop_toBottomOf="@id/txtTitle" />
 
     <!-- Scrollable form -->
     <androidx.core.widget.NestedScrollView
@@ -77,7 +78,7 @@
                 app:boxBackgroundMode="outline">
 
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/edtBirthday"
+                    android:id="@+id/Birthday"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Birthday"
@@ -153,20 +154,12 @@
         app:layout_constraintEnd_toEndOf="parent">
 
         <Button
-            android:id="@+id/btnSkip"
-            android:layout_width="0dp"
-            android:layout_height="48dp"
-            android:layout_weight="1"
-            android:text="Skip"
-            android:textAllCaps="false"/>
-
-        <Button
             android:id="@+id/btnSubmit"
             android:layout_width="0dp"
             android:layout_height="48dp"
             android:layout_marginStart="12dp"
             android:layout_weight="1"
-            android:text="Submit"
+            android:text="Next"
             android:textAllCaps="false"
             android:textStyle="bold" />
     </LinearLayout>
