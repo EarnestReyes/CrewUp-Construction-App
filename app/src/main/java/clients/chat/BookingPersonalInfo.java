@@ -16,6 +16,7 @@ import androidx.core.view.WindowInsetsCompat;
 import com.example.ConstructionApp.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
@@ -26,6 +27,7 @@ public class BookingPersonalInfo extends AppCompatActivity {
     EditText firstname, lastname, initial, mobilenum, email, location;
     FirebaseFirestore db;
     FirebaseAuth mAuth;
+    String projectId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,9 +56,10 @@ public class BookingPersonalInfo extends AppCompatActivity {
 
         back.setOnClickListener(v -> finish());
 
+        SuggestToUser();
+
         approved.setOnClickListener(v -> {
 
-            // ✅ GET VALUES HERE
             String F_name = firstname.getText().toString().trim();
             String L_name = lastname.getText().toString().trim();
             String I_name = initial.getText().toString().trim();
@@ -64,7 +67,6 @@ public class BookingPersonalInfo extends AppCompatActivity {
             String E_M = email.getText().toString().trim();
             String L = location.getText().toString().trim();
 
-            // OPTIONAL: basic validation
             if (F_name.isEmpty() || L_name.isEmpty() || M_num.isEmpty()) {
                 Toast.makeText(this, "Please fill in required fields", Toast.LENGTH_SHORT).show();
                 return;
@@ -77,8 +79,9 @@ public class BookingPersonalInfo extends AppCompatActivity {
                     L
             );
 
-            Intent in = new Intent(this, ServiceInfo.class);
-            startActivity(in);
+            Intent intent = new Intent(this, ServiceInfo.class);
+            intent.putExtra("projectId", projectId);
+            startActivity(intent);
         });
     }
 
@@ -87,14 +90,74 @@ public class BookingPersonalInfo extends AppCompatActivity {
         FirebaseUser user = mAuth.getCurrentUser();
         if (user == null) return;
 
+        DocumentReference ref = db.collection("BookingOrder").document();
+        projectId = ref.getId();
+
         Map<String, Object> orderData = new HashMap<>();
+        orderData.put("projectId", projectId);
+        orderData.put("userId", user.getUid());
         orderData.put("Name", username);
         orderData.put("Email", email);
         orderData.put("Mobile Number", mobilenum);
         orderData.put("Home_Address", location);
+        orderData.put("status", "pending");
 
-        db.collection("BookingOrder")
-                .document(user.getUid())
-                .set(orderData);
+        ref.set(orderData)
+                .addOnSuccessListener(unused ->
+                        Toast.makeText(this, "Booking created", Toast.LENGTH_SHORT).show()
+                )
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Failed to create booking", Toast.LENGTH_SHORT).show()
+                );
     }
+    private void SuggestToUser() {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null) return;
+
+        String userId = currentUser.getUid();
+
+        db.collection("users")
+                .document(userId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (!documentSnapshot.exists()) return;
+
+                    String name = documentSnapshot.getString("username");
+                    String mobile = documentSnapshot.getString("Mobile Number");
+                    String Email = documentSnapshot.getString("email");
+
+                    if (name == null || name.trim().isEmpty()) return;
+
+                    String[] parts = name.trim().split("\\s+");
+
+                    String firstName = "";
+                    String initials = "";
+                    String lastName = "";
+
+                    if (parts.length >= 1) {
+                        firstName = parts[0];
+                    }
+
+                    if (parts.length == 3) {
+                        initials = parts[1].replace(".", "");
+                        lastName = parts[2];
+                    } else if (parts.length >= 2) {
+                        lastName = parts[parts.length - 1];
+                    }
+
+                    firstname.setText(firstName);
+                    initial.setText(initials);
+                    lastname.setText(lastName);
+                    email.setText(Email);
+
+                    if (mobile != null) {
+                        mobilenum.setText(mobile);
+                    }
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Failed to fetch user info", Toast.LENGTH_SHORT).show()
+                );
+    }
+
+
 }

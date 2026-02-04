@@ -34,6 +34,7 @@ import com.firebase.ui.firestore.FirestoreRecyclerOptions;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 
@@ -43,7 +44,7 @@ import java.util.Map;
 
 public class ChatActivity extends AppCompatActivity {
 
-    private String otherUserId;
+    private String otherUserId, projectId;
     private UserModel otherUser;
     private String chatroomId;
     private ChatRecyclerAdapter adapter;
@@ -52,10 +53,14 @@ public class ChatActivity extends AppCompatActivity {
     private TextView otherUsername;
     private RecyclerView recyclerView;
     private ImageView profilePic;
+    FirebaseAuth mAuth;
+    FirebaseFirestore db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
 
         // Edge-to-edge (required for IME)
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
@@ -135,6 +140,7 @@ public class ChatActivity extends AppCompatActivity {
 
         hire_btn.setOnClickListener(view -> {
             permission("Clarification", "Are you sure you want to hire " + otherUser.getUsername() + "?", "Thank you!");
+
         });
 
         chatroomId = FirebaseUtil.getChatroomId(
@@ -173,6 +179,7 @@ public class ChatActivity extends AppCompatActivity {
 
                     if ("worker".equalsIgnoreCase(otherUserRole)) {
                         hire_btn.setVisibility(View.VISIBLE);
+                        //if user already hired the worker the button will disapeaer
                     } else {
                         hire_btn.setVisibility(GONE);
                     }

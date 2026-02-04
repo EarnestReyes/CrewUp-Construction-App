@@ -106,7 +106,7 @@
                     android:layout_marginBottom="12dp"
                     android:background="@drawable/bg_input_yellow"
                     android:padding="10dp"
-                    android:textColor="@android:color/white" />
+                    android:textColor="@color/text_primary" />
 
                 <!-- Site Address -->
                 <TextView
@@ -124,7 +124,7 @@
                     android:background="@drawable/bg_input_yellow"
                     android:hint="Enter address"
                     android:padding="10dp"
-                    android:textColor="@android:color/white"
+                    android:textColor="@color/text_primary"
                     android:textColorHint="#AAAAAA" />
 
                 <!-- Preferred Date & Time -->
@@ -144,7 +144,7 @@
                     android:focusable="false"
                     android:hint="Select date and time"
                     android:padding="10dp"
-                    android:textColor="@android:color/white"
+                    android:textColor="@color/text_primary"
                     android:textColorHint="#AAAAAA" />
 
                 <!-- Job Description -->
@@ -164,7 +164,7 @@
                     android:gravity="top"
                     android:hint="Describe the job"
                     android:padding="12dp"
-                    android:textColor="@android:color/white"
+                    android:textColor="@color/text_primary"
                     android:textColorHint="#AAAAAA" />
 
                 <!-- Upload -->
@@ -190,7 +190,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Budget Range"
-                    android:textColor="#FFFFFF"
+                    android:textColor="@color/text_primary"
                     android:textSize="13sp" />
 
                 <EditText
@@ -200,7 +200,7 @@
                     android:background="@drawable/bg_input_yellow"
                     android:hint="Enter budget"
                     android:padding="12dp"
-                    android:textColor="@android:color/white"
+                    android:textColor="@color/text_primary"
                     android:textColorHint="#AAAAAA" />
 
             </LinearLayout>

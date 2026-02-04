@@ -155,9 +155,8 @@ public class MainActivity extends AppCompatActivity {
             loadFragment(new ProfileFragment());
         });
         navActivity.setOnClickListener(v -> {
-            Intent in = new Intent(this, clients.home.WalletProfile.class);
-            startActivity(in);
 
+            Toast.makeText(this, "Put Function", Toast.LENGTH_SHORT).show();
         });
     }
 
