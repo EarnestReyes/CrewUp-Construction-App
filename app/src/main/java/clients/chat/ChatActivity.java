@@ -153,9 +153,6 @@ public class ChatActivity extends AppCompatActivity {
             }
         });
     }
-
-
-
     private void loadOtherUser() {
         FirebaseUtil.getUserReference(otherUserId)
                 .get()
@@ -235,6 +232,7 @@ public class ChatActivity extends AppCompatActivity {
                         model = new ChatroomModel(
                                 chatroomId,
                                 Arrays.asList(
+
                                         FirebaseUtil.currentUserId(),
                                         otherUserId
                                 ),

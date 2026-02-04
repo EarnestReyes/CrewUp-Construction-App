@@ -1,32 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
     android:id="@+id/main"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#1E1E1E">
+    android:background="@color/bg_color">
 
     <!-- Top App Bar -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/topBar"
         android:layout_width="0dp"
         android:layout_height="56dp"
-        android:background="#F6B000"
-        app:layout_constraintTop_toTopOf="parent"
+        android:background="@color/primary"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
             android:id="@+id/btnBack"
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:layout_marginStart="16dp"
-            android:src="@drawable/ic_back"
             android:contentDescription="Back"
-            app:layout_constraintTop_toTopOf="parent"
+            android:src="@drawable/ic_back"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"/>
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/title"
@@ -36,11 +35,11 @@
             android:textColor="#000000"
             android:textSize="18sp"
             android:textStyle="bold"
-            app:layout_constraintStart_toEndOf="@id/btnBack"
-            app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.45"/>
+            app:layout_constraintHorizontal_bias="0.45"
+            app:layout_constraintStart_toEndOf="@id/btnBack"
+            app:layout_constraintTop_toTopOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -49,14 +48,14 @@
         android:id="@+id/logo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
         android:text="CrewUp"
         android:textColor="#F6B000"
         android:textSize="36sp"
         android:textStyle="bold"
-        app:layout_constraintTop_toBottomOf="@id/topBar"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="24dp"/>
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/topBar" />
 
     <!-- Card -->
     <androidx.cardview.widget.CardView
@@ -64,18 +63,18 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_margin="16dp"
+        app:cardBackgroundColor="#2A2A2A"
         app:cardCornerRadius="16dp"
         app:cardElevation="6dp"
-        app:layout_constraintTop_toBottomOf="@id/logo"
         app:layout_constraintBottom_toTopOf="@id/agreeCheckbox"
-        app:cardBackgroundColor="#2A2A2A"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toBottomOf="@id/logo">
 
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/button_secondary"
+            android:background="@color/detail_card"
             android:padding="16dp">
 
             <LinearLayout
@@ -88,9 +87,9 @@
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:text="DATA PRIVACY ACT"
+                    android:textColor="@color/text_primary"
                     android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/white"/>
+                    android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="match_parent"
@@ -106,7 +105,7 @@ The Data Privacy Act of 2012, RA 10173, or the Data Privacy Act, protects indivi
 Your safety is of paramount importance to us. We remain committed to respecting your personal privacy, which again is significant to us, as well as upholding our real and legitimate objectives as an educational institution and our commitment to thoroughly and efficiently fulfill our obligations as such.
 
 By acknowledging this Data Privacy Statement, I grant free, voluntary, and unconditional permission to the collecting and retrieval of all Personal Details, account or activity details, information pertaining to me, disclosed in person or by any approved agent to the information management system by any means in compliance with Republic Act (R.A.) 10173, also known as the Data Privacy Act."
-                    android:textColor="@android:color/white"
+                    android:textColor="@color/text_primary"
                     android:textColorHighlight="#FFFFFF"
                     android:textSize="13sp" />
 
@@ -120,25 +119,25 @@ By acknowledging this Data Privacy Statement, I grant free, voluntary, and uncon
         android:id="@+id/agreeCheckbox"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginBottom="12dp"
         android:text="I Agree"
         android:textColor="#FFFFFF"
-        android:layout_marginStart="24dp"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintBottom_toTopOf="@id/btnSubmit"
-        android:layout_marginBottom="12dp"/>
+        app:layout_constraintStart_toStartOf="parent" />
 
     <!-- Next Button -->
     <Button
         android:id="@+id/btnSubmit"
         android:layout_width="0dp"
         android:layout_height="52dp"
-        android:text="Next"
-        android:textStyle="bold"
-        android:textColor="#000000"
-        android:backgroundTint="#F6B000"
         android:layout_margin="16dp"
+        android:backgroundTint="#F6B000"
+        android:text="Next"
+        android:textColor="#000000"
+        android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

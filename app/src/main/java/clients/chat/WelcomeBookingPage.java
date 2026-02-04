@@ -31,6 +31,11 @@ public class WelcomeBookingPage extends AppCompatActivity {
         });
 
         Button btnProceed = findViewById(R.id.btnProceed);
+        ImageView back = findViewById(R.id.btnBack);
+
+        back.setOnClickListener(v -> {
+            finish();
+        });
 
         btnProceed.setOnClickListener(v -> {
             Intent in = new Intent(this, Permission.class);

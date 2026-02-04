@@ -6,21 +6,6 @@
     android:id="@+id/main"
     android:layout_height="match_parent">
 
-    <ImageButton
-    android:id="@+id/btnBack"
-    android:layout_width="49dp"
-    android:layout_height="42dp"
-    android:layout_marginStart="4dp"
-    android:background="?attr/selectableItemBackgroundBorderless"
-    android:contentDescription="Back"
-    android:scaleType="centerInside"
-    android:src="@drawable/ic_back"
-    app:layout_constraintBottom_toBottomOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toTopOf="parent"
-    app:layout_constraintVertical_bias="0.01"
-    app:tint="#000000" />
-
     <VideoView
         android:id="@+id/videoBg"
         android:layout_width="0dp"
@@ -33,30 +18,51 @@
     <View
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="#80000000"
-        app:layout_constraintTop_toTopOf="parent"
+        android:background="@color/bg_color"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="0dp"
         android:layout_height="56dp"
         android:background="#F4B400"
-        app:title="Booking Service"
-        app:titleTextColor="@android:color/black"
-        app:navigationIcon="@drawable/ic_back"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- 🔙 BACK BUTTON -->
+        <ImageView
+            android:id="@+id/btnBack"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="start|center_vertical"
+            android:layout_marginStart="16dp"
+            android:src="@drawable/ic_back"
+            android:contentDescription="Back"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <!-- TITLE -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="Booking Service"
+            android:textColor="@android:color/black"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+    </androidx.appcompat.widget.Toolbar>
 
     <LinearLayout
         android:id="@+id/cardContainer"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_margin="24dp"
-        android:background="@color/on_primary"
+        android:background="@color/detail_card"
         android:orientation="vertical"
         android:padding="20dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -77,7 +83,7 @@
             android:layout_marginTop="16dp"
             android:gravity="center"
             android:text="Welcome to CrewUp Booking Service!"
-            android:textColor="@android:color/white"
+            android:textColor="@color/text_primary"
             android:textSize="16sp"
             android:textStyle="bold" />
 
@@ -88,7 +94,7 @@
             android:layout_marginTop="12dp"
             android:lineSpacingExtra="4dp"
             android:text="Request a service by sharing your job details, preferred schedule, and photos or videos of the work needed. Workers will review your request and send an inspection schedule or price estimate.\n\nOnce you accept the offer, your booking is confirmed. After the job is done, leave a rating and review to help keep our community trusted and reliable."
-            android:textColor="#DDFFFFFF"
+            android:textColor="@color/text_primary"
             android:textSize="13sp" />
 
         <!-- Proceed Button -->
