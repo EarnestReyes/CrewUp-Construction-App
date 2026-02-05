@@ -14,28 +14,44 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.bumptech.glide.Glide;
 import com.example.ConstructionApp.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import models.ProjectModel;
+
 public class ReviewDetails extends AppCompatActivity {
+
     FirebaseFirestore db;
     FirebaseAuth mAuth;
 
-    TextView Username, UserMobile, UserAddress, SiteAddress, DateTime, Budget, Description;
+    String projectId;
+
+    TextView Username, UserMobile, UserAddress,
+            SiteAddress, DateTime, Budget, Description;
+
+    ImageView photoLeftTop, photoRight, photoLeftBottom;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
+
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_review_details);
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
         Username = findViewById(R.id.Username);
         UserMobile = findViewById(R.id.UserMobile);
         UserAddress = findViewById(R.id.UserAddrees);
@@ -44,56 +60,83 @@ public class ReviewDetails extends AppCompatActivity {
         Budget = findViewById(R.id.Budget);
         Description = findViewById(R.id.Description);
 
-        loaddetails();
+        //imageviews
+        photoLeftBottom = findViewById(R.id.photoLeftBottom);
+        photoRight = findViewById(R.id.photoRight);
+        photoLeftTop = findViewById(R.id.photoLeftTop);
 
-        Button nxt = findViewById(R.id.btnSubmit);
-        nxt.setOnClickListener(v -> {
-            Intent in = new Intent(this, ServiceBreakdown.class);
-            startActivity(in);
-        });
+        //place the images here
+        FirebaseFirestore.getInstance()
+                .collection("BookingOrder")
+                .document(projectId)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    if (!doc.exists()) return;
 
-        Button prv = findViewById(R.id.btnPrevious);
-        prv.setOnClickListener(v -> {
-            Intent in = new Intent(this, ServiceInfo.class);
-            startActivity(in);
-        });
+                    String url = doc.getString("Service_info_image");
+                    if (url != null && !url.isEmpty()) {
+                        Glide.with(this)
+                                .load(url)
+                                .centerCrop()
+                                .into(photoLeftTop);
+                    }
+                });
 
-        ImageView back = findViewById(R.id.btnBack);
-        back.setOnClickListener(v -> {
-            finish();
-        });
+        loadDetails();
 
+        findViewById(R.id.btnSubmit).setOnClickListener(v -> {
+            //after finish there's a splash screen
+            Intent intent = new Intent(this, ChatActivity.class);
+        intent.putExtra("projectId", projectId);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(intent);
+        finish();
+    });
+
+        findViewById(R.id.btnPrevious).setOnClickListener(v ->
+                startActivity(new Intent(this, ServiceInfo.class))
+        );
+
+        findViewById(R.id.btnBack).setOnClickListener(v -> finish());
     }
-    private void loaddetails() {
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+
+    private void loadDetails() {
+
+        FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser == null) return;
 
-        String userId = currentUser.getUid();
-
         db.collection("BookingOrder")
-                .document(userId)
+                .whereEqualTo("status", "pending")
+                .whereEqualTo("userId", currentUser.getUid())
+                .limit(1)
                 .get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot.exists()) {
-                        String name = documentSnapshot.getString("Name");
-                        String mobile = documentSnapshot.getString("Mobile Number");
-                        String address = documentSnapshot.getString("Home_Address");
-                        String site = documentSnapshot.getString("Site_Address");
-                        String timestamp = documentSnapshot.getString("Date & Time");
-                        String budget = documentSnapshot.getString("Budget");
-                        String description = documentSnapshot.getString("Description");
+                .addOnSuccessListener(querySnapshot -> {
 
-                        if (name != null) {
-                            Username.setText(name);
-                            UserMobile.setText(mobile);
-                            UserAddress.setText(address);
-                            SiteAddress.setText(site);
-                            DateTime.setText(timestamp);
-                            Description.setText(description);
-                            Budget.setText(budget);
-                        } else {
-                            Toast.makeText(this, "User information unable to be fetch", Toast.LENGTH_SHORT).show();
-                        }
-                    }});
+                    if (querySnapshot.isEmpty()) {
+                        Toast.makeText(this, "No pending booking found", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    DocumentSnapshot doc = querySnapshot.getDocuments().get(0);
+
+                    projectId = doc.getId();
+
+                    Username.setText(getSafe(doc, "Name"));
+                    UserMobile.setText(getSafe(doc, "Mobile Number"));
+                    UserAddress.setText(getSafe(doc, "Home_Address"));
+                    SiteAddress.setText(getSafe(doc, "Site_Address"));
+                    DateTime.setText(getSafe(doc, "Date & Time"));
+                    Description.setText(getSafe(doc, "Description"));
+                    Budget.setText("₱" + getSafe(doc, "Budget"));
+
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Failed to load details", Toast.LENGTH_SHORT).show()
+                );
+    }
+
+    private String getSafe(DocumentSnapshot doc, String field) {
+        String value = doc.getString(field);
+        return value != null && !value.isEmpty() ? value : "—";
     }
 }

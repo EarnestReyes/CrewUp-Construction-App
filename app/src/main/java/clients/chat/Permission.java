@@ -15,6 +15,8 @@ import com.example.ConstructionApp.R;
 
 public class Permission extends AppCompatActivity {
 
+    String otherId;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -26,6 +28,8 @@ public class Permission extends AppCompatActivity {
             return insets;
         });
 
+        otherId = getIntent().getStringExtra("otherId");
+
         Button approved = findViewById(R.id.btnSubmit);
         ImageView back = findViewById(R.id.btnBack);
         back.setOnClickListener(v -> {
@@ -34,6 +38,7 @@ public class Permission extends AppCompatActivity {
 
         approved.setOnClickListener(v -> {
             Intent in = new Intent(this, BookingPersonalInfo.class);
+            in.putExtra("otherId", otherId);
             startActivity(in);
         });
     }

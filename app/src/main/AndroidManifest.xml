@@ -20,7 +20,7 @@
             android:name="workers.auth.TopUpWallet"
             android:exported="false" />
         <activity
-            android:name="clients.home.WalletProfile"
+            android:name="workers.wallet.WalletProfile"
             android:exported="false" />
         <activity
             android:name="clients.chat.ServiceBreakdown"

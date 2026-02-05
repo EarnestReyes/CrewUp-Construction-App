@@ -18,11 +18,15 @@ import java.util.Calendar;
 import java.util.Locale;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.bumptech.glide.Glide;
 import com.example.ConstructionApp.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -32,12 +36,36 @@ import com.google.firebase.firestore.SetOptions;
 import java.util.HashMap;
 import java.util.Map;
 
+import data.FirebaseUtil;
+
 public class ServiceInfo extends AppCompatActivity {
 
     FirebaseFirestore db;
     FirebaseAuth mAuth;
     AutoCompleteTextView type;
     EditText etAddress, etDateTime, etDescription, etBudget;
+    Button btnUpload;
+
+    //For image uploader
+    private final ActivityResultLauncher<String> UploadedImage =
+            registerForActivityResult(
+                    new ActivityResultContracts.GetContent(),
+                    uri -> {
+                        if (uri != null) {
+
+                            // Show preview immediately (good UX)
+                            Glide.with(this)
+                                    .load(uri)
+                                    .circleCrop();
+
+                            // Upload to Cloudinary
+                            FirebaseUtil.UploadServiceType(
+                                    this,
+                                    uri
+                            );
+                        }
+                    }
+            );
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,6 +85,12 @@ public class ServiceInfo extends AppCompatActivity {
         etDateTime = findViewById(R.id.etDateTime);
         etDescription = findViewById(R.id.etDescription);
         etBudget = findViewById(R.id.etBudget);
+        btnUpload = findViewById(R.id.btnUpload);
+
+        btnUpload.setOnClickListener(v -> {
+            Toast.makeText(this, "Under process", Toast.LENGTH_SHORT).show();
+            permission(UploadedImage);
+        });
 
         Calendar selectedDateTime = Calendar.getInstance();
 
@@ -64,7 +98,6 @@ public class ServiceInfo extends AppCompatActivity {
 
             Calendar now = Calendar.getInstance();
 
-            // 📅 DATE PICKER
             new DatePickerDialog(
                     this,
                     (view, year, month, dayOfMonth) -> {
@@ -73,7 +106,6 @@ public class ServiceInfo extends AppCompatActivity {
                         selectedDateTime.set(Calendar.MONTH, month);
                         selectedDateTime.set(Calendar.DAY_OF_MONTH, dayOfMonth);
 
-                        // ⏰ TIME PICKER (opens after date)
                         new TimePickerDialog(
                                 this,
                                 (timeView, hourOfDay, minute) -> {
@@ -151,5 +183,15 @@ public class ServiceInfo extends AppCompatActivity {
         db.collection("BookingOrder")
                 .document(projectId)
                 .set(user, SetOptions.merge());
+    }
+    private void permission(ActivityResultLauncher act) {
+        new AlertDialog.Builder(this)
+                .setTitle("Media Permission")
+                .setMessage("Allow app to access your gallery?")
+                .setCancelable(false)
+                .setPositiveButton("Yes", (d, w) -> act.launch("image/*"))
+                .setNegativeButton("No", (d, w) ->
+                        Toast.makeText(this, "We need permission of camera to proceed", Toast.LENGTH_SHORT).show())
+                .show();
     }
 }

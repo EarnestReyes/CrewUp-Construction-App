@@ -256,32 +256,29 @@
                         android:layout_height="140dp"
                         android:layout_marginTop="8dp">
 
-                        <View
+                        <ImageView
                             android:id="@+id/photoLeftTop"
                             android:layout_width="0dp"
                             android:layout_height="0dp"
-                            android:background="@drawable/example_photo"
                             app:layout_constraintBottom_toTopOf="@id/photoLeftBottom"
                             app:layout_constraintEnd_toStartOf="@id/photoRight"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toTopOf="parent"
                             app:layout_constraintWidth_percent="0.48" />
 
-                        <View
+                        <ImageView
                             android:id="@+id/photoLeftBottom"
                             android:layout_width="0dp"
                             android:layout_height="0dp"
-                            android:background="@drawable/example_photo"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toStartOf="@id/photoRight"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toBottomOf="@id/photoLeftTop" />
 
-                        <View
+                        <ImageView
                             android:id="@+id/photoRight"
                             android:layout_width="0dp"
                             android:layout_height="0dp"
-                            android:background="@drawable/example_photo"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toEndOf="@id/photoLeftTop"

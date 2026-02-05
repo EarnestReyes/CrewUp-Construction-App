@@ -5,6 +5,7 @@ import static android.view.View.GONE;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -84,12 +85,19 @@ public class ChatActivity extends AppCompatActivity {
         profilePic = findViewById(R.id.profile_pic_image_view);
         hire_btn = findViewById(R.id.hire_btn);
 
+        //remove the plus button
+        String otherUserRole = otherUser.getRole();
+        if ("worker".equalsIgnoreCase(otherUserRole)) {
+            checkIfAlreadyHired();
+        } else {
+            hire_btn.setVisibility(GONE);
+        }
+
         View root = findViewById(R.id.main);
         View bottomLayout = findViewById(R.id.bottom_layout);
 
         ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
 
-            // 🚨 Prevent crash when activity is closing
             if (isFinishing() || isDestroyed()) {
                 return insets;
             }
@@ -139,8 +147,10 @@ public class ChatActivity extends AppCompatActivity {
         backBtn.setOnClickListener((v) -> finish());
 
         hire_btn.setOnClickListener(view -> {
-            permission("Clarification", "Are you sure you want to hire " + otherUser.getUsername() + "?", "Thank you!");
 
+            checkIfAlreadyHired();
+
+            permission("Clarification", "Are you sure you want to hire " + otherUser.getUsername() + "?", "Action cancelled");
         });
 
         chatroomId = FirebaseUtil.getChatroomId(
@@ -178,8 +188,7 @@ public class ChatActivity extends AppCompatActivity {
                     String otherUserRole = otherUser.getRole();
 
                     if ("worker".equalsIgnoreCase(otherUserRole)) {
-                        hire_btn.setVisibility(View.VISIBLE);
-                        //if user already hired the worker the button will disapeaer
+                        checkIfAlreadyHired();
                     } else {
                         hire_btn.setVisibility(GONE);
                     }
@@ -344,6 +353,7 @@ public class ChatActivity extends AppCompatActivity {
                     hire_btn.setVisibility(GONE);
                     Toast.makeText(this, "Hiring worker, please wait...", Toast.LENGTH_SHORT).show();
                     Intent in = new Intent(this, WelcomeBookingPage.class);
+                    in.putExtra("otherId", otherUserId);
                     startActivity(in);
                     try{
                         Thread.sleep(2000);
@@ -356,5 +366,32 @@ public class ChatActivity extends AppCompatActivity {
                     Toast.makeText(this, toastText, Toast.LENGTH_SHORT).show();
                 })
                 .show();
+    }
+    private void checkIfAlreadyHired() {
+
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser == null) {
+            hire_btn.setVisibility(GONE);
+            return;
+        }
+
+        db.collection("BookingOrder")
+                .whereEqualTo("userId", currentUser.getUid())
+                .whereEqualTo("workerId", otherUserId)
+                .whereIn("status", Arrays.asList("pending", "active"))
+                .limit(1)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+
+                    if (!querySnapshot.isEmpty()) {
+                        hire_btn.setVisibility(ViewGroup.GONE);
+                    } else {
+                        hire_btn.setVisibility(View.VISIBLE);
+                    }
+
+                })
+                .addOnFailureListener(e ->
+                        hire_btn.setVisibility(GONE)
+                );
     }
 }

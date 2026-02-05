@@ -27,7 +27,7 @@ public class BookingPersonalInfo extends AppCompatActivity {
     EditText firstname, lastname, initial, mobilenum, email, location;
     FirebaseFirestore db;
     FirebaseAuth mAuth;
-    String projectId;
+    String projectId, otherId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +40,8 @@ public class BookingPersonalInfo extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+        otherId = getIntent().getStringExtra("otherId");
 
         Button approved = findViewById(R.id.btnNext);
         ImageView back = findViewById(R.id.btnBack);
@@ -101,6 +103,7 @@ public class BookingPersonalInfo extends AppCompatActivity {
         orderData.put("Mobile Number", mobilenum);
         orderData.put("Home_Address", location);
         orderData.put("status", "pending");
+        orderData.put("workerId", otherId);
 
         ref.set(orderData)
                 .addOnSuccessListener(unused ->
@@ -125,13 +128,15 @@ public class BookingPersonalInfo extends AppCompatActivity {
                     String name = documentSnapshot.getString("username");
                     String mobile = documentSnapshot.getString("Mobile Number");
                     String Email = documentSnapshot.getString("email");
+                    String Initial = documentSnapshot.getString("MiddleInitial");
+                    String Address = documentSnapshot.getString("Address");
 
                     if (name == null || name.trim().isEmpty()) return;
 
                     String[] parts = name.trim().split("\\s+");
 
                     String firstName = "";
-                    String initials = "";
+                    String initials = Initial;
                     String lastName = "";
 
                     if (parts.length >= 1) {
@@ -149,6 +154,7 @@ public class BookingPersonalInfo extends AppCompatActivity {
                     initial.setText(initials);
                     lastname.setText(lastName);
                     email.setText(Email);
+                    location.setText(Address);
 
                     if (mobile != null) {
                         mobilenum.setText(mobile);

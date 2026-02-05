@@ -10,6 +10,7 @@ import com.cloudinary.android.MediaManager;
 import com.cloudinary.android.callback.ErrorInfo;
 import com.cloudinary.android.callback.UploadCallback;
 import com.example.ConstructionApp.R;
+import com.google.firebase.Firebase;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.CollectionReference;
@@ -29,7 +30,7 @@ import models.UserModel;
 
 public class FirebaseUtil {
 
-    /* ---------------- AUTH ---------------- */
+    /* ---------------- AUH ---------------- */
 
     public static String currentUserId() {
         return FirebaseAuth.getInstance().getUid();
@@ -328,6 +329,82 @@ public class FirebaseUtil {
             return userIds.get(0);
         }
     }
+
+    public static void UploadServiceType(
+            Context context,
+            Uri imageUri
+    ) {
+
+        String uid = currentUserId();
+        if (uid == null || imageUri == null) return;
+
+        MediaManager.get().upload(imageUri)
+                .unsigned("CrewUp")
+                .option("folder", "profile_pictures")
+                .callback(new UploadCallback() {
+
+                    @Override
+                    public void onStart(String requestId) {
+                        Toast.makeText(context, "Uploading picture", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onProgress(String requestId, long bytes, long totalBytes) {
+                    }
+
+                    @Override
+                    public void onSuccess(String requestId, Map resultData) {
+
+                        String imageUrl = resultData.get("secure_url").toString();
+
+                        Map<String, Object> data = new HashMap<>();
+                        data.put("Service_info_image", imageUrl);
+
+                        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+                        DocumentReference ref = db.collection("BookingOrder").document();
+                        String projectId = ref.getId();
+
+                        FirebaseFirestore.getInstance()
+                                .collection("BookingOrder")
+                                .document(projectId)
+                                .set(data, SetOptions.merge());
+                    }
+
+                    @Override
+                    public void onError(String requestId, ErrorInfo error) {
+                        Toast.makeText(context, "Upload failed", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onReschedule(String requestId, ErrorInfo error) {
+                    }
+                })
+                .dispatch();
+    }
+    public static void listentoServiceInfo(
+            Context context,
+            ImageView imageView,
+            String userId
+    ) {
+        if (userId == null) return;
+        FirebaseFirestore.getInstance()
+                .collection("BookingOrder")
+                .document(userId)
+                .addSnapshotListener((snapshot, e) -> {
+
+                    if (e != null || snapshot == null || !snapshot.exists()) return;
+
+                    String url = snapshot.getString("Service_info_image");
+                    if (url != null && !url.isEmpty()) {
+
+                        Glide.with(context)
+                                .load(url)
+                                .into(imageView);
+                    }
+                });
+    }
+
 
 }
 

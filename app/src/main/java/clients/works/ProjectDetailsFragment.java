@@ -38,6 +38,9 @@ public class ProjectDetailsFragment extends Fragment {
         cancel = v.findViewById(R.id.btnCancel);
         complete = v.findViewById(R.id.btnComplete);
 
+        accept.setVisibility(ViewGroup.GONE);
+        cancel.setVisibility(ViewGroup.GONE);
+
         Bundle args = getArguments();
         if (args == null) return v;
 

@@ -32,6 +32,7 @@ import clients.posts.Posts;
 import workers.chat.WorkersChat;
 import workers.home.NotificationsWorker;
 import workers.profile.WorkerProfile;
+import workers.wallet.WalletProfile;
 import workers.works.works;
 
 public class MainActivity extends AppCompatActivity {
@@ -130,7 +131,8 @@ public class MainActivity extends AppCompatActivity {
         });
 
         navBell.setOnClickListener(v -> {
-            Toast.makeText(this, "Put Function", Toast.LENGTH_SHORT).show();
+            loadFragment(new works());
+            highlight(navBell);
         });
 
         navAdd.setOnClickListener(v -> {
@@ -149,8 +151,8 @@ public class MainActivity extends AppCompatActivity {
         });
 
         navActivity.setOnClickListener(v -> {
-            loadFragment(new works());
-            highlight(navBell);
+            loadFragment(new WalletProfile());
+            highlight(navActivity);
 
         });
 
@@ -183,7 +185,7 @@ public class MainActivity extends AppCompatActivity {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) return;
 
-        db.collection("workers")
+        db.collection("users")
                 .document(user.getUid())
                 .get()
                 .addOnSuccessListener(document -> {
@@ -215,10 +217,10 @@ public class MainActivity extends AppCompatActivity {
 
                     Map<String, Object> data = new HashMap<>();
                     data.put("userId", uid);
-                    data.put("role", "worker");
+                    data.put("Role", "worker");
                     data.put("fcmToken", token);
 
-                    db.collection("workers")
+                    db.collection("users")
                             .document(uid)
                             .set(data, SetOptions.merge())
                             .addOnSuccessListener(unused ->

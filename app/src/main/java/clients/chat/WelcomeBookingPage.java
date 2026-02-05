@@ -19,6 +19,8 @@ import com.example.ConstructionApp.R;
 
 public class WelcomeBookingPage extends AppCompatActivity {
 
+    String otherId;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -30,6 +32,8 @@ public class WelcomeBookingPage extends AppCompatActivity {
             return insets;
         });
 
+        otherId = getIntent().getStringExtra("otherId");
+
         Button btnProceed = findViewById(R.id.btnProceed);
         ImageView back = findViewById(R.id.btnBack);
 
@@ -39,6 +43,7 @@ public class WelcomeBookingPage extends AppCompatActivity {
 
         btnProceed.setOnClickListener(v -> {
             Intent in = new Intent(this, Permission.class);
+            in.putExtra("otherId", otherId);
             startActivity(in);
         });
 

@@ -199,6 +199,7 @@
                     android:layout_height="48dp"
                     android:background="@drawable/bg_input_yellow"
                     android:hint="Enter budget"
+                    android:inputType="number"
                     android:padding="12dp"
                     android:textColor="@color/text_primary"
                     android:textColorHint="#AAAAAA" />

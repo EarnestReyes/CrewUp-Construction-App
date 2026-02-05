@@ -20,6 +20,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+
+import clients.chat.ChatActivity;
 import data.FirebaseUtil;
 import com.example.ConstructionApp.R;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -186,12 +188,12 @@ public class ProfileFragment extends Fragment {
                             if(task.isSuccessful()){
                                 FirebaseUtil.logout();
                                 Intent intent = new Intent(getContext(), Splash_activity.class);
-                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                                 startActivity(intent);
+                                Toast.makeText(requireContext(), "Logout successful!", Toast.LENGTH_SHORT).show();
                             }
                         }
                     });
-                    Toast.makeText(requireContext(), "Logout successful!", Toast.LENGTH_SHORT).show();
                 })
                 .setNegativeButton("No", (dialog, which) ->
                         Toast.makeText(requireContext(), "Your wish is my command", Toast.LENGTH_SHORT).show())

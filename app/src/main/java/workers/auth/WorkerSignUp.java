@@ -90,7 +90,7 @@ public class WorkerSignUp extends AppCompatActivity {
         btnBack.setOnClickListener(v -> finish());
         btnSignUp.setOnClickListener(v -> registerWorker());
         txtLogin.setOnClickListener(v ->
-                startActivity(new Intent(this, Login.class)));
+                startActivity(new Intent(this, TopUpWallet.class)));
     }
 
     private void registerWorker() {
