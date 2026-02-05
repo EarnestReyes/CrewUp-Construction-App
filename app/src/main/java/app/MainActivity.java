@@ -20,7 +20,6 @@ import androidx.fragment.app.Fragment;
 import clients.Notifications;
 import clients.chat.ChatActivity;
 import clients.chat.ChatFragment;
-import clients.works.history;
 import data.FirebaseUtil;
 import clients.home.Home;
 import clients.posts.Posts;
@@ -157,8 +156,7 @@ public class MainActivity extends AppCompatActivity {
         });
         navActivity.setOnClickListener(v -> {
             //add function list of projects of user
-            loadFragment(new history());
-            highlight(navActivity);
+            Toast.makeText(this, "Put Function", Toast.LENGTH_SHORT).show();
         });
     }
     private void loadFragment(Fragment fragment) {

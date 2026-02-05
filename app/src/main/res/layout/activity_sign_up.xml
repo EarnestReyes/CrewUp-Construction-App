@@ -42,6 +42,7 @@
         android:id="@+id/txtSubtitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:textStyle="bold"
         android:text="Sign up to get started!"
         android:textSize="14sp"
         android:textColor="?attr/colorOnBackground"

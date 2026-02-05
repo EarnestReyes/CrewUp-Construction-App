@@ -1,11 +1,13 @@
 package auth;
 
+import android.annotation.SuppressLint;
 import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
+import android.widget.ImageButton;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -29,9 +31,11 @@ import app.MainActivity;
 public class UserDetails extends AppCompatActivity {
     TextInputEditText edtBirthday, mobilenum, socials;
     AutoCompleteTextView edtGender;
-    Button btnSkip, btnSubmit;
+    Button  btnSubmit;
+    ImageButton btnBack;
 
     FirebaseFirestore db;
+    @SuppressLint({"WrongViewCast", "MissingInflatedId"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -44,26 +48,25 @@ public class UserDetails extends AppCompatActivity {
             return insets;
         });
 
-        edtBirthday = findViewById(R.id.edtBirthday);
+        edtBirthday = findViewById(R.id.Birthday);
         edtGender = findViewById(R.id.edtGender);
         mobilenum = findViewById(R.id.edtMobile);
         socials = findViewById(R.id.edtSocials);
 
-        btnSkip = findViewById(R.id.btnSkip);
+
+        btnBack = findViewById(R.id.btnBack);
         btnSubmit = findViewById(R.id.btnSubmit);
 
         edtBirthday.setOnClickListener(v -> showDatePicker());
         edtGender.setOnClickListener(v -> edtGender.showDropDown());
 
-        btnSkip.setOnClickListener(v -> {
-            Intent in = new Intent(this, MainActivity.class);
-            startActivity(in);
+        btnBack.setOnClickListener(v -> {
+        finish();
         });
 
         btnSubmit.setOnClickListener(v -> {
             saveUserToFirestore();
-
-            Intent in = new Intent(this, MainActivity.class);
+            Intent in = new Intent(this, TopUpWallet.class);
             startActivity(in);
         });
 
@@ -71,7 +74,6 @@ public class UserDetails extends AppCompatActivity {
         String[] genderOptions = {
                 "Male",
                 "Female",
-                "Non-binary",
                 "Prefer not to say"
         };
 
@@ -97,7 +99,7 @@ public class UserDetails extends AppCompatActivity {
 
         DatePickerDialog datePickerDialog =
                 new DatePickerDialog(
-                        this, // use requireContext() if Fragment
+                        this,
                         (view, selectedYear, selectedMonth, selectedDay) -> {
 
                             String date =
@@ -116,7 +118,7 @@ public class UserDetails extends AppCompatActivity {
                         day
                 );
 
-        // Optional: prevent future dates
+
         datePickerDialog.getDatePicker()
                 .setMaxDate(System.currentTimeMillis());
 

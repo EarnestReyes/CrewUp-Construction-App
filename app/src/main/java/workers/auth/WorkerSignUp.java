@@ -81,6 +81,8 @@ public class WorkerSignUp extends AppCompatActivity {
         password = findViewById(R.id.edtPassword);
         confirmPass = findViewById(R.id.edtConfirmPassword);
 
+
+
         Button btnSignUp = findViewById(R.id.btnSignUp);
         TextView txtLogin = findViewById(R.id.txtLogin);
         ImageButton btnBack = findViewById(R.id.btnBack);
