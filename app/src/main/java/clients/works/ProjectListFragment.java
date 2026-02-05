@@ -34,8 +34,7 @@ public class ProjectListFragment extends Fragment {
     private List<ProjectModel> list;
 
     // 🔹 REQUIRED EMPTY CONSTRUCTOR
-    public ProjectListFragment() {
-    }
+    public ProjectListFragment() {}
 
     // 🔹 CORRECT WAY TO CREATE FRAGMENT
     public static ProjectListFragment newInstance(String status) {
@@ -70,9 +69,10 @@ public class ProjectListFragment extends Fragment {
         list = new ArrayList<>();
         adapter = new ProjectAdapter(list, this);
         recyclerView.setAdapter(adapter);
+
             loadBookings();
 
-            return v;
+        return v;
     }
     private void loadBookings() {
 
@@ -111,6 +111,5 @@ public class ProjectListFragment extends Fragment {
             adapter.notifyDataSetChanged();
         });
     }
+
 }
-
-

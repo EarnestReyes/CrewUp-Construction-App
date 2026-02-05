@@ -39,7 +39,7 @@ public class history extends Fragment {
                     case 3:
                         return ProjectListFragment.newInstance("cancelled");
                     default:
-                        return ProjectListFragment.newInstance("pending");
+                        return ProjectListFragment.newInstance("all");
                 }
             }
 
@@ -63,13 +63,9 @@ public class history extends Fragment {
                 case 3:
                     tab.setText("Cancelled");
                     break;
-                case 4:
-                    tab.setText("Pending");
-                    break;
             }
         }).attach();
 
         return v;
     }
 }
-

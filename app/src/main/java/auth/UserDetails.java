@@ -27,6 +27,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import app.MainActivity;
+import workers.auth.TopUpWallet;
 
 public class UserDetails extends AppCompatActivity {
     TextInputEditText edtBirthday, mobilenum, socials;
@@ -66,7 +67,7 @@ public class UserDetails extends AppCompatActivity {
 
         btnSubmit.setOnClickListener(v -> {
             saveUserToFirestore();
-            Intent in = new Intent(this, TopUpWallet.class);
+            Intent in = new Intent(this, MainActivity.class);
             startActivity(in);
         });
 

@@ -17,7 +17,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Fragments_Reyes" >
         <activity
-            android:name="auth.TopUpWallet"
+            android:name="workers.auth.TopUpWallet"
             android:exported="false" />
         <activity
             android:name="clients.home.WalletProfile"
