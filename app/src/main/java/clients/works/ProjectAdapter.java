@@ -41,6 +41,7 @@ public class ProjectAdapter
         h.name.setText(p.Name);
         h.status.setText(p.status);
         h.budget.setText("Budget: " + p.Budget);
+        h.service.setText(p.Service_Type);
 
         h.itemView.setOnClickListener(v -> {
             Bundle b = new Bundle();
@@ -52,12 +53,13 @@ public class ProjectAdapter
             FragmentManager fm = fragment.getParentFragmentManager();
             if (!fm.isStateSaved()) {
                 fm.beginTransaction()
-                        .replace(R.id.main, f)
+                        .replace(R.id.main,f)
                         .addToBackStack(null)
                         .commit();
                 h.name.setText(null);
                 h.status.setText(null);
                 h.budget.setText(null);
+                h.service.setText(null);
             }
         });
     }
@@ -68,13 +70,14 @@ public class ProjectAdapter
     }
 
     static class VH extends RecyclerView.ViewHolder {
-        TextView name, budget, status;
+        TextView name, budget, status, service;
 
         VH(View v) {
             super(v);
             name = v.findViewById(R.id.tvName);
             budget = v.findViewById(R.id.tvBudget);
             status = v.findViewById(R.id.tvStatus);
+            service = v.findViewById(R.id.tvService);
         }
     }
 }

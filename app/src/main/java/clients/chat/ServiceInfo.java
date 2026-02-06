@@ -237,7 +237,7 @@ public class ServiceInfo extends AppCompatActivity {
 
         Map<String, Object> user = new HashMap<>();
 
-        user.put("Service Type", type.getText().toString().trim());
+        user.put("Service_Type", type.getText().toString().trim());
         user.put("Site_Address", etAddress.getText().toString().trim());
         user.put("Date & Time", etDateTime.getText().toString().trim());
         user.put("Description", etDescription.getText().toString().trim());
@@ -249,7 +249,7 @@ public class ServiceInfo extends AppCompatActivity {
         if (photo2 != null) photos.add(photo2);
         if (photo3 != null) photos.add(photo3);
 
-        user.put("photos", photos); // ✅ store as array
+        user.put("photos", photos);
 
         db.collection("BookingOrder")
                 .document(projectId)

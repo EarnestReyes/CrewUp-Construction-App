@@ -36,24 +36,22 @@ public class CommentAdapter
         View view = LayoutInflater.from(context)
                 .inflate(R.layout.item_comment, parent, false);
         return new CommentViewHolder(view);
-
-
     }
 
     @Override
     public void onBindViewHolder(
             @NonNull CommentViewHolder holder, int position) {
 
-        comment comment = comments.get(position);
+        comment c = comments.get(position);
 
-        holder.txtName.setText(comment.getUserName());
-        holder.txtComment.setText(comment.getText());
+        holder.txtName.setText(c.getUserName());
+        holder.txtComment.setText(c.getText());
 
-        if (comment.getProfilePicUrl() != null &&
-                !comment.getProfilePicUrl().isEmpty()) {
+        if (c.getProfilePicUrl() != null &&
+                !c.getProfilePicUrl().isEmpty()) {
 
             Glide.with(context)
-                    .load(comment.getProfilePicUrl())
+                    .load(c.getProfilePicUrl())
                     .circleCrop()
                     .into(holder.imgProfile);
         } else {
@@ -81,4 +79,3 @@ public class CommentAdapter
         }
     }
 }
-

@@ -261,7 +261,10 @@ public class ProfileFragment extends Fragment {
 
                     for (QueryDocumentSnapshot doc : value) {
 
+                        // ✅ READ EXACT FIELDS
                         String content = doc.getString("content");
+                        String imageUrl = doc.getString("imageUrl");
+                        String userName = doc.getString("userName");
 
                         // ----- TIMESTAMP -----
                         Object rawTime = doc.get("timestamp");
@@ -278,10 +281,10 @@ public class ProfileFragment extends Fragment {
                             time = "Just now";
                         }
 
+                        // ✅ CREATE POST CLEANLY
                         Post post = new Post(
                                 user.getUid(),
-                                "You",
-                                "",
+                                userName != null ? userName : "You",
                                 content != null ? content : "",
                                 time,
                                 currentUserProfilePicUrl
@@ -289,21 +292,27 @@ public class ProfileFragment extends Fragment {
 
                         post.setPostId(doc.getId());
 
+                        // ✅ SET IMAGE SEPARATELY
+                        post.setImageUrl(imageUrl);
+
+                        // Likes
                         Long likes = doc.getLong("likeCount");
                         post.setLikeCount(likes != null ? likes.intValue() : 0);
 
-                        String currentUserId = user.getUid();
+                        // Check if liked by me
                         db.collection("posts")
                                 .document(post.getPostId())
                                 .collection("likes")
-                                .document(currentUserId)
+                                .document(user.getUid())
                                 .get()
                                 .addOnSuccessListener(likeSnap -> {
                                     post.setLikedByMe(likeSnap.exists());
                                     adapter.notifyDataSetChanged();
                                 });
+
                         posts.add(post);
                     }
+
                     adapter.notifyDataSetChanged();
                 });
     }

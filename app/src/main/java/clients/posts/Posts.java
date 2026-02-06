@@ -182,7 +182,7 @@ public class Posts extends Fragment {
                             .add(post)
                             .addOnSuccessListener(doc -> {
                                 txtContent.setText("");
-                                selectedImageUri = null;
+                                imgPreview = null;
 
                                 Toast.makeText(
                                         requireContext(),

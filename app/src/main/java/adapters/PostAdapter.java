@@ -18,12 +18,13 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.ConstructionApp.R;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.android.material.bottomsheet.BottomSheetDialog;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,254 +45,201 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
 
     @NonNull
     @Override
-    public PostViewHolder onCreateViewHolder(
-            @NonNull ViewGroup parent, int viewType) {
-
+    public PostViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(context)
                 .inflate(R.layout.item_post_card, parent, false);
-
         return new PostViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(
-            @NonNull PostViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull PostViewHolder holder, int position) {
 
         Post post = posts.get(position);
 
         holder.txtName.setText(post.getUserName());
         holder.txtContent.setText(post.getContent());
         holder.txtTime.setText(post.getTimestamp());
+        holder.txtLikeCount.setText(String.valueOf(post.getLikeCount()));
 
-        String postImageUrl = post.getImageUrl();
-
-        if (postImageUrl != null && !postImageUrl.isEmpty()) {
+        // Post image
+        if (post.getImageUrl() != null && !post.getImageUrl().isEmpty()) {
             holder.postImage.setVisibility(View.VISIBLE);
-            Glide.with(context)
-                    .load(postImageUrl)
-                    .into(holder.postImage);
+            Glide.with(context).load(post.getImageUrl()).into(holder.postImage);
         } else {
             holder.postImage.setVisibility(View.GONE);
         }
 
-        holder.txtLikeCount.setText(
-                String.valueOf(post.getLikeCount())
-        );
-
-        holder.imgProfile.setOnClickListener(v -> {
-            Intent profile = new Intent(context, UserProfile.class);
-            profile.putExtra("userId", post.getUserId());
-            context.startActivity(profile);
-        });
-
-        holder.txtName.setOnClickListener(v -> {
-            Intent profile = new Intent(context, UserProfile.class);
-            profile.putExtra("userId", post.getUserId());
-            context.startActivity(profile);
-        });
-
-        holder.buttonLike.setImageResource(
-                post.isLikedByMe()
-                        ? R.drawable.ic_filled
-                        : R.drawable.ic_like
-        );
-
-        String url = post.getProfilePicUrl();
-        if (url != null && !url.isEmpty()) {
+        // Profile image
+        if (post.getProfilePicUrl() != null && !post.getProfilePicUrl().isEmpty()) {
             Glide.with(context)
-                    .load(url)
-                    .placeholder(R.drawable.ic_profile_placeholder_foreground)
+                    .load(post.getProfilePicUrl())
                     .circleCrop()
                     .into(holder.imgProfile);
         } else {
             holder.imgProfile.setImageResource(
-                    R.drawable.ic_profile_placeholder_foreground
-            );
+                    R.drawable.ic_profile_placeholder_foreground);
         }
 
-        holder.btnLike.setOnClickListener(v -> {
-            toggleLike(post, holder);
-        });
+        // Profile click
+        View.OnClickListener openProfile = v -> {
+            Intent i = new Intent(context, UserProfile.class);
+            i.putExtra("userId", post.getUserId());
+            context.startActivity(i);
+        };
+        holder.imgProfile.setOnClickListener(openProfile);
+        holder.txtName.setOnClickListener(openProfile);
 
-        holder.comment.setOnClickListener(v -> {
+        // Like icon
+        holder.buttonLike.setImageResource(
+                post.isLikedByMe() ? R.drawable.ic_filled : R.drawable.ic_like
+        );
 
-            BottomSheetDialog bottomSheetDialog =
-                    new BottomSheetDialog(context, R.style.BottomSheetTheme);
+        holder.btnLike.setOnClickListener(v -> toggleLike(post, holder));
 
-            View sheetView = LayoutInflater.from(context)
-                    .inflate(R.layout.comment_layout, null);
+        // COMMENTS
+        holder.comment.setOnClickListener(v -> openComments(post));
+    }
 
-            bottomSheetDialog.setContentView(sheetView);
-            bottomSheetDialog.show();
+    private void openComments(Post post) {
 
-            bottomSheetDialog.setOnShowListener(dialog -> {
-                BottomSheetDialog d = (BottomSheetDialog) dialog;
-                View bottomSheet =
-                        d.findViewById(com.google.android.material.R.id.design_bottom_sheet);
+        BottomSheetDialog dialog =
+                new BottomSheetDialog(context, R.style.BottomSheetTheme);
 
-                if (bottomSheet != null) {
-                    com.google.android.material.bottomsheet.BottomSheetBehavior
-                            .from(bottomSheet)
-                            .setState(
-                                    com.google.android.material.bottomsheet
-                                            .BottomSheetBehavior.STATE_EXPANDED
-                            );
-                }
-            });
+        View sheet = LayoutInflater.from(context)
+                .inflate(R.layout.comment_layout, null);
 
-            RecyclerView recyclerView =
-                    sheetView.findViewById(R.id.comment_recycler);
+        dialog.setContentView(sheet);
+        dialog.show();
 
-            ArrayList<comment> commentList = new ArrayList<>();
-            CommentAdapter adapter =
-                    new CommentAdapter(context, commentList);
+        View bottomSheet = dialog.findViewById(
+                com.google.android.material.R.id.design_bottom_sheet);
 
-            recyclerView.setLayoutManager(new LinearLayoutManager(context));
-            recyclerView.setAdapter(adapter);
+        if (bottomSheet != null) {
+            BottomSheetBehavior.from(bottomSheet)
+                    .setState(BottomSheetBehavior.STATE_EXPANDED);
+        }
 
-            //LOAD COMMENTS (THIS WAS MISSING EFFECTIVELY)
-            FirebaseFirestore.getInstance()
-                    .collection("posts")
-                    .document(post.getPostId())
-                    .collection("comments")
-                    .orderBy("timestamp")
-                    .addSnapshotListener((value, error) -> {
-                        if (error != null || value == null) return;
+        RecyclerView recyclerView = sheet.findViewById(R.id.comment_recycler);
+        EditText input = sheet.findViewById(R.id.comment_input);
+        ImageButton send = sheet.findViewById(R.id.btnsend);
 
-                        commentList.clear();
-                        for (DocumentSnapshot doc : value.getDocuments()) {
-                            comment c = doc.toObject(comment.class);
-                            if (c != null) {
-                                c.setCommentId(doc.getId());
-                                commentList.add(c);
-                            }
+        ArrayList<comment> comments = new ArrayList<>();
+        CommentAdapter adapter = new CommentAdapter(context, comments);
+
+        recyclerView.setLayoutManager(new LinearLayoutManager(context));
+        recyclerView.setAdapter(adapter);
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        // Load comments
+        db.collection("posts")
+                .document(post.getPostId())
+                .collection("comments")
+                .orderBy("timestamp")
+                .addSnapshotListener((snap, err) -> {
+                    if (err != null || snap == null) return;
+
+                    comments.clear();
+                    for (DocumentSnapshot d : snap.getDocuments()) {
+                        comment c = d.toObject(comment.class);
+                        if (c != null) {
+                            c.setCommentId(d.getId());
+                            comments.add(c);
                         }
-                        adapter.notifyDataSetChanged();
+                    }
+                    adapter.notifyDataSetChanged();
+                });
+
+        // SEND COMMENT (FIXED)
+        send.setOnClickListener(v -> {
+
+            String text = input.getText().toString().trim();
+            if (text.isEmpty()) {
+                Toast.makeText(context, "Comment cannot be empty", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            String uid = FirebaseAuth.getInstance().getUid();
+            if (uid == null) return;
+
+            db.collection("users")
+                    .document(uid)
+                    .get()
+                    .addOnSuccessListener(userDoc -> {
+
+                        String name = userDoc.getString("username");
+                        String photo = userDoc.getString("profilePicUrl");
+
+                        comment newComment = new comment(
+                                uid,
+                                name,
+                                photo,
+                                text,
+                                System.currentTimeMillis()
+                        );
+
+                        db.collection("posts")
+                                .document(post.getPostId())
+                                .collection("comments")
+                                .add(newComment)
+                                .addOnSuccessListener(ref -> {
+                                    input.setText("");
+                                });
                     });
-
-            //INPUT + SEND BUTTON
-            EditText commentInput =
-                    sheetView.findViewById(R.id.comment_input);
-            ImageButton sendBtn =
-                    sheetView.findViewById(R.id.btnsend);
-
-            sendBtn.setOnClickListener(btn -> {
-
-                String text = commentInput.getText().toString().trim();
-                if (text.isEmpty()) {
-                    Toast.makeText(context, "Comment cannot be empty", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                String postId = post.getPostId();
-                String userId = FirebaseAuth.getInstance().getUid();
-                if (postId == null || userId == null) return;
-
-                comment newComment = new comment(
-                        userId,
-                        post.getUserName(),
-                        post.getProfilePicUrl(),
-                        text,
-                        System.currentTimeMillis()
-                );
-
-                FirebaseFirestore.getInstance()
-                        .collection("posts")
-                        .document(postId)
-                        .collection("comments")
-                        .add(newComment)
-                        .addOnSuccessListener(docRef -> {
-
-                            String generatedId = docRef.getId();
-                            newComment.setCommentId(generatedId);
-                            docRef.update("commentId", generatedId);
-
-                            commentInput.setText("");
-                        });
-            });
         });
+    }
 
-        holder.sharebtn.setOnClickListener(v -> {
-            Intent in = new Intent(Intent.ACTION_SEND);
-            in.setType("text/plain");
-            String body = post.getUserName();
-            String sub = "http://google.com";
-            in.putExtra(Intent.EXTRA_TEXT, body);
-            in.putExtra(Intent.EXTRA_TEXT, sub);
-            context.startActivity(Intent.createChooser(in, "Share using"));
-        });
+    private void toggleLike(Post post, PostViewHolder holder) {
+
+        String postId = post.getPostId();
+        String uid = FirebaseAuth.getInstance().getUid();
+        if (postId == null || uid == null) return;
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        DocumentReference postRef = db.collection("posts").document(postId);
+        DocumentReference likeRef = postRef.collection("likes").document(uid);
+
+        db.runTransaction(t -> {
+            if (t.get(likeRef).exists()) {
+                t.delete(likeRef);
+                t.update(postRef, "likeCount", FieldValue.increment(-1));
+                post.setLikedByMe(false);
+                post.setLikeCount(post.getLikeCount() - 1);
+            } else {
+                t.set(likeRef, new HashMap<>());
+                t.update(postRef, "likeCount", FieldValue.increment(1));
+                post.setLikedByMe(true);
+                post.setLikeCount(post.getLikeCount() + 1);
+            }
+            return null;
+        }).addOnSuccessListener(v ->
+                holder.txtLikeCount.setText(String.valueOf(post.getLikeCount()))
+        );
     }
 
     @Override
     public int getItemCount() {
         return posts.size();
     }
-    private void toggleLike(Post post, PostViewHolder holder) {
 
-        String postId = post.getPostId();
-        String userId = FirebaseAuth.getInstance().getUid();
-        if (postId == null || userId == null) return;
-
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-
-        DocumentReference postRef =
-                db.collection("posts").document(postId);
-
-        DocumentReference likeRef =
-                postRef.collection("likes").document(userId);
-
-        db.runTransaction(transaction -> {
-
-            DocumentSnapshot likeSnap = transaction.get(likeRef);
-
-            if (likeSnap.exists()) {
-                transaction.delete(likeRef);
-                transaction.update(postRef,
-                        "likeCount", FieldValue.increment(-1));
-
-                post.setLikedByMe(false);
-                post.setLikeCount(post.getLikeCount() - 1);
-
-            } else {
-                transaction.set(likeRef, new HashMap<>());
-                transaction.update(postRef,
-                        "likeCount", FieldValue.increment(1));
-
-                post.setLikedByMe(true);
-                post.setLikeCount(post.getLikeCount() + 1);
-            }
-            return null;
-        }).addOnSuccessListener(aVoid -> {
-
-            holder.txtLikeCount.setText(
-                    String.valueOf(post.getLikeCount())
-            );
-
-            holder.buttonLike.setImageResource(
-                    post.isLikedByMe()
-                            ? R.drawable.ic_filled
-                            : R.drawable.ic_like
-            );
-        });
-    }
     static class PostViewHolder extends RecyclerView.ViewHolder {
-        ImageView imgProfile, buttonLike;
+
+        ImageView imgProfile, buttonLike, postImage;
         TextView txtName, txtTime, txtContent, txtLikeCount;
         LinearLayout sharebtn, btnLike, comment;
-        ImageView postImage;
+
         public PostViewHolder(@NonNull View itemView) {
             super(itemView);
             imgProfile = itemView.findViewById(R.id.imgProfile);
             txtName = itemView.findViewById(R.id.workertxtName);
             txtTime = itemView.findViewById(R.id.txtTime);
             txtContent = itemView.findViewById(R.id.txtPostContent);
-            btnLike = itemView.findViewById(R.id.btnLike);
             txtLikeCount = itemView.findViewById(R.id.txtLikeCount);
-            sharebtn = itemView.findViewById(R.id.sharebtn);
+            btnLike = itemView.findViewById(R.id.btnLike);
             buttonLike = itemView.findViewById(R.id.ButtonLike);
+            sharebtn = itemView.findViewById(R.id.sharebtn);
             comment = itemView.findViewById(R.id.comment);
             postImage = itemView.findViewById(R.id.postImage);
-
         }
     }
 }
