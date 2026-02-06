@@ -85,14 +85,6 @@ public class ChatActivity extends AppCompatActivity {
         profilePic = findViewById(R.id.profile_pic_image_view);
         hire_btn = findViewById(R.id.hire_btn);
 
-        //remove the plus button
-        String otherUserRole = otherUser.getRole();
-        if ("worker".equalsIgnoreCase(otherUserRole)) {
-            checkIfAlreadyHired();
-        } else {
-            hire_btn.setVisibility(GONE);
-        }
-
         View root = findViewById(R.id.main);
         View bottomLayout = findViewById(R.id.bottom_layout);
 
@@ -384,7 +376,7 @@ public class ChatActivity extends AppCompatActivity {
                 .addOnSuccessListener(querySnapshot -> {
 
                     if (!querySnapshot.isEmpty()) {
-                        hire_btn.setVisibility(ViewGroup.GONE);
+                        hire_btn.setVisibility(View.GONE); 
                     } else {
                         hire_btn.setVisibility(View.VISIBLE);
                     }

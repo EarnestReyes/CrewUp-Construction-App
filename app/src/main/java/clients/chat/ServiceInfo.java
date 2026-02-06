@@ -7,6 +7,7 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.Toast;
 
@@ -14,7 +15,9 @@ import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Locale;
 
 import androidx.activity.EdgeToEdge;
@@ -30,6 +33,7 @@ import com.bumptech.glide.Glide;
 import com.example.ConstructionApp.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 
@@ -40,32 +44,65 @@ import data.FirebaseUtil;
 
 public class ServiceInfo extends AppCompatActivity {
 
-    FirebaseFirestore db;
+    public FirebaseFirestore db;
     FirebaseAuth mAuth;
     AutoCompleteTextView type;
     EditText etAddress, etDateTime, etDescription, etBudget;
-    Button btnUpload;
+    String projectId;
+    ImageView p1, p2, p3;
+    LinearLayout Photos;
+
+    private String photo1 = null;
+    private String photo2 = null;
+    private String photo3 = null;
+    private int photoCount = 0;
+
 
     //For image uploader
     private final ActivityResultLauncher<String> UploadedImage =
             registerForActivityResult(
                     new ActivityResultContracts.GetContent(),
                     uri -> {
-                        if (uri != null) {
+                        if (uri == null) return;
 
-                            // Show preview immediately (good UX)
-                            Glide.with(this)
-                                    .load(uri)
-                                    .circleCrop();
-
-                            // Upload to Cloudinary
-                            FirebaseUtil.UploadServiceType(
-                                    this,
-                                    uri
-                            );
+                        if (photoCount >= 3) {
+                            Toast.makeText(this, "You can upload only 3 photos", Toast.LENGTH_SHORT).show();
+                            return;
                         }
+
+                        FirebaseUtil.UploadServiceType(
+                                this,
+                                uri,
+                                imageUrl -> {
+
+                                    // 🔥 SHOW IMAGE IMMEDIATELY (REALTIME)
+                                    if (photoCount == 0) {
+                                        photo1 = imageUrl;
+                                        Glide.with(this)
+                                                .load(imageUrl)
+                                                .centerCrop()
+                                                .into(p1);
+                                    } else if (photoCount == 1) {
+                                        photo2 = imageUrl;
+                                        Glide.with(this)
+                                                .load(imageUrl)
+                                                .centerCrop()
+                                                .into(p2);
+                                    } else if (photoCount == 2) {
+                                        photo3 = imageUrl;
+                                        Glide.with(this)
+                                                .load(imageUrl)
+                                                .centerCrop()
+                                                .into(p3);
+                                    }
+
+                                    photoCount++;
+                                }
+                        );
                     }
             );
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,18 +116,43 @@ public class ServiceInfo extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+        projectId = getIntent().getStringExtra("projectId");
+
         Button nxt = findViewById(R.id.btnSubmit);
         type = findViewById(R.id.spServiceType);
         etAddress = findViewById(R.id.etAddress);
         etDateTime = findViewById(R.id.etDateTime);
         etDescription = findViewById(R.id.etDescription);
         etBudget = findViewById(R.id.etBudget);
-        btnUpload = findViewById(R.id.btnUpload);
+        Photos = findViewById(R.id.photos);
+        p1 = findViewById(R.id.photo1);
+        p2 = findViewById(R.id.photo2);
+        p3 = findViewById(R.id.photo3);
 
-        btnUpload.setOnClickListener(v -> {
-            Toast.makeText(this, "Under process", Toast.LENGTH_SHORT).show();
-            permission(UploadedImage);
+        p1.setOnClickListener(v -> permission(UploadedImage));
+        p2.setOnClickListener(v -> permission(UploadedImage));
+        p3.setOnClickListener(v -> permission(UploadedImage));
+
+        Photos.setOnClickListener(v -> {
+            FirebaseFirestore.getInstance()
+                    .collection("BookingOrder")
+                    .document(projectId)
+                    .get()
+                    .addOnSuccessListener(doc -> {
+
+                        List<String> photos = (List<String>) doc.get("photos");
+
+                        if (photos != null && photos.size() >= 3) {
+                            Toast.makeText(this, "Maximum of 3 photos only", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        permission(UploadedImage);
+                    });
         });
+
+        loadpictures();
 
         Calendar selectedDateTime = Calendar.getInstance();
 
@@ -160,6 +222,7 @@ public class ServiceInfo extends AppCompatActivity {
         nxt.setOnClickListener(v -> {
             Intent in = new Intent(this, ReviewDetails.class);
             saveUserToFirestore(getIntent().getStringExtra("projectId"));
+            in.putExtra("projectId", projectId);
             startActivity(in);
         });
 
@@ -173,17 +236,26 @@ public class ServiceInfo extends AppCompatActivity {
     private void saveUserToFirestore(String projectId) {
 
         Map<String, Object> user = new HashMap<>();
+
         user.put("Service Type", type.getText().toString().trim());
         user.put("Site_Address", etAddress.getText().toString().trim());
         user.put("Date & Time", etDateTime.getText().toString().trim());
         user.put("Description", etDescription.getText().toString().trim());
-        user.put("Photo", "Image // put image here");
         user.put("Budget", etBudget.getText().toString().trim());
+
+        List<String> photos = new ArrayList<>();
+
+        if (photo1 != null) photos.add(photo1);
+        if (photo2 != null) photos.add(photo2);
+        if (photo3 != null) photos.add(photo3);
+
+        user.put("photos", photos); // ✅ store as array
 
         db.collection("BookingOrder")
                 .document(projectId)
                 .set(user, SetOptions.merge());
     }
+
     private void permission(ActivityResultLauncher act) {
         new AlertDialog.Builder(this)
                 .setTitle("Media Permission")
@@ -194,4 +266,38 @@ public class ServiceInfo extends AppCompatActivity {
                         Toast.makeText(this, "We need permission of camera to proceed", Toast.LENGTH_SHORT).show())
                 .show();
     }
+
+    public void loadpictures(){
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser == null) return;
+
+        db.collection("BookingOrder")
+                .whereEqualTo("status", "pending")
+                .whereEqualTo("userId", currentUser.getUid())
+            .limit(1)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+
+                    if (querySnapshot.isEmpty()) {
+                        Toast.makeText(this, "No pending booking found", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    DocumentSnapshot doc = querySnapshot.getDocuments().get(0);
+
+                    List<String> photos = (List<String>) doc.get("photos");
+
+                    if (photos != null) {
+                        if (photos.size() > 0)
+                            Glide.with(this).load(photos.get(0)).into(p1);
+
+                        if (photos.size() > 1)
+                            Glide.with(this).load(photos.get(1)).into(p2);
+
+                        if (photos.size() > 2)
+                            Glide.with(this).load(photos.get(2)).into(p3);
+                    }
+                });
+    }
+
 }

@@ -10,6 +10,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,6 +23,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
+import adapters.PostAdapter;
 import clients.chat.ChatActivity;
 import data.FirebaseUtil;
 import com.example.ConstructionApp.R;
@@ -29,9 +32,17 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.messaging.FirebaseMessaging;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Locale;
+
 import app.Splash_activity;
+import models.Post;
 
 public class ProfileFragment extends Fragment {
 
@@ -40,6 +51,11 @@ public class ProfileFragment extends Fragment {
     private ImageView imgProfile, imgCoverPhoto;
     private Uri selectedImageUri;
     private TextView username, birthday, Gender, Location, Mobile, Social;
+    RecyclerView recyclerView;
+    private ArrayList<Post> posts;
+    private PostAdapter adapter;
+
+    private String currentUserProfilePicUrl;
 
     private final ActivityResultLauncher<String> imagePickerLauncher =
             registerForActivityResult(
@@ -110,8 +126,28 @@ public class ProfileFragment extends Fragment {
         Location = view.findViewById(R.id.location);
         Mobile = view.findViewById(R.id.mobile);
         Social = view.findViewById(R.id.social);
+        recyclerView = view.findViewById(R.id.recyclerPosts);
+        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
+
+        posts = new ArrayList<>();
+        adapter = new PostAdapter(requireContext(), posts);
+        recyclerView.setAdapter(adapter);
 
         loaddetails();
+
+        db = FirebaseFirestore.getInstance();
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null) {
+            db.collection("users")
+                    .document(user.getUid())
+                    .get()
+                    .addOnSuccessListener(snapshot -> {
+
+                        currentUserProfilePicUrl =
+                                snapshot.getString("profilePicUrl");
+                        loadPosts();
+                    });
+        }
 
         String uid = FirebaseUtil.currentUserId();
         if (uid != null && isAdded()) {
@@ -208,5 +244,74 @@ public class ProfileFragment extends Fragment {
                 .setNegativeButton("No", (d, w) ->
                         Toast.makeText(requireContext(), "We need permission of camera to proceed", Toast.LENGTH_SHORT).show())
                 .show();
+    }
+    private void loadPosts() {
+
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return;
+
+        db.collection("posts")
+                .whereEqualTo("userId", user.getUid())
+                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .addSnapshotListener((value, error) -> {
+
+                    if (value == null) return;
+
+                    posts.clear();
+
+                    for (QueryDocumentSnapshot doc : value) {
+
+                        String content = doc.getString("content");
+
+                        // ----- TIMESTAMP -----
+                        Object rawTime = doc.get("timestamp");
+                        String time;
+
+                        if (rawTime instanceof com.google.firebase.Timestamp) {
+                            time = formatTimestamp(
+                                    ((com.google.firebase.Timestamp) rawTime)
+                                            .toDate().getTime()
+                            );
+                        } else if (rawTime instanceof Long) {
+                            time = formatTimestamp((Long) rawTime);
+                        } else {
+                            time = "Just now";
+                        }
+
+                        Post post = new Post(
+                                user.getUid(),
+                                "You",
+                                "",
+                                content != null ? content : "",
+                                time,
+                                currentUserProfilePicUrl
+                        );
+
+                        post.setPostId(doc.getId());
+
+                        Long likes = doc.getLong("likeCount");
+                        post.setLikeCount(likes != null ? likes.intValue() : 0);
+
+                        String currentUserId = user.getUid();
+                        db.collection("posts")
+                                .document(post.getPostId())
+                                .collection("likes")
+                                .document(currentUserId)
+                                .get()
+                                .addOnSuccessListener(likeSnap -> {
+                                    post.setLikedByMe(likeSnap.exists());
+                                    adapter.notifyDataSetChanged();
+                                });
+                        posts.add(post);
+                    }
+                    adapter.notifyDataSetChanged();
+                });
+    }
+
+    private String formatTimestamp(long millis) {
+        return new SimpleDateFormat(
+                "MMM dd, yyyy • hh:mm a",
+                Locale.getDefault()
+        ).format(new Date(millis));
     }
 }

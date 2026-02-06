@@ -69,13 +69,16 @@
             android:exported="false" />
         <activity
             android:name="auth.ForgotPass"
-            android:exported="false" />
+            android:exported="false"
+            android:windowSoftInputMode="stateHidden|adjustResize" />
         <activity
             android:name="auth.SignUp"
-            android:exported="false" />
+            android:exported="false"
+            android:windowSoftInputMode="stateHidden|adjustResize" />
         <activity
             android:name="auth.Login"
-            android:exported="false" />
+            android:exported="false"
+            android:windowSoftInputMode="stateHidden|adjustResize" />
         <activity
             android:name="auth.GetStartedActivity"
             android:exported="false" />

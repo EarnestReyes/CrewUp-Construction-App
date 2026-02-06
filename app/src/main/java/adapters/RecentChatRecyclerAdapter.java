@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -96,7 +97,6 @@ public class RecentChatRecyclerAdapter
         // Username
         holder.usernameText.setText(user.getUsername());
 
-        // Last message
         boolean sentByMe =
                 model.getLastMessageSenderId() != null &&
                         model.getLastMessageSenderId().equals(FirebaseUtil.currentUserId());

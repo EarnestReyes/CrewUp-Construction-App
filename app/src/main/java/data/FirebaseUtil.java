@@ -13,14 +13,18 @@ import com.example.ConstructionApp.R;
 import com.google.firebase.Firebase;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -330,9 +334,15 @@ public class FirebaseUtil {
         }
     }
 
+    public interface ImageUploadCallback {
+        void onUploaded(String imageUrl);
+    }
+
+
     public static void UploadServiceType(
             Context context,
-            Uri imageUri
+            Uri imageUri,
+            ImageUploadCallback callback
     ) {
 
         String uid = currentUserId();
@@ -340,35 +350,44 @@ public class FirebaseUtil {
 
         MediaManager.get().upload(imageUri)
                 .unsigned("CrewUp")
-                .option("folder", "profile_pictures")
+                .option("folder", "service_photos")
                 .callback(new UploadCallback() {
 
                     @Override
                     public void onStart(String requestId) {
-                        Toast.makeText(context, "Uploading picture", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, "Uploading picture…", Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
-                    public void onProgress(String requestId, long bytes, long totalBytes) {
-                    }
+                    public void onProgress(String requestId, long bytes, long totalBytes) {}
 
                     @Override
                     public void onSuccess(String requestId, Map resultData) {
 
                         String imageUrl = resultData.get("secure_url").toString();
 
+                        if (callback != null) {
+                            callback.onUploaded(imageUrl);
+                        }
+
                         Map<String, Object> data = new HashMap<>();
-                        data.put("Service_info_image", imageUrl);
+                        data.put("photos", FieldValue.arrayUnion(imageUrl));
 
                         FirebaseFirestore db = FirebaseFirestore.getInstance();
+                        String userId = FirebaseAuth.getInstance().getUid();
 
-                        DocumentReference ref = db.collection("BookingOrder").document();
-                        String projectId = ref.getId();
-
-                        FirebaseFirestore.getInstance()
-                                .collection("BookingOrder")
-                                .document(projectId)
-                                .set(data, SetOptions.merge());
+                        db.collection("BookingOrder")
+                                .whereEqualTo("userId", userId)
+                                .whereEqualTo("status", "pending")
+                                .limit(1)
+                                .get()
+                                .addOnSuccessListener(q -> {
+                                    if (q.isEmpty()) return;
+                                    String projectId = q.getDocuments().get(0).getId();
+                                    db.collection("BookingOrder")
+                                            .document(projectId)
+                                            .set(data, SetOptions.merge());
+                                });
                     }
 
                     @Override
@@ -377,34 +396,69 @@ public class FirebaseUtil {
                     }
 
                     @Override
-                    public void onReschedule(String requestId, ErrorInfo error) {
-                    }
+                    public void onReschedule(String requestId, ErrorInfo error) {}
                 })
                 .dispatch();
     }
-    public static void listentoServiceInfo(
+
+    public static void ImagePost(
             Context context,
-            ImageView imageView,
-            String userId
+            Uri imageUri,
+            ImageUploadCallback callback
     ) {
-        if (userId == null) return;
-        FirebaseFirestore.getInstance()
-                .collection("BookingOrder")
-                .document(userId)
-                .addSnapshotListener((snapshot, e) -> {
+        if (imageUri == null) return;
 
-                    if (e != null || snapshot == null || !snapshot.exists()) return;
+        MediaManager.get().upload(imageUri)
+                .unsigned("CrewUp")
+                .option("folder", "post_images")
+                .callback(new UploadCallback() {
 
-                    String url = snapshot.getString("Service_info_image");
-                    if (url != null && !url.isEmpty()) {
-
-                        Glide.with(context)
-                                .load(url)
-                                .into(imageView);
+                    @Override
+                    public void onStart(String requestId) {
+                        Toast.makeText(context,
+                                "Uploading image...",
+                                Toast.LENGTH_SHORT).show();
                     }
-                });
-    }
 
+                    @Override
+                    public void onProgress(
+                            String requestId,
+                            long bytes,
+                            long totalBytes
+                    ) {}
+
+                    @Override
+                    public void onSuccess(
+                            String requestId,
+                            Map resultData
+                    ) {
+
+                        String imageUrl =
+                                resultData.get("secure_url").toString();
+
+                        if (callback != null) {
+                            callback.onUploaded(imageUrl);
+                        }
+                    }
+
+                    @Override
+                    public void onError(
+                            String requestId,
+                            ErrorInfo error
+                    ) {
+                        Toast.makeText(context,
+                                "Image upload failed",
+                                Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onReschedule(
+                            String requestId,
+                            ErrorInfo error
+                    ) {}
+                })
+                .dispatch();
+    }
 
 }
 

@@ -106,7 +106,6 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_alignParentEnd="true"
-                            android:text="Carl Joshua C. Dolera"
                             android:textColor="@color/design_default_color_on_primary" />
                     </RelativeLayout>
 
@@ -126,7 +125,6 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_alignParentEnd="true"
-                            android:text="09123456789"
                             android:textColor="@color/design_default_color_on_primary" />
                     </RelativeLayout>
 
@@ -146,7 +144,6 @@
                             android:layout_width="200dp"
                             android:layout_height="wrap_content"
                             android:layout_alignParentEnd="true"
-                            android:text="Imus City, Cavite"
                             android:textAlignment="viewEnd"
                             android:textColor="@color/design_default_color_on_primary" />
                     </RelativeLayout>
@@ -196,10 +193,11 @@
 
                         <TextView
                             android:id="@+id/DateTime"
-                            android:layout_width="wrap_content"
+                            android:layout_width="150dp"
                             android:layout_height="wrap_content"
                             android:layout_alignParentEnd="true"
                             android:text="January 25, 2026"
+                            android:textAlignment="viewEnd"
                             android:textColor="@color/design_default_color_on_primary" />
                     </RelativeLayout>
 
@@ -260,6 +258,7 @@
                             android:id="@+id/photoLeftTop"
                             android:layout_width="0dp"
                             android:layout_height="0dp"
+                            android:fitsSystemWindows="false"
                             app:layout_constraintBottom_toTopOf="@id/photoLeftBottom"
                             app:layout_constraintEnd_toStartOf="@id/photoRight"
                             app:layout_constraintStart_toStartOf="parent"

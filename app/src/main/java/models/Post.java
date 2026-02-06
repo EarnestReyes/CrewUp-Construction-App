@@ -7,6 +7,7 @@ public class Post {
     private String title;
     private String content;
     private String timestamp;
+    private String imageUrl;
     private String profilePicUrl;
     private int likeCount;
     private boolean likedByMe;
@@ -77,5 +78,14 @@ public class Post {
     public void setPostId(String postId) {
         this.postId = postId;
     }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
 
 }

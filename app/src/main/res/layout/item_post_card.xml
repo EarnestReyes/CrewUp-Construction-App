@@ -68,6 +68,15 @@
             android:textSize="14sp"
             android:textColor="@color/text_primary" />
 
+        <ImageView
+            android:id="@+id/postImage"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_light_gray_rounded"
+            android:scaleType="centerCrop"
+            android:visibility="gone" />
+
         <!-- DIVIDER -->
         <View
             android:layout_width="match_parent"

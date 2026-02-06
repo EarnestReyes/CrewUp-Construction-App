@@ -63,6 +63,17 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         holder.txtContent.setText(post.getContent());
         holder.txtTime.setText(post.getTimestamp());
 
+        String postImageUrl = post.getImageUrl();
+
+        if (postImageUrl != null && !postImageUrl.isEmpty()) {
+            holder.postImage.setVisibility(View.VISIBLE);
+            Glide.with(context)
+                    .load(postImageUrl)
+                    .into(holder.postImage);
+        } else {
+            holder.postImage.setVisibility(View.GONE);
+        }
+
         holder.txtLikeCount.setText(
                 String.valueOf(post.getLikeCount())
         );
@@ -267,6 +278,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         ImageView imgProfile, buttonLike;
         TextView txtName, txtTime, txtContent, txtLikeCount;
         LinearLayout sharebtn, btnLike, comment;
+        ImageView postImage;
         public PostViewHolder(@NonNull View itemView) {
             super(itemView);
             imgProfile = itemView.findViewById(R.id.imgProfile);
@@ -278,6 +290,8 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             sharebtn = itemView.findViewById(R.id.sharebtn);
             buttonLike = itemView.findViewById(R.id.ButtonLike);
             comment = itemView.findViewById(R.id.comment);
+            postImage = itemView.findViewById(R.id.postImage);
+
         }
     }
 }

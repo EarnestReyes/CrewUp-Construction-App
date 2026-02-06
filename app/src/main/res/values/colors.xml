@@ -20,4 +20,8 @@
     <color name="icon_comment">#4CAF50</color>
     <color name="icon_share">#3F51B5</color>
     <color name="detail_card">#DDDDDD</color>
+
+    <color name="outline_default">#DDDDDD</color>
+    <color name="outline_focused">#1E88E5</color>
+
 </resources>

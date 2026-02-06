@@ -22,6 +22,9 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.util.Arrays;
+import java.util.List;
+
 import models.ProjectModel;
 
 public class ReviewDetails extends AppCompatActivity {
@@ -52,6 +55,8 @@ public class ReviewDetails extends AppCompatActivity {
             return insets;
         });
 
+        projectId = getIntent().getStringExtra("projectId");
+
         Username = findViewById(R.id.Username);
         UserMobile = findViewById(R.id.UserMobile);
         UserAddress = findViewById(R.id.UserAddrees);
@@ -64,6 +69,9 @@ public class ReviewDetails extends AppCompatActivity {
         photoLeftBottom = findViewById(R.id.photoLeftBottom);
         photoRight = findViewById(R.id.photoRight);
         photoLeftTop = findViewById(R.id.photoLeftTop);
+
+        loadBookingAndDetails();
+        loadImages(projectId);
 
         //place the images here
         FirebaseFirestore.getInstance()
@@ -87,17 +95,43 @@ public class ReviewDetails extends AppCompatActivity {
         findViewById(R.id.btnSubmit).setOnClickListener(v -> {
             //after finish there's a splash screen
             Intent intent = new Intent(this, ChatActivity.class);
-        intent.putExtra("projectId", projectId);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        startActivity(intent);
-        finish();
-    });
+            intent.putExtra("projectId", projectId);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
+            finish();
+        });
 
         findViewById(R.id.btnPrevious).setOnClickListener(v ->
                 startActivity(new Intent(this, ServiceInfo.class))
         );
 
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
+    }
+    private void loadBookingAndDetails() {
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        String userId = FirebaseAuth.getInstance().getUid();
+
+        db.collection("BookingOrder")
+                .whereEqualTo("userId", userId)
+                .whereIn("status", Arrays.asList("pending", "active"))
+                .limit(1)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+
+                    if (querySnapshot.isEmpty()) {
+                        Toast.makeText(this, "No active booking found", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    DocumentSnapshot doc = querySnapshot.getDocuments().get(0);
+                    String projectId = doc.getId();
+
+                    loadDetails();
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Failed to load booking", Toast.LENGTH_SHORT).show()
+                );
     }
 
     private void loadDetails() {
@@ -119,6 +153,19 @@ public class ReviewDetails extends AppCompatActivity {
 
                     DocumentSnapshot doc = querySnapshot.getDocuments().get(0);
 
+                    List<String> photos = (List<String>) doc.get("photos");
+
+                    if (photos != null) {
+                        if (photos.size() > 0)
+                            Glide.with(this).load(photos.get(0)).centerCrop().into(photoLeftTop);
+
+                        if (photos.size() > 1)
+                            Glide.with(this).load(photos.get(1)).centerCrop().into(photoRight);
+
+                        if (photos.size() > 2)
+                            Glide.with(this).load(photos.get(2)).centerCrop().into(photoLeftBottom);
+                    }
+
                     projectId = doc.getId();
 
                     Username.setText(getSafe(doc, "Name"));
@@ -138,5 +185,21 @@ public class ReviewDetails extends AppCompatActivity {
     private String getSafe(DocumentSnapshot doc, String field) {
         String value = doc.getString(field);
         return value != null && !value.isEmpty() ? value : "—";
+    }
+    private void loadImages(String projectId) {
+
+        db.collection("BookingOrder")
+                .document(projectId)
+                .get()
+                .addOnSuccessListener(doc -> {
+
+                    String url = doc.getString("Service_info_image");
+                    if (url != null && !url.isEmpty()) {
+                        Glide.with(this)
+                                .load(url)
+                                .centerCrop()
+                                .into(photoLeftTop);
+                    }
+                });
     }
 }
