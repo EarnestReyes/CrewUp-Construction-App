@@ -62,8 +62,11 @@ public class ProfileFragment extends Fragment {
 
     private String currentUserProfilePicUrl;
 
-    // ================= IMAGE PICKERS =================
+    private boolean isFirstLoad = true;
+    private boolean isRefreshing = false;
+    private int lastItemCount = -1;
 
+    // ================= IMAGE PICKERS =================
     private final ActivityResultLauncher<String> imagePickerLauncher =
             registerForActivityResult(
                     new ActivityResultContracts.GetContent(),
@@ -136,9 +139,12 @@ public class ProfileFragment extends Fragment {
                 R.color.icon_comment
         );
 
-        swipeRefresh.setOnRefreshListener(this::loadPosts);
+        swipeRefresh.setOnRefreshListener(() -> {
+            isRefreshing = true;
+            progressLoading.setVisibility(View.VISIBLE);
+            adapter.notifyDataSetChanged();
+        });
 
-        loadPosts();
 
         loadUserDetails();
         loadCurrentUserProfilePic();
@@ -194,26 +200,33 @@ public class ProfileFragment extends Fragment {
 
     private void loadPosts() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user == null) return;
+        if (user == null) {
+            stopLoading();
+            return;
+        }
 
         db.collection("posts")
                 .whereEqualTo("userId", user.getUid())
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .addSnapshotListener((value, error) -> {
-                    if (value == null) return;
 
-                    swipeRefresh.setRefreshing(false);
-                    progressLoading.setVisibility(View.GONE);
+                    if (error != null || value == null) {
+                        stopLoading();
+                        return;
+                    }
+
+                    int newCount = value.size();
+
+                    // 🔒 If nothing changed and not refreshing → STOP
+                    if (!isRefreshing && !isFirstLoad && newCount == lastItemCount) {
+                        stopLoading();
+                        return;
+                    }
 
                     posts.clear();
 
                     for (QueryDocumentSnapshot doc : value) {
 
-                        String content = doc.getString("content");
-                        String imageUrl = doc.getString("imageUrl");
-                        String userName = doc.getString("userName");
-
-                        // ✅ ALWAYS STORE TIMESTAMP AS LONG
                         long timestamp;
                         Object rawTime = doc.get("timestamp");
 
@@ -228,34 +241,25 @@ public class ProfileFragment extends Fragment {
 
                         Post post = new Post(
                                 user.getUid(),
-                                userName != null ? userName : "You",
+                                doc.getString("userName"),
                                 "",
-                                content != null ? content : "",
+                                doc.getString("content"),
                                 timestamp,
                                 currentUserProfilePicUrl,
-                                imageUrl
+                                doc.getString("imageUrl")
                         );
 
                         post.setPostId(doc.getId());
-
-                        Long likes = doc.getLong("likeCount");
-                        post.setLikeCount(likes != null ? likes.intValue() : 0);
-
-                        db.collection("posts")
-                                .document(post.getPostId())
-                                .collection("likes")
-                                .document(user.getUid())
-                                .get()
-                                .addOnSuccessListener(like ->
-                                        post.setLikedByMe(like.exists())
-                                );
-
                         posts.add(post);
                     }
 
+                    lastItemCount = newCount;
                     adapter.notifyDataSetChanged();
+
+                    stopLoading();
                 });
     }
+
 
     // ================= LOGOUT =================
 
@@ -285,5 +289,12 @@ public class ProfileFragment extends Fragment {
                 .setNegativeButton("No", null)
                 .show();
     }
+    private void stopLoading() {
+        progressLoading.setVisibility(View.GONE);
+        swipeRefresh.setRefreshing(false);
+        isFirstLoad = false;
+        isRefreshing = false;
+    }
+
 }
 

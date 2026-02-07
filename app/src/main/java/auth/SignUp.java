@@ -3,15 +3,15 @@ package auth;
 import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
+import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Looper;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -24,7 +24,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
-import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
@@ -35,6 +34,7 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -51,8 +51,6 @@ public class SignUp extends AppCompatActivity {
     private static final int LOCATION_REQUEST_CODE = 100;
     private static final String CHANNEL_ID = "crew_up_channel";
 
-    private String userAddress = "";
-
     private TextInputEditText username, email, password, confirmPassword;
 
     @Override
@@ -65,8 +63,7 @@ public class SignUp extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
-        ViewCompat.setOnApplyWindowInsetsListener(
-                findViewById(R.id.main),
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main),
                 (v, insets) -> {
                     v.setPadding(
                             insets.getInsets(WindowInsetsCompat.Type.systemBars()).left,
@@ -87,83 +84,60 @@ public class SignUp extends AppCompatActivity {
         ImageButton btnBack = findViewById(R.id.btnBack);
 
         btnBack.setOnClickListener(v -> finish());
-
+        txtLogin.setOnClickListener(v -> startActivity(new Intent(this, Login.class)));
         btnSignUp.setOnClickListener(v -> registerUser());
-
-        txtLogin.setOnClickListener(v ->
-                startActivity(new Intent(this, Login.class)));
     }
+
     private void registerUser() {
 
-        String rawName = username.getText().toString().trim();
+        String name = username.getText().toString().trim();
         String emailTxt = email.getText().toString().trim();
         String passTxt = password.getText().toString().trim();
         String confirmTxt = confirmPassword.getText().toString().trim();
 
-        if (rawName.isEmpty() || emailTxt.isEmpty()
+        if (name.isEmpty() || emailTxt.isEmpty()
                 || passTxt.isEmpty() || confirmTxt.isEmpty()) {
-            Toast.makeText(this, "All fields are required", Toast.LENGTH_SHORT).show();
+            toast("All fields are required");
             return;
         }
 
         if (!passTxt.equals(confirmTxt)) {
-            Toast.makeText(this, "Passwords do not match", Toast.LENGTH_SHORT).show();
+            toast("Passwords do not match");
             return;
         }
 
         if (passTxt.length() < 6) {
-            Toast.makeText(this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show();
+            toast("Password must be at least 6 characters");
             return;
         }
 
-        String formattedName = formatName(rawName);
-
         mAuth.createUserWithEmailAndPassword(emailTxt, passTxt)
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-
-                        saveUserToFirestore(formattedName, emailTxt);
-                        createNotification(formattedName);
-                        showLocationDialog();
-
-                    } else {
-                        Toast.makeText(
-                                this,
-                                task.getException() != null
-                                        ? task.getException().getMessage()
-                                        : "Registration failed",
-                                Toast.LENGTH_LONG
-                        ).show();
-                    }
-                });
+                .addOnSuccessListener(authResult -> {
+                    saveUserToFirestore(name, emailTxt);
+                    createNotification(name);
+                    showLocationDialog();
+                })
+                .addOnFailureListener(e ->
+                        toast(e.getMessage()));
     }
-    private String formatName(String name) {
-        String[] parts = name.split("\\s+");
-        for (int i = 0; i < parts.length && i < 2; i++) {
-            parts[i] = parts[i].substring(0, 1).toUpperCase()
-                    + parts[i].substring(1).toLowerCase();
-        }
-        return String.join(" ", parts);
-    }
+
     private void saveUserToFirestore(String username, String email) {
-
+        String role = getIntent().getStringExtra("client");
         FirebaseUser user = mAuth.getCurrentUser();
         if (user == null) return;
 
-        String role = getIntent().getStringExtra("client");
-        if (role == null) role = "client";
-
         Map<String, Object> data = new HashMap<>();
         data.put("username", username);
+        data.put("Role", role);
         data.put("username_lower", username.toLowerCase());
         data.put("email", email);
-        data.put("Role", role);
         data.put("createdAt", System.currentTimeMillis());
 
         db.collection("users")
                 .document(user.getUid())
-                .set(data);
+                .set(data, SetOptions.merge());
     }
+
     private void showLocationDialog() {
         new AlertDialog.Builder(this)
                 .setTitle("Location Permission")
@@ -173,6 +147,7 @@ public class SignUp extends AppCompatActivity {
                 .setNegativeButton("No", (d, w) -> goToUserDetails())
                 .show();
     }
+
     private void requestLocationPermission() {
         if (ContextCompat.checkSelfPermission(
                 this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -183,55 +158,62 @@ public class SignUp extends AppCompatActivity {
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                     LOCATION_REQUEST_CODE);
         } else {
-            getUserLocation();
+            fetchAndSaveLocation();
         }
     }
-    private void getUserLocation() {
+
+    private void fetchAndSaveLocation() {
+
         if (ActivityCompat.checkSelfPermission(
                 this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) return;
 
         fusedLocationClient.getLastLocation()
                 .addOnSuccessListener(location -> {
-
                     if (location != null) {
-                        double lat = location.getLatitude();
-                        double lng = location.getLongitude();
-                        userAddress = getAddressFromLocation(lat, lng);
-                        saveLocationToFirestore(userAddress, lat, lng);
+                        saveLocationAsync(location);
                     }
                     goToUserDetails();
                 });
     }
-    private String getAddressFromLocation(double lat, double lng) {
-        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
-        try {
-            List<Address> addresses =
-                    geocoder.getFromLocation(lat, lng, 1);
-            if (addresses != null && !addresses.isEmpty()) {
-                Address a = addresses.get(0);
-                return a.getLocality() + ", " + a.getAdminArea();
-            }
-        } catch (IOException e) {
-            Log.e("GEO", e.getMessage());
-        }
-        return "Unknown location";
-    }
 
-    private void saveLocationToFirestore(String address, double lat, double lng) {
+    private void saveLocationAsync(Location location) {
 
         FirebaseUser user = mAuth.getCurrentUser();
         if (user == null) return;
 
-        Map<String, Object> data = new HashMap<>();
-        data.put("location", address);
-        data.put("lat", lat);
-        data.put("lng", lng);
-        data.put("locationUpdatedAt", System.currentTimeMillis());
+        double lat = location.getLatitude();
+        double lng = location.getLongitude();
 
-        db.collection("users")
-                .document(user.getUid())
-                .update(data);
+        new Thread(() -> {
+            String address = "Unknown location";
+
+            try {
+                Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+                List<Address> list = geocoder.getFromLocation(lat, lng, 1);
+                if (list != null && !list.isEmpty()) {
+                    Address a = list.get(0);
+                    address = a.getLocality() + ", " + a.getAdminArea();
+                }
+            } catch (IOException ignored) {}
+
+            String finalAddress = address;
+
+            runOnUiThread(() -> {
+                Map<String, Object> data = new HashMap<>();
+                data.put("lat", lat);
+                data.put("lng", lng);
+                data.put("location", finalAddress);
+                data.put("locationUpdatedAt", System.currentTimeMillis());
+
+                db.collection("users")
+                        .document(user.getUid())
+                        .set(data, SetOptions.merge());
+
+                Log.d("LOCATION_DEBUG", "Saved: " + finalAddress);
+            });
+
+        }).start();
     }
 
     private void goToUserDetails() {
@@ -258,11 +240,14 @@ public class SignUp extends AppCompatActivity {
         NotificationCompat.Builder builder =
                 new NotificationCompat.Builder(this, CHANNEL_ID)
                         .setSmallIcon(R.drawable.crewup_logo)
-                        .setContentTitle("Account Created Successfully!")
-                        .setContentText("Welcome " + name + "!")
-                        .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+                        .setContentTitle("Account Created")
+                        .setContentText("Welcome " + name + "!");
 
         manager.notify(1, builder.build());
+    }
+
+    private void toast(String msg) {
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -273,13 +258,12 @@ public class SignUp extends AppCompatActivity {
 
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
-        if (requestCode == LOCATION_REQUEST_CODE) {
-            if (grantResults.length > 0
-                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                getUserLocation();
-            } else {
-                goToUserDetails();
-            }
+        if (requestCode == LOCATION_REQUEST_CODE
+                && grantResults.length > 0
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            fetchAndSaveLocation();
+        } else {
+            goToUserDetails();
         }
     }
 }

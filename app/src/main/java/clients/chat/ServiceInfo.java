@@ -2,13 +2,13 @@ package clients.chat;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.Spinner;
 import android.widget.Toast;
 
 import android.app.DatePickerDialog;
@@ -51,7 +51,7 @@ public class ServiceInfo extends AppCompatActivity {
     String projectId;
     ImageView p1, p2, p3;
     LinearLayout Photos;
-
+    View map;
     private String photo1 = null;
     private String photo2 = null;
     private String photo3 = null;
@@ -129,10 +129,17 @@ public class ServiceInfo extends AppCompatActivity {
         p1 = findViewById(R.id.photo1);
         p2 = findViewById(R.id.photo2);
         p3 = findViewById(R.id.photo3);
+        map = findViewById(R.id.map);
 
         p1.setOnClickListener(v -> permission(UploadedImage));
         p2.setOnClickListener(v -> permission(UploadedImage));
         p3.setOnClickListener(v -> permission(UploadedImage));
+
+        map.setOnClickListener(v -> {
+            Toast.makeText(this, "Opening location..", Toast.LENGTH_SHORT).show();
+            Intent in = new Intent(this, RealTimeLocation.class);
+            startActivity(in);
+        });
 
         Photos.setOnClickListener(v -> {
             FirebaseFirestore.getInstance()

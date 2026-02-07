@@ -25,12 +25,13 @@ public class ChatFragment extends Fragment {
 
     private RecyclerView recyclerView;
     private RecentChatRecyclerAdapter adapter;
-
     private SwipeRefreshLayout swipeRefresh;
     private ProgressBar progressLoading;
     private TextView txtEmpty;
 
-    private boolean firstLoad = true;
+    private boolean isFirstLoad = true;
+    private boolean isRefreshing = false;
+    private int lastItemCount = -1;
 
     @Nullable
     @Override
@@ -49,6 +50,7 @@ public class ChatFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerView.setItemAnimator(null);
 
+        // Initial UI state
         progressLoading.setVisibility(View.VISIBLE);
         txtEmpty.setVisibility(View.GONE);
 
@@ -61,10 +63,13 @@ public class ChatFragment extends Fragment {
         );
 
         swipeRefresh.setOnRefreshListener(() -> {
-            swipeRefresh.postDelayed(
-                    () -> swipeRefresh.setRefreshing(false),
-                    600
-            );
+            isRefreshing = true;
+            progressLoading.setVisibility(View.VISIBLE);
+
+            if (adapter != null) {
+                adapter.stopListening();
+                adapter.startListening();
+            }
         });
 
         return view;
@@ -85,22 +90,31 @@ public class ChatFragment extends Fragment {
 
             @Override
             public void onDataChanged() {
-                if (firstLoad) {
-                    progressLoading.setVisibility(View.GONE);
-                    firstLoad = false;
+
+                int newCount = getItemCount();
+
+                if (!isRefreshing && !isFirstLoad && newCount == lastItemCount) {
+                    stopLoading();
+                    return;
                 }
 
-                swipeRefresh.setRefreshing(false);
+                lastItemCount = newCount;
 
-                if (getItemCount() == 0) {
-                    txtEmpty.setVisibility(View.VISIBLE);
-                } else {
-                    txtEmpty.setVisibility(View.GONE);
-                }
+                // Empty state
+                txtEmpty.setVisibility(newCount == 0 ? View.VISIBLE : View.GONE);
+
+                stopLoading();
             }
         };
 
         recyclerView.setAdapter(adapter);
+    }
+
+    private void stopLoading() {
+        progressLoading.setVisibility(View.GONE);
+        swipeRefresh.setRefreshing(false);
+        isFirstLoad = false;
+        isRefreshing = false;
     }
 
     @Override
@@ -115,4 +129,3 @@ public class ChatFragment extends Fragment {
         if (adapter != null) adapter.stopListening();
     }
 }
-

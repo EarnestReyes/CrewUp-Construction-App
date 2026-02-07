@@ -20,6 +20,7 @@ import androidx.fragment.app.Fragment;
 import clients.Notifications;
 import clients.chat.ChatActivity;
 import clients.chat.ChatFragment;
+import clients.chat.RealTimeLocation;
 import clients.works.history;
 import data.FirebaseUtil;
 import clients.home.Home;
@@ -105,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
         Profile = findViewById((R.id.Profile));
 
         txtNewsFeed.setOnClickListener(v -> {
-            Intent in = new Intent(this, RealTimeLocation.class);
+            Intent in = new Intent(this, WorkersLocationMap.class);
             startActivity(in);
             Toast.makeText(this, "Opening Location..", Toast.LENGTH_SHORT).show();
         });
