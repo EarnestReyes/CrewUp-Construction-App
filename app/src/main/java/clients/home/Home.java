@@ -120,15 +120,17 @@ public class Home extends Fragment {
                         final String imageUrl = doc.getString("imageUrl");
 
                         // ---------- TIMESTAMP ----------
+                        long timestamp;
                         Object rawTime = doc.get("timestamp");
-                        final String time;
 
-                        if (rawTime instanceof Timestamp) {
-                            time = formatTimestamp(((Timestamp) rawTime).toDate().getTime());
+                        if (rawTime instanceof com.google.firebase.Timestamp) {
+                            timestamp = ((com.google.firebase.Timestamp) rawTime)
+                                    .toDate()
+                                    .getTime();
                         } else if (rawTime instanceof Long) {
-                            time = formatTimestamp((Long) rawTime);
+                            timestamp = (Long) rawTime;
                         } else {
-                            time = "Just now";
+                            timestamp = System.currentTimeMillis();
                         }
 
                         Long likes = doc.getLong("likeCount");
@@ -142,8 +144,9 @@ public class Home extends Fragment {
                                     profileCache.get(userId + "_name"),
                                     title != null ? title : "",
                                     content != null ? content : "",
-                                    time,
-                                    profileCache.get(userId)
+                                    timestamp,                         // ✅ long timestamp
+                                    profileCache.get(userId),     // ✅ profilePicUrl (String)
+                                    imageUrl                      // ✅ imageUrl
                             );
 
                             post.setPostId(postId);
@@ -171,11 +174,12 @@ public class Home extends Fragment {
 
                                     Post post = new Post(
                                             userId,
-                                            username != null ? username : "Unknown",
+                                            profileCache.get(userId + "_name"),
                                             title != null ? title : "",
                                             content != null ? content : "",
-                                            time,
-                                            profilePicUrl
+                                            timestamp,                         // ✅ long timestamp
+                                            profileCache.get(userId),     // ✅ profilePicUrl (String)
+                                            imageUrl                      // ✅ imageUrl
                                     );
 
                                     post.setPostId(postId);

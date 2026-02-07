@@ -1,5 +1,6 @@
 package workers.works;
 
+import android.media.Image;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,9 +12,12 @@ import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
 
+import com.bumptech.glide.Glide;
 import com.example.ConstructionApp.R;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.List;
 
 public class ProjectDetailsFragment extends Fragment {
 
@@ -21,6 +25,7 @@ public class ProjectDetailsFragment extends Fragment {
             tvSite, tvBudget, tvDesc;
 
     Button accept, cancel, complete;
+    ImageView imgPhoto;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -39,6 +44,8 @@ public class ProjectDetailsFragment extends Fragment {
         accept = v.findViewById(R.id.btnAccept);
         cancel = v.findViewById(R.id.btnCancel);
         complete = v.findViewById(R.id.btnComplete);
+        imgPhoto = v.findViewById(R.id.imgPhoto);
+
 
         Bundle args = getArguments();
         if (args == null) return v;
@@ -60,6 +67,18 @@ public class ProjectDetailsFragment extends Fragment {
             tvSite.setText(doc.getString("Site_Address"));
             tvBudget.setText(doc.getString("Budget"));
             tvDesc.setText(doc.getString("Description"));
+
+            List<String> photos = (List<String>) doc.get("photos");
+
+            if (photos != null && !photos.isEmpty()) {
+                Glide.with(requireContext())
+                        .load(photos.get(0))
+                        .placeholder(R.drawable.bg_bottom_nav)
+                        .error(com.cloudinary.android.ui.R.drawable.lock)
+                        .into(imgPhoto);
+            } else {
+                imgPhoto.setVisibility(View.GONE);
+            }
         });
 
         accept.setOnClickListener(v1 ->

@@ -10,12 +10,16 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,66 +30,68 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.messaging.FirebaseMessaging;
 
+import java.util.ArrayList;
+
+import adapters.PostAdapter;
 import app.MainActivity;
 import app.Splash_activity;
 import auth.GetStartedActivity;
 import data.FirebaseUtil;
+import models.Post;
 
 public class WorkerProfile extends Fragment {
 
     private FirebaseFirestore db;
+    private ListenerRegistration postsListener;
     private Button logout;
     private ImageView imgProfile, imgCoverPhoto;
-    private Uri selectedImageUri;
     private TextView username, birthday, Gender, Location, Mobile, Social;
+    private RecyclerView recyclerView;
+
+    private ArrayList<Post> posts;
+    private PostAdapter adapter;
+
+    private ProgressBar progressLoading;
+    private SwipeRefreshLayout swipeRefresh;
+
+    private String currentUserProfilePicUrl;
+
+    // ================= IMAGE PICKERS =================
 
     private final ActivityResultLauncher<String> imagePickerLauncher =
             registerForActivityResult(
                     new ActivityResultContracts.GetContent(),
                     uri -> {
                         if (uri != null && isAdded()) {
-
-                            // Show preview immediately (good UX)
                             Glide.with(requireContext())
                                     .load(uri)
                                     .circleCrop()
                                     .into(imgProfile);
-
-                            // Upload to Cloudinary
-                            FirebaseUtil.uploadProfilePic(
-                                    requireContext(),
-                                    uri
-                            );
+                            FirebaseUtil.uploadProfilePic(requireContext(), uri);
                         }
                     }
             );
 
-    private final ActivityResultLauncher<String> CoverimagePickerLauncher =
+    private final ActivityResultLauncher<String> coverImagePickerLauncher =
             registerForActivityResult(
                     new ActivityResultContracts.GetContent(),
                     uri -> {
                         if (uri != null && isAdded()) {
-
-                            // Show preview immediately (good UX)
                             Glide.with(requireContext())
                                     .load(uri)
                                     .centerCrop()
                                     .into(imgCoverPhoto);
-
-                            // Upload to Cloudinary
-                            FirebaseUtil.uploadCoverProfilePic(
-                                    requireContext(),
-                                    uri
-                            );
+                            FirebaseUtil.uploadCoverProfilePic(requireContext(), uri);
                         }
                     }
             );
 
-    public WorkerProfile() {
-
-    }
+    // ================= LIFECYCLE =================
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -99,115 +105,191 @@ public class WorkerProfile extends Fragment {
             ViewGroup container,
             Bundle savedInstanceState
     ) {
-        View view = inflater.inflate(R.layout.fragment_worker_profile, container, false);
+        View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
         logout = view.findViewById(R.id.logout_btn);
         imgProfile = view.findViewById(R.id.imgProfile);
-        username = view.findViewById(R.id.workertxtName);
         imgCoverPhoto = view.findViewById(R.id.imgCoverPhoto);
+        username = view.findViewById(R.id.workertxtName);
         birthday = view.findViewById(R.id.birthday);
         Gender = view.findViewById(R.id.gender);
         Location = view.findViewById(R.id.location);
         Mobile = view.findViewById(R.id.mobile);
         Social = view.findViewById(R.id.social);
 
-        loaddetails();
+        progressLoading = view.findViewById(R.id.progressLoading);
+        swipeRefresh = view.findViewById(R.id.swipeRefresh);
+
+        recyclerView = view.findViewById(R.id.recyclerPosts);
+        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
+
+        posts = new ArrayList<>();
+        adapter = new PostAdapter(requireContext(), posts);
+        recyclerView.setAdapter(adapter);
+
+        progressLoading.setVisibility(View.VISIBLE);
+
+        swipeRefresh.setColorSchemeResources(
+                R.color.primary,
+                R.color.icon_share,
+                R.color.icon_comment
+        );
+
+        swipeRefresh.setOnRefreshListener(() -> {
+            swipeRefresh.setRefreshing(false);
+        });
+
+        loadUserDetails();
+        loadCurrentUserProfilePic();
+        loadPosts();
 
         String uid = FirebaseUtil.currentUserId();
         if (uid != null && isAdded()) {
-            FirebaseUtil.listenToProfilePic(
-                    requireContext(),
-                    imgProfile,
-                    uid
-            );
+            FirebaseUtil.listenToProfilePic(requireContext(), imgProfile, uid);
+            FirebaseUtil.CoverlistenToProfilePic(requireContext(), imgCoverPhoto, uid);
         }
 
-        String uidc = FirebaseUtil.currentUserId();
-        if (uidc != null && isAdded()) {
-            FirebaseUtil.CoverlistenToProfilePic(
-                    requireContext(),
-                    imgCoverPhoto,
-                    uidc
-            );
-        }
+        imgProfile.setOnClickListener(v -> permission(imagePickerLauncher));
+        imgCoverPhoto.setOnClickListener(v -> permission(coverImagePickerLauncher));
 
-        imgCoverPhoto.setOnClickListener(v -> {
+        logout.setOnClickListener(v -> logout());
 
-           permission(CoverimagePickerLauncher);
-
-        });
-
-        imgProfile.setOnClickListener(v -> {
-
-           permission(imagePickerLauncher);
-        });
-
-
-        logout.setOnClickListener(v -> {
-            logout();
-        });
         return view;
     }
 
-    private void loaddetails() {
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser == null) return;
+    // ================= USER DATA =================
 
-        String userId = currentUser.getUid();
+    private void loadUserDetails() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return;
 
         db.collection("users")
-                .document(userId)
+                .document(user.getUid())
                 .get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot.exists()) {
-                        String name = documentSnapshot.getString("username");
-                        String Birthday = documentSnapshot.getString("Birthday");
-                        String gender = documentSnapshot.getString("Gender");
-                        String location = documentSnapshot.getString("location");
-                        String mobile = documentSnapshot.getString("Mobile Number");
-                        String socials = documentSnapshot.getString("Social");
-                        if (name != null) {
-                            username.setText(name);
-                            birthday.setText(Birthday);
-                            Gender.setText(gender);
-                            Location.setText(location);
-                            Mobile.setText(mobile);
-                            Social.setText(socials);
-                        }
-                    }});
+                .addOnSuccessListener(doc -> {
+                    if (!doc.exists()) return;
+                    username.setText(doc.getString("username"));
+                    birthday.setText(doc.getString("Birthday"));
+                    Gender.setText(doc.getString("Gender"));
+                    Location.setText(doc.getString("location"));
+                    Mobile.setText(doc.getString("Mobile Number"));
+                    Social.setText(doc.getString("Social"));
+                });
     }
+
+    private void loadCurrentUserProfilePic() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return;
+
+        db.collection("users")
+                .document(user.getUid())
+                .get()
+                .addOnSuccessListener(doc ->
+                        currentUserProfilePicUrl = doc.getString("profilePicUrl")
+                );
+    }
+
+    // ================= POSTS =================
+
+    private void loadPosts() {
+
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return;
+
+        // ❌ Remove old listener before adding a new one
+        if (postsListener != null) {
+            postsListener.remove();
+        }
+
+        postsListener = db.collection("posts")
+                .whereEqualTo("userId", user.getUid())
+                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .addSnapshotListener((value, error) -> {
+
+                    if (error != null || value == null) return;
+
+                    posts.clear();
+
+                    for (QueryDocumentSnapshot doc : value) {
+
+                        String content = doc.getString("content");
+                        String imageUrl = doc.getString("imageUrl");
+                        String userName = doc.getString("userName");
+
+                        long timestamp;
+                        Object rawTime = doc.get("timestamp");
+
+                        if (rawTime instanceof com.google.firebase.Timestamp) {
+                            timestamp = ((com.google.firebase.Timestamp) rawTime)
+                                    .toDate().getTime();
+                        } else if (rawTime instanceof Long) {
+                            timestamp = (Long) rawTime;
+                        } else {
+                            timestamp = System.currentTimeMillis();
+                        }
+
+                        Post post = new Post(
+                                user.getUid(),
+                                userName != null ? userName : "You",
+                                "",
+                                content != null ? content : "",
+                                timestamp,
+                                currentUserProfilePicUrl,
+                                imageUrl
+                        );
+
+                        post.setPostId(doc.getId());
+
+                        Long likes = doc.getLong("likeCount");
+                        post.setLikeCount(likes != null ? likes.intValue() : 0);
+
+                        posts.add(post);
+                    }
+
+                    adapter.notifyDataSetChanged();
+                    swipeRefresh.setRefreshing(false);
+                    progressLoading.setVisibility(View.GONE);
+                });
+    }
+
+
+    // ================= LOGOUT =================
+
     private void logout() {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Account Logout")
-                .setMessage("Are you sure you want to logout from this account?")
-                .setCancelable(false)
-                .setPositiveButton("Yes", (dialog, which) -> {
-                    FirebaseMessaging.getInstance().deleteToken().addOnCompleteListener(new OnCompleteListener<Void>() {
-                        @Override
-                        public void onComplete(@NonNull Task<Void> task) {
-                            if(task.isSuccessful()){
-                                FirebaseUtil.logout();
-                                Intent intent = new Intent(getContext(), GetStartedActivity.class);
-                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                                startActivity(intent);
-                            }
-                        }
-                    });
-                    Toast.makeText(requireContext(), "Logout successful!", Toast.LENGTH_SHORT).show();
-                })
-                .setNegativeButton("No", (dialog, which) ->
-                        Toast.makeText(requireContext(), "Your wish is my command", Toast.LENGTH_SHORT).show())
+                .setMessage("Are you sure you want to logout?")
+                .setPositiveButton("Yes", (d, w) ->
+                        FirebaseMessaging.getInstance().deleteToken()
+                                .addOnCompleteListener(Task::isSuccessful)
+                                .addOnSuccessListener(v -> {
+                                    FirebaseUtil.logout();
+                                    startActivity(new Intent(getContext(), Splash_activity.class));
+                                    Toast.makeText(requireContext(),
+                                            "Logout successful!", Toast.LENGTH_SHORT).show();
+                                })
+                )
+                .setNegativeButton("No", null)
                 .show();
     }
 
-    private void permission(ActivityResultLauncher act) {
+    private void permission(ActivityResultLauncher<String> launcher) {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Media Permission")
                 .setMessage("Allow app to access your gallery?")
-                .setCancelable(false)
-                .setPositiveButton("Yes", (d, w) -> act.launch("image/*"))
-                .setNegativeButton("No", (d, w) ->
-                        Toast.makeText(requireContext(), "We need permission of camera to proceed", Toast.LENGTH_SHORT).show())
+                .setPositiveButton("Yes", (d, w) -> launcher.launch("image/*"))
+                .setNegativeButton("No", null)
                 .show();
     }
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (postsListener != null) {
+            postsListener.remove();
+            postsListener = null;
+        }
+    }
+
 }
+
+

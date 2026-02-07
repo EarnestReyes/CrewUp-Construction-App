@@ -12,12 +12,14 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -49,59 +51,48 @@ public class ProfileFragment extends Fragment {
     private FirebaseFirestore db;
     private Button logout;
     private ImageView imgProfile, imgCoverPhoto;
-    private Uri selectedImageUri;
     private TextView username, birthday, Gender, Location, Mobile, Social;
-    RecyclerView recyclerView;
+    private RecyclerView recyclerView;
+
     private ArrayList<Post> posts;
     private PostAdapter adapter;
 
+    private ProgressBar progressLoading;
+    private SwipeRefreshLayout swipeRefresh;
+
     private String currentUserProfilePicUrl;
+
+    // ================= IMAGE PICKERS =================
 
     private final ActivityResultLauncher<String> imagePickerLauncher =
             registerForActivityResult(
                     new ActivityResultContracts.GetContent(),
                     uri -> {
                         if (uri != null && isAdded()) {
-
-                            // Show preview immediately (good UX)
                             Glide.with(requireContext())
                                     .load(uri)
                                     .circleCrop()
                                     .into(imgProfile);
-
-                            // Upload to Cloudinary
-                            FirebaseUtil.uploadProfilePic(
-                                    requireContext(),
-                                    uri
-                            );
-                        }
-                    }
-              );
-
-    private final ActivityResultLauncher<String> CoverimagePickerLauncher =
-            registerForActivityResult(
-                    new ActivityResultContracts.GetContent(),
-                    uri -> {
-                        if (uri != null && isAdded()) {
-
-                            // Show preview immediately (good UX)
-                            Glide.with(requireContext())
-                                    .load(uri)
-                                    .centerCrop()
-                                    .into(imgCoverPhoto);
-
-                            // Upload to Cloudinary
-                            FirebaseUtil.uploadCoverProfilePic(
-                                    requireContext(),
-                                    uri
-                            );
+                            FirebaseUtil.uploadProfilePic(requireContext(), uri);
                         }
                     }
             );
 
-    public ProfileFragment() {
+    private final ActivityResultLauncher<String> coverImagePickerLauncher =
+            registerForActivityResult(
+                    new ActivityResultContracts.GetContent(),
+                    uri -> {
+                        if (uri != null && isAdded()) {
+                            Glide.with(requireContext())
+                                    .load(uri)
+                                    .centerCrop()
+                                    .into(imgCoverPhoto);
+                            FirebaseUtil.uploadCoverProfilePic(requireContext(), uri);
+                        }
+                    }
+            );
 
-    }
+    // ================= LIFECYCLE =================
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -119,13 +110,17 @@ public class ProfileFragment extends Fragment {
 
         logout = view.findViewById(R.id.logout_btn);
         imgProfile = view.findViewById(R.id.imgProfile);
-        username = view.findViewById(R.id.workertxtName);
         imgCoverPhoto = view.findViewById(R.id.imgCoverPhoto);
+        username = view.findViewById(R.id.workertxtName);
         birthday = view.findViewById(R.id.birthday);
         Gender = view.findViewById(R.id.gender);
         Location = view.findViewById(R.id.location);
         Mobile = view.findViewById(R.id.mobile);
         Social = view.findViewById(R.id.social);
+
+        progressLoading = view.findViewById(R.id.progressLoading);
+        swipeRefresh = view.findViewById(R.id.swipeRefresh);
+
         recyclerView = view.findViewById(R.id.recyclerPosts);
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
 
@@ -133,120 +128,71 @@ public class ProfileFragment extends Fragment {
         adapter = new PostAdapter(requireContext(), posts);
         recyclerView.setAdapter(adapter);
 
-        loaddetails();
+        progressLoading.setVisibility(View.VISIBLE);
 
-        db = FirebaseFirestore.getInstance();
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user != null) {
-            db.collection("users")
-                    .document(user.getUid())
-                    .get()
-                    .addOnSuccessListener(snapshot -> {
+        swipeRefresh.setColorSchemeResources(
+                R.color.primary,
+                R.color.icon_share,
+                R.color.icon_comment
+        );
 
-                        currentUserProfilePicUrl =
-                                snapshot.getString("profilePicUrl");
-                        loadPosts();
-                    });
-        }
+        swipeRefresh.setOnRefreshListener(this::loadPosts);
+
+        loadPosts();
+
+        loadUserDetails();
+        loadCurrentUserProfilePic();
+        loadPosts();
 
         String uid = FirebaseUtil.currentUserId();
         if (uid != null && isAdded()) {
-            FirebaseUtil.listenToProfilePic(
-                    requireContext(),
-                    imgProfile,
-                    uid
-            );
+            FirebaseUtil.listenToProfilePic(requireContext(), imgProfile, uid);
+            FirebaseUtil.CoverlistenToProfilePic(requireContext(), imgCoverPhoto, uid);
         }
 
-        String uidc = FirebaseUtil.currentUserId();
-        if (uidc != null && isAdded()) {
-            FirebaseUtil.CoverlistenToProfilePic(
-                    requireContext(),
-                    imgCoverPhoto,
-                    uidc
-            );
-        }
+        imgProfile.setOnClickListener(v -> permission(imagePickerLauncher));
+        imgCoverPhoto.setOnClickListener(v -> permission(coverImagePickerLauncher));
 
-        imgCoverPhoto.setOnClickListener(v -> {
+        logout.setOnClickListener(v -> logout());
 
-            permission(CoverimagePickerLauncher);
+        return view;
+    }
 
-        });
+    // ================= USER DATA =================
 
-        imgProfile.setOnClickListener(v -> {
-
-            permission(imagePickerLauncher);
-        });
-
-
-        logout.setOnClickListener(v -> {
-            logout();
-        });
-            return view;
-        }
-
-    private void loaddetails() {
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser == null) return;
-
-        String userId = currentUser.getUid();
+    private void loadUserDetails() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return;
 
         db.collection("users")
-                .document(userId)
+                .document(user.getUid())
                 .get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot.exists()) {
-                        String name = documentSnapshot.getString("username");
-                        String Birthday = documentSnapshot.getString("Birthday");
-                        String gender = documentSnapshot.getString("Gender");
-                        String location = documentSnapshot.getString("location");
-                        String mobile = documentSnapshot.getString("Mobile Number");
-                        String socials = documentSnapshot.getString("Social");
-                        if (name != null) {
-                            username.setText(name);
-                            birthday.setText(Birthday);
-                            Gender.setText(gender);
-                            Location.setText(location);
-                            Mobile.setText(mobile);
-                            Social.setText(socials);
-                        }
-      }});
+                .addOnSuccessListener(doc -> {
+                    if (!doc.exists()) return;
+                    username.setText(doc.getString("username"));
+                    birthday.setText(doc.getString("Birthday"));
+                    Gender.setText(doc.getString("Gender"));
+                    Location.setText(doc.getString("location"));
+                    Mobile.setText(doc.getString("Mobile Number"));
+                    Social.setText(doc.getString("Social"));
+                });
     }
-    private void logout() {
-        new AlertDialog.Builder(requireContext())
-                .setTitle("Account Logout")
-                .setMessage("Are you sure you want to logout from this account?")
-                .setCancelable(false)
-                .setPositiveButton("Yes", (dialog, which) -> {
-                    FirebaseMessaging.getInstance().deleteToken().addOnCompleteListener(new OnCompleteListener<Void>() {
-                        @Override
-                        public void onComplete(@NonNull Task<Void> task) {
-                            if(task.isSuccessful()){
-                                FirebaseUtil.logout();
-                                Intent intent = new Intent(getContext(), Splash_activity.class);
-                                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                                startActivity(intent);
-                                Toast.makeText(requireContext(), "Logout successful!", Toast.LENGTH_SHORT).show();
-                            }
-                        }
-                    });
-                })
-                .setNegativeButton("No", (dialog, which) ->
-                        Toast.makeText(requireContext(), "Your wish is my command", Toast.LENGTH_SHORT).show())
-                .show();
-    }
-    private void permission(ActivityResultLauncher act) {
-        new AlertDialog.Builder(requireContext())
-                .setTitle("Media Permission")
-                .setMessage("Allow app to access your gallery?")
-                .setCancelable(false)
-                .setPositiveButton("Yes", (d, w) -> act.launch("image/*"))
-                .setNegativeButton("No", (d, w) ->
-                        Toast.makeText(requireContext(), "We need permission of camera to proceed", Toast.LENGTH_SHORT).show())
-                .show();
-    }
-    private void loadPosts() {
 
+    private void loadCurrentUserProfilePic() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return;
+
+        db.collection("users")
+                .document(user.getUid())
+                .get()
+                .addOnSuccessListener(doc ->
+                        currentUserProfilePicUrl = doc.getString("profilePicUrl")
+                );
+    }
+
+    // ================= POSTS =================
+
+    private void loadPosts() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) return;
 
@@ -254,61 +200,55 @@ public class ProfileFragment extends Fragment {
                 .whereEqualTo("userId", user.getUid())
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .addSnapshotListener((value, error) -> {
-
                     if (value == null) return;
+
+                    swipeRefresh.setRefreshing(false);
+                    progressLoading.setVisibility(View.GONE);
 
                     posts.clear();
 
                     for (QueryDocumentSnapshot doc : value) {
 
-                        // ✅ READ EXACT FIELDS
                         String content = doc.getString("content");
                         String imageUrl = doc.getString("imageUrl");
                         String userName = doc.getString("userName");
 
-                        // ----- TIMESTAMP -----
+                        // ✅ ALWAYS STORE TIMESTAMP AS LONG
+                        long timestamp;
                         Object rawTime = doc.get("timestamp");
-                        String time;
 
                         if (rawTime instanceof com.google.firebase.Timestamp) {
-                            time = formatTimestamp(
-                                    ((com.google.firebase.Timestamp) rawTime)
-                                            .toDate().getTime()
-                            );
+                            timestamp = ((com.google.firebase.Timestamp) rawTime)
+                                    .toDate().getTime();
                         } else if (rawTime instanceof Long) {
-                            time = formatTimestamp((Long) rawTime);
+                            timestamp = (Long) rawTime;
                         } else {
-                            time = "Just now";
+                            timestamp = System.currentTimeMillis();
                         }
 
-                        // ✅ CREATE POST CLEANLY
                         Post post = new Post(
                                 user.getUid(),
                                 userName != null ? userName : "You",
+                                "",
                                 content != null ? content : "",
-                                time,
-                                currentUserProfilePicUrl
+                                timestamp,
+                                currentUserProfilePicUrl,
+                                imageUrl
                         );
 
                         post.setPostId(doc.getId());
 
-                        // ✅ SET IMAGE SEPARATELY
-                        post.setImageUrl(imageUrl);
-
-                        // Likes
                         Long likes = doc.getLong("likeCount");
                         post.setLikeCount(likes != null ? likes.intValue() : 0);
 
-                        // Check if liked by me
                         db.collection("posts")
                                 .document(post.getPostId())
                                 .collection("likes")
                                 .document(user.getUid())
                                 .get()
-                                .addOnSuccessListener(likeSnap -> {
-                                    post.setLikedByMe(likeSnap.exists());
-                                    adapter.notifyDataSetChanged();
-                                });
+                                .addOnSuccessListener(like ->
+                                        post.setLikedByMe(like.exists())
+                                );
 
                         posts.add(post);
                     }
@@ -317,10 +257,33 @@ public class ProfileFragment extends Fragment {
                 });
     }
 
-    private String formatTimestamp(long millis) {
-        return new SimpleDateFormat(
-                "MMM dd, yyyy • hh:mm a",
-                Locale.getDefault()
-        ).format(new Date(millis));
+    // ================= LOGOUT =================
+
+    private void logout() {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Account Logout")
+                .setMessage("Are you sure you want to logout?")
+                .setPositiveButton("Yes", (d, w) ->
+                        FirebaseMessaging.getInstance().deleteToken()
+                                .addOnCompleteListener(Task::isSuccessful)
+                                .addOnSuccessListener(v -> {
+                                    FirebaseUtil.logout();
+                                    startActivity(new Intent(getContext(), Splash_activity.class));
+                                    Toast.makeText(requireContext(),
+                                            "Logout successful!", Toast.LENGTH_SHORT).show();
+                                })
+                )
+                .setNegativeButton("No", null)
+                .show();
+    }
+
+    private void permission(ActivityResultLauncher<String> launcher) {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Media Permission")
+                .setMessage("Allow app to access your gallery?")
+                .setPositiveButton("Yes", (d, w) -> launcher.launch("image/*"))
+                .setNegativeButton("No", null)
+                .show();
     }
 }
+

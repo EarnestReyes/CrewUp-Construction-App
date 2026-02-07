@@ -2,261 +2,173 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/bg_color">
 
-    <androidx.core.widget.NestedScrollView
-        android:id="@+id/scrollContent"
+    <!-- ================= SWIPE REFRESH ================= -->
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefresh"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:fillViewport="true"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- ONLY ONE CHILD -->
-        <LinearLayout
+        <!-- ================= SCROLL ================= -->
+        <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_height="match_parent"
+            android:fillViewport="true">
 
-            <!-- ================= COVER PHOTO ================= -->
-            <FrameLayout
-                android:id="@+id/cover_container"
-                android:layout_width="match_parent"
-                android:layout_height="180dp">
-
-                <ImageView
-                    android:id="@+id/imgCoverPhoto"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:scaleType="centerCrop"
-                    android:src="@color/button_secondary" />
-            </FrameLayout>
-
-            <!-- ================= PROFILE IMAGE ================= -->
-            <FrameLayout
-                android:id="@+id/profileImageContainer"
-                android:layout_width="120dp"
-                android:layout_height="120dp"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="-60dp">
-
-                <ImageView
-                    android:id="@+id/imgProfile"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:background="@drawable/circle_bg"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/ic_profile_placeholder_foreground"/>
-
-                <ImageView
-                    android:id="@+id/btnEditPhoto"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:layout_gravity="bottom|end"
-                    android:background="@drawable/bg_fab"
-                    android:padding="6dp"
-                    android:src="@drawable/ic_edit"
-                    app:tint="@color/icon_like"/>
-            </FrameLayout>
-
-            <!-- ================= NAME ================= -->
-            <TextView
-                android:id="@+id/workertxtName"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="12dp"
-                android:minHeight="24dp"
-                android:textColor="@color/text_primary"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-
-            <!-- ================= PERSONAL DETAILS ================= -->
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="16dp"
-                app:cardBackgroundColor="@color/detail_card"
-                app:cardCornerRadius="12dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-
-                    <!-- Card Header -->
-
-                    <RelativeLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:minHeight="24dp"
-                            android:text="Personal Details"
-                            android:textColor="@color/text_primary"
-                            android:textStyle="bold"/>
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:minHeight="20dp"
-                            android:layout_alignParentEnd="true"
-                            android:text="Edit"
-                            android:textColor="#4DA6FF"/>
-                    </RelativeLayout>
-
-                    <!-- Details -->
-
-                    <!-- Contact Info -->
-                    <RelativeLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Birthday" />
-
-                        <TextView
-                            android:id="@+id/birthday"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_alignParentEnd="true"
-                            android:text="August 18, 2005" />
-                    </RelativeLayout>
-
-                    <RelativeLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Gender" />
-
-                        <TextView
-                            android:id="@+id/gender"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_alignParentEnd="true"
-                            android:text="Male" />
-                    </RelativeLayout>
-
-                    <RelativeLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Location" />
-
-                        <TextView
-                            android:id="@+id/location"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_alignParentEnd="true"
-                            android:text="Imus, Cavite" />
-                    </RelativeLayout>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:minHeight="24dp"
-                        android:layout_marginTop="12dp"
-                        android:text="Contact Info"
-                        android:textColor="@color/text_primary"
-                        android:textStyle="bold"/>
-
-                    <RelativeLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Mobile Number" />
-
-                        <TextView
-                            android:id="@+id/mobile"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_alignParentEnd="true"
-                            android:text="0962-909-0803" />
-                    </RelativeLayout>
-
-                    <RelativeLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Socials" />
-
-                        <TextView
-                            android:id="@+id/social"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_alignParentEnd="true"
-                            android:text="https//fb.com" />
-                    </RelativeLayout>
-
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <!-- ================= BUTTONS ================= -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="16dp"
                 android:orientation="vertical">
 
-                <Button
+                <!-- ================= COVER PHOTO ================= -->
+                <FrameLayout
                     android:layout_width="match_parent"
-                    android:layout_height="44dp"
-                    android:backgroundTint="@color/button_secondary"
-                    android:text="About"
-                    android:textAllCaps="false"
-                    android:textColor="#F4B400"/>
+                    android:layout_height="180dp">
 
-                <Button
+                    <ImageView
+                        android:id="@+id/imgCoverPhoto"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop"
+                        android:src="@color/button_secondary"/>
+                </FrameLayout>
+
+                <!-- ================= PROFILE IMAGE ================= -->
+                <FrameLayout
+                    android:layout_width="120dp"
+                    android:layout_height="120dp"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="-60dp">
+
+                    <ImageView
+                        android:id="@+id/imgProfile"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/circle_bg"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_profile_placeholder_foreground"/>
+                </FrameLayout>
+
+                <!-- ================= USERNAME ================= -->
+                <TextView
+                    android:id="@+id/workertxtName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="12dp"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"/>
+
+                <!-- ================= PERSONAL INFO ================= -->
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
-                    android:layout_height="44dp"
-                    android:layout_marginTop="6dp"
-                    android:backgroundTint="@color/button_secondary"
-                    android:text="Manage Account"
-                    android:textAllCaps="false"
-                    android:textColor="#F4B400"/>
+                    android:layout_height="wrap_content"
+                    android:layout_margin="16dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp"
+                    app:cardBackgroundColor="@color/card_color">
 
-                <Button
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Personal Information"
+                            android:textColor="@color/text_primary"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginVertical="10dp"
+                            android:background="@color/divider_color"/>
+
+                        <LinearLayout style="@style/ProfileRow">
+                            <TextView android:text="Birthday" style="@style/ProfileLabel"/>
+                            <TextView android:id="@+id/birthday" style="@style/ProfileValue"/>
+                        </LinearLayout>
+
+                        <LinearLayout style="@style/ProfileRow">
+                            <TextView android:text="Gender" style="@style/ProfileLabel"/>
+                            <TextView android:id="@+id/gender" style="@style/ProfileValue"/>
+                        </LinearLayout>
+
+                        <LinearLayout style="@style/ProfileRow">
+                            <TextView android:text="Location" style="@style/ProfileLabel"/>
+                            <TextView android:id="@+id/location" style="@style/ProfileValue"/>
+                        </LinearLayout>
+
+                        <LinearLayout style="@style/ProfileRow">
+                            <TextView android:text="Mobile" style="@style/ProfileLabel"/>
+                            <TextView android:id="@+id/mobile" style="@style/ProfileValue"/>
+                        </LinearLayout>
+
+                        <LinearLayout style="@style/ProfileRow">
+                            <TextView android:text="Social" style="@style/ProfileLabel"/>
+                            <TextView android:id="@+id/social" style="@style/ProfileValue"/>
+                        </LinearLayout>
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- ================= POSTS TITLE ================= -->
+                <TextView
                     android:layout_width="match_parent"
-                    android:layout_height="44dp"
-                    android:layout_marginTop="6dp"
-                    android:backgroundTint="@color/button_secondary"
-                    android:text="Developer’s Page"
-                    android:textAllCaps="false"
-                    android:textColor="#F4B400"/>
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="8dp"
+                    android:text="Posts"
+                    android:textStyle="bold"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary"/>
 
+                <!-- ================= USER POSTS ================= -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerPosts"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="8dp"
+                    android:nestedScrollingEnabled="false"/>
+
+                <!-- ================= LOGOUT ================= -->
                 <Button
                     android:id="@+id/logout_btn"
                     android:layout_width="match_parent"
-                    android:layout_height="44dp"
-                    android:layout_marginTop="6dp"
-                    android:backgroundTint="@color/button_secondary"
-                    android:text="Log-out"
+                    android:layout_height="48dp"
+                    android:layout_margin="16dp"
+                    android:text="Log out"
                     android:textAllCaps="false"
+                    android:textStyle="bold"
+                    android:backgroundTint="@color/button_secondary"
                     android:textColor="#FF3B30"/>
-            </LinearLayout>
 
-        </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
+            </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+    <!-- ================= PROGRESS ================= -->
+    <ProgressBar
+        android:id="@+id/progressLoading"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -22,9 +22,11 @@ import com.bumptech.glide.Glide;
 import com.example.ConstructionApp.R;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -44,12 +46,14 @@ public class UserProfile extends AppCompatActivity {
     public RecyclerView recyclerPosts;
     public PostAdapter adapter;
     private ArrayList<Post> posts;
+
     private final Map<String, String> profileCache = new HashMap<>();
+
     TextView username;
     ImageView profile, imgCoverPhoto;
     ImageButton backBtn;
     Button button;
-
+    String currentUserProfilePicUrl;
     FirebaseFirestore db;
 
     @Override
@@ -74,71 +78,62 @@ public class UserProfile extends AppCompatActivity {
 
         backBtn.setOnClickListener(v -> finish());
 
-        String userId = getIntent().getStringExtra("userId");
-        if (userId == null) {
+        String profileUserId = getIntent().getStringExtra("userId");
+        if (profileUserId == null) {
             finish();
             return;
         }
 
+        recyclerPosts = findViewById(R.id.recyclerPosts);
+        recyclerPosts.setLayoutManager(new LinearLayoutManager(this));
+
         posts = new ArrayList<>();
+        adapter = new PostAdapter(this, posts);
+        recyclerPosts.setAdapter(adapter);
 
-        loadPosts();
-
-        FirebaseFirestore.getInstance()
-                .collection("users")
-                .document(userId)
-                .get()
-                .addOnSuccessListener(doc -> {
-                    if (!doc.exists()) return;
-
-                    username.setText(doc.getString("username"));
-
-                    String url = doc.getString("CoverprofilePicUrl");
-                    if (url != null && !url.isEmpty()) {
-                        Glide.with(this)
-                                .load(url)
-                                .centerCrop()
-                                .into(imgCoverPhoto);
-                    }
-                });
-
-        FirebaseFirestore.getInstance()
-                .collection("users")
-                .document(userId)
-                .get()
-                .addOnSuccessListener(doc -> {
-                    if (!doc.exists()) return;
-
-                    username.setText(doc.getString("username"));
-
-                    String url = doc.getString("profilePicUrl");
-                    if (url != null && !url.isEmpty()) {
-                        Glide.with(this)
-                                .load(url)
-                                .placeholder(R.drawable.ic_profile_placeholder_foreground)
-                                .circleCrop()
-                                .into(profile);
-                    }
-                });
+        loadUserInfo(profileUserId);
+        loadPosts(profileUserId);
 
         button.setOnClickListener(v -> {
             Intent intent = new Intent(this, ChatActivity.class);
-            intent.putExtra("userId", userId);
+            intent.putExtra("userId", profileUserId);
             startActivity(intent);
         });
     }
 
-    private void loadPosts() {
+    // ================= USER INFO =================
 
-        String profileUserId = getIntent().getStringExtra("userId");
-        if (profileUserId == null) return;
+    private void loadUserInfo(String userId) {
 
-        recyclerPosts = findViewById(R.id.recyclerPosts);
-        recyclerPosts.setLayoutManager(new LinearLayoutManager(this));
+        db.collection("users")
+                .document(userId)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    if (!doc.exists()) return;
 
-        posts.clear();
-        adapter = new PostAdapter(this, posts);
-        recyclerPosts.setAdapter(adapter);
+                    username.setText(doc.getString("username"));
+
+                    String cover = doc.getString("CoverprofilePicUrl");
+                    if (cover != null && !cover.isEmpty()) {
+                        Glide.with(this)
+                                .load(cover)
+                                .centerCrop()
+                                .into(imgCoverPhoto);
+                    }
+
+                    String profileUrl = doc.getString("profilePicUrl");
+                    if (profileUrl != null && !profileUrl.isEmpty()) {
+                        Glide.with(this)
+                                .load(profileUrl)
+                                .circleCrop()
+                                .into(profile);
+                    }
+                });
+    }
+
+    // ================= POSTS =================
+
+    private void loadPosts(String profileUserId) {
 
         String currentUserId = FirebaseAuth.getInstance().getUid();
 
@@ -151,33 +146,31 @@ public class UserProfile extends AppCompatActivity {
 
                     posts.clear();
 
-                    for (DocumentSnapshot postDoc : value.getDocuments()) {
+                    for (QueryDocumentSnapshot doc : value) {
 
-                        String userId = postDoc.getString("userId");
+                        String userId = doc.getString("userId");
                         if (userId == null) continue;
 
-                        String content = postDoc.getString("content");
-                        String title = postDoc.getString("title");
+                        String content = doc.getString("content");
+                        String title = doc.getString("title");
+                        String imageUrl = doc.getString("imageUrl");
 
-                        // ---- timestamp ----
-                        Object rawTime = postDoc.get("timestamp");
-                        String time;
+                        // ---- TIMESTAMP (ALWAYS LONG) ----
+                        long timestamp;
+                        Object rawTime = doc.get("timestamp");
 
-                        if (rawTime instanceof Timestamp) {
-                            time = formatTimestamp(
-                                    ((Timestamp) rawTime).toDate().getTime()
-                            );
+                        if (rawTime instanceof com.google.firebase.Timestamp) {
+                            timestamp = ((com.google.firebase.Timestamp) rawTime)
+                                    .toDate().getTime();
                         } else if (rawTime instanceof Long) {
-                            time = formatTimestamp((Long) rawTime);
+                            timestamp = (Long) rawTime;
                         } else {
-                            time = "Just now";
+                            timestamp = System.currentTimeMillis();
                         }
 
-                        // ---- like count ----
-                        Long likes = postDoc.getLong("likeCount");
+                        Long likes = doc.getLong("likeCount");
                         int likeCount = likes != null ? likes.intValue() : 0;
 
-                        // ---- cached profile ----
                         String cachedName = profileCache.get(userId + "_name");
                         String cachedPic = profileCache.get(userId);
 
@@ -188,24 +181,16 @@ public class UserProfile extends AppCompatActivity {
                                     cachedName,
                                     title != null ? title : "",
                                     content != null ? content : "",
-                                    time,
-                                    cachedPic
+                                    timestamp,
+                                    cachedPic,
+                                    imageUrl
                             );
 
-                            post.setPostId(postDoc.getId());
+                            post.setPostId(doc.getId());
                             post.setLikeCount(likeCount);
+                            posts.add(post);
 
-                            if (currentUserId != null) {
-                                db.collection("posts")
-                                        .document(post.getPostId())
-                                        .collection("likes")
-                                        .document(currentUserId)
-                                        .get()
-                                        .addOnSuccessListener(likeSnap -> {
-                                            post.setLikedByMe(likeSnap.exists());
-                                            adapter.notifyDataSetChanged();
-                                        });
-                            }
+                            checkLike(post, currentUserId);
                             continue;
                         }
 
@@ -215,41 +200,27 @@ public class UserProfile extends AppCompatActivity {
 
                                     if (!userSnap.exists()) return;
 
-                                    String username =
-                                            userSnap.getString("username");
+                                    String name = userSnap.getString("username");
+                                    String pic = userSnap.getString("profilePicUrl");
 
-                                    String profilePicUrl =
-                                            userSnap.getString("profilePicUrl");
-
-                                    profileCache.put(userId, profilePicUrl);
-                                    profileCache.put(userId + "_name", username);
+                                    profileCache.put(userId, pic);
+                                    profileCache.put(userId + "_name", name);
 
                                     Post post = new Post(
                                             userId,
-                                            username != null ? username : "Unknown",
+                                            name != null ? name : "Unknown",
                                             title != null ? title : "",
                                             content != null ? content : "",
-                                            time,
-                                            profilePicUrl
+                                            timestamp,
+                                            pic,
+                                            imageUrl
                                     );
 
-                                    post.setPostId(postDoc.getId());
+                                    post.setPostId(doc.getId());
                                     post.setLikeCount(likeCount);
-
                                     posts.add(post);
 
-                                    if (currentUserId != null) {
-                                        db.collection("posts")
-                                                .document(post.getPostId())
-                                                .collection("likes")
-                                                .document(currentUserId)
-                                                .get()
-                                                .addOnSuccessListener(likeSnap -> {
-                                                    post.setLikedByMe(likeSnap.exists());
-                                                    adapter.notifyDataSetChanged();
-                                                });
-                                    }
-
+                                    checkLike(post, currentUserId);
                                     adapter.notifyDataSetChanged();
                                 });
                     }
@@ -258,11 +229,18 @@ public class UserProfile extends AppCompatActivity {
                 });
     }
 
-    private String formatTimestamp(long millis) {
-        return new SimpleDateFormat(
-                "MMM dd, yyyy • hh:mm a",
-                Locale.getDefault()
-        ).format(new Date(millis));
+    private void checkLike(Post post, String currentUserId) {
+        if (currentUserId == null) return;
+
+        db.collection("posts")
+                .document(post.getPostId())
+                .collection("likes")
+                .document(currentUserId)
+                .get()
+                .addOnSuccessListener(like ->
+                        post.setLikedByMe(like.exists())
+                );
     }
 
 }
+

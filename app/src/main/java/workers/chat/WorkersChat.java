@@ -6,11 +6,14 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import models.ChatroomModel;
 import data.FirebaseUtil;
@@ -23,6 +26,10 @@ public class WorkersChat extends Fragment {
 
     private RecyclerView recyclerView;
     private RecentChatRecyclerAdapter adapter;
+    private SwipeRefreshLayout swipeRefresh;
+    private ProgressBar progressLoading;
+    private TextView txtEmpty;
+    private boolean firstLoad = true;
 
     public WorkersChat() {
 
@@ -37,10 +44,30 @@ public class WorkersChat extends Fragment {
     ) {
         View view = inflater.inflate(R.layout.fragment_messages, container, false);
 
+        swipeRefresh = view.findViewById(R.id.swipeRefresh);
+        progressLoading = view.findViewById(R.id.progressLoading);
+        txtEmpty = view.findViewById(R.id.txtEmpty);
         recyclerView = view.findViewById(R.id.rvMessages);
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerView.setItemAnimator(null);
+
+        progressLoading.setVisibility(View.VISIBLE);
+        txtEmpty.setVisibility(View.GONE);
+
         setupRecyclerView();
+
+        swipeRefresh.setColorSchemeResources(
+                R.color.primary,
+                R.color.icon_share,
+                R.color.icon_comment
+        );
+
+        swipeRefresh.setOnRefreshListener(() -> {
+            swipeRefresh.postDelayed(
+                    () -> swipeRefresh.setRefreshing(false),
+                    600
+            );
+        });
 
         return view;
     }
@@ -56,7 +83,25 @@ public class WorkersChat extends Fragment {
                         .setQuery(query, ChatroomModel.class)
                         .build();
 
-        adapter = new RecentChatRecyclerAdapter(options, requireContext());
+        adapter = new RecentChatRecyclerAdapter(options, requireContext()) {
+
+            @Override
+            public void onDataChanged() {
+                if (firstLoad) {
+                    progressLoading.setVisibility(View.GONE);
+                    firstLoad = false;
+                }
+
+                swipeRefresh.setRefreshing(false);
+
+                if (getItemCount() == 0) {
+                    txtEmpty.setVisibility(View.VISIBLE);
+                } else {
+                    txtEmpty.setVisibility(View.GONE);
+                }
+            }
+        };
+
         recyclerView.setAdapter(adapter);
     }
 
