@@ -40,17 +40,12 @@ import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
-    // Bottom nav buttons
     ImageButton navHome, navBell, navAdd, navChat, navActivity;
     TextView txtNewsFeed;
     ImageView btnSearch, notification, Profile ;
     private FirebaseFirestore db;
-
     private String userLocation = "";
-
     private TextView txtLocation;
-
-
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -78,7 +73,6 @@ public class MainActivity extends AppCompatActivity {
             );
             return insets;
         });
-
 
         View root = findViewById(R.id.main);
 
@@ -110,6 +104,11 @@ public class MainActivity extends AppCompatActivity {
         notification = findViewById(R.id.btnBell);
         Profile = findViewById((R.id.Profile));
 
+        txtNewsFeed.setOnClickListener(v -> {
+            Intent in = new Intent(this, RealTimeLocation.class);
+            startActivity(in);
+            Toast.makeText(this, "Opening Location..", Toast.LENGTH_SHORT).show();
+        });
 
         btnSearch.setOnClickListener(v -> {
             Intent in = new Intent(MainActivity.this, SearchUserActivity.class);
@@ -125,13 +124,11 @@ public class MainActivity extends AppCompatActivity {
             startActivity(in);
         });
 
-
         if (savedInstanceState == null) {
             loadFragment(new Home());
             highlight(navHome);
         }
 
-        // Click listeners
         navHome.setOnClickListener(v -> {
             loadFragment(new Home());
             highlight(navHome);
