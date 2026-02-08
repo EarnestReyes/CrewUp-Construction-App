@@ -64,6 +64,7 @@ public class SearchUserActivity extends AppCompatActivity {
         });
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setItemAnimator(null);
 
         loadRecentSearches();
 
@@ -124,23 +125,30 @@ public class SearchUserActivity extends AppCompatActivity {
                         })
                         .build();
 
-        if (adapter != null) adapter.stopListening();
+        if (adapter != null) {
+            adapter.stopListening();
+            recyclerView.setAdapter(null);
+        }
 
         adapter = new SearchUserRecyclerAdapter(options, this, isRecent);
         recyclerView.setAdapter(adapter);
         adapter.startListening();
     }
 
+
     @Override
-    protected void onStop() {
-        super.onStop();
-        if (adapter != null) adapter.stopListening();
+    public void onResume() {
+        super.onResume();
+        if (adapter != null) {
+            recyclerView.post(adapter::startListening);
+        }
     }
+
     @Override
-    protected void onPostResume() {
-        super.onPostResume();
-        if(adapter!=null){
-            adapter.notifyDataSetChanged();
+    public void onPause() {
+        super.onPause();
+        if (adapter != null) {
+            adapter.stopListening();
         }
     }
 }

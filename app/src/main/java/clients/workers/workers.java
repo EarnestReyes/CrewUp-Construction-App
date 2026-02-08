@@ -29,8 +29,7 @@ public class workers extends Fragment {
     private SwipeRefreshLayout swipeRefresh;
     private ProgressBar progressLoading;
     private TextView txtEmpty;
-
-    private boolean firstLoad = true; // 🔥 IMPORTANT
+    private boolean firstLoad = true;
 
     @Override
     public View onCreateView(
@@ -45,11 +44,10 @@ public class workers extends Fragment {
         progressLoading = view.findViewById(R.id.progressLoading);
         txtEmpty = view.findViewById(R.id.txtEmpty);
 
-        recyclerView.setLayoutManager(
-                new GridLayoutManager(requireContext(), 2)
-        );
+        recyclerView.setLayoutManager(new GridLayoutManager(requireContext(), 2));
+        recyclerView.setItemAnimator(null);
+        recyclerView.setAdapter(adapter);
 
-        // 🔥 Initial state
         progressLoading.setVisibility(View.VISIBLE);
         txtEmpty.setVisibility(View.GONE);
 
@@ -92,24 +90,31 @@ public class workers extends Fragment {
         );
 
         swipeRefresh.setOnRefreshListener(() -> {
-            swipeRefresh.postDelayed(
-                    () -> swipeRefresh.setRefreshing(false),
-                    600
-            );
+            swipeRefresh.setEnabled(false);
+
+            recyclerView.postDelayed(() -> {
+                swipeRefresh.setRefreshing(false);
+                swipeRefresh.setEnabled(true);
+            }, 300);
         });
 
         return view;
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
-        adapter.startListening();
+    public void onResume() {
+        super.onResume();
+        if (adapter != null) {
+            recyclerView.post(adapter::startListening);
+        }
     }
 
     @Override
-    public void onStop() {
-        super.onStop();
-        adapter.stopListening();
+    public void onPause() {
+        super.onPause();
+        if (adapter != null) {
+            adapter.stopListening();
+        }
     }
+
 }
