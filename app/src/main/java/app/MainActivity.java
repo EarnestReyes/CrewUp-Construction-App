@@ -25,17 +25,14 @@ import androidx.fragment.app.Fragment;
 import clients.Notifications;
 import clients.chat.ChatActivity;
 import clients.chat.ChatFragment;
-import clients.chat.RealTimeLocation;
 import clients.works.history;
-import data.FirebaseUtil;
 import clients.home.Home;
 import clients.posts.Posts;
 import clients.profile.ProfileFragment;
-import com.example.ConstructionApp.R;
 import clients.home.SearchUserActivity;
 import clients.workers.workers;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
+
+import com.example.ConstructionApp.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -45,23 +42,29 @@ import com.onesignal.OneSignal;
 import java.util.HashMap;
 import java.util.Map;
 
+import data.FirebaseUtil;
+
 public class MainActivity extends AppCompatActivity {
 
     ImageButton navHome, navBell, navAdd, navChat, navActivity;
+    ImageView btnSearch, notification, Profile;
     TextView txtNewsFeed;
-    ImageView btnSearch, notification, Profile ;
+
     private FirebaseFirestore db;
-    private String userLocation = "";
-    private TextView txtLocation;
+    private boolean oneSignalLoggedIn = false;
 
     @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this,
-                    Manifest.permission.POST_NOTIFICATIONS)
-                    != PackageManager.PERMISSION_GRANTED) {
+        super.onCreate(savedInstanceState); // ✅ MUST BE FIRST
+        setContentView(R.layout.activity_main);
 
+        // Android 13+ notification permission
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(
                         this,
                         new String[]{Manifest.permission.POST_NOTIFICATIONS},
@@ -69,16 +72,9 @@ public class MainActivity extends AppCompatActivity {
                 );
             }
         }
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user != null) {
-            OneSignal.login(user.getUid());
-        }
-
-        FirebaseUser users = FirebaseAuth.getInstance().getCurrentUser();
-        if (users == null) {
+        if (user == null) {
             startActivity(new Intent(this, auth.Login.class));
             finish();
             return;
@@ -86,72 +82,67 @@ public class MainActivity extends AppCompatActivity {
 
         db = FirebaseFirestore.getInstance();
 
-        View main = findViewById(R.id.main);
-        ViewCompat.setOnApplyWindowInsetsListener(main, (v, insets) -> {
-            int topInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
-            v.setPadding(
-                    v.getPaddingLeft(),
-                    topInset,
-                    v.getPaddingRight(),
-                    v.getPaddingBottom()
-            );
-            return insets;
-        });
-
         View root = findViewById(R.id.main);
-
         ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
-            Insets systemBars =
-                    insets.getInsets(WindowInsetsCompat.Type.systemBars());
-
-            v.setPadding(
-                    systemBars.left,
-                    systemBars.top,
-                    systemBars.right,
-                    systemBars.bottom
-            );
-
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+        initViews();
+        initNavigation();
 
         getUserLocationFromDatabase();
         getFCMToken();
-
-        // Init buttons
-        navHome = findViewById(R.id.navHome);
-        navBell = findViewById(R.id.navBell);
-        navAdd = findViewById(R.id.navAdd);
-        navChat = findViewById(R.id.navChat);
-        navActivity = findViewById(R.id.navActivity);
-        txtNewsFeed = findViewById(R.id.txtNewsfeed);
-        btnSearch = findViewById(R.id.btnSearch);
-        notification = findViewById(R.id.btnBell);
-        Profile = findViewById((R.id.Profile));
-
-        txtNewsFeed.setOnClickListener(v -> {
-            Intent in = new Intent(this, WorkersLocationMap.class);
-            startActivity(in);
-            Toast.makeText(this, "Opening Location..", Toast.LENGTH_SHORT).show();
-        });
-
-        btnSearch.setOnClickListener(v -> {
-            Intent in = new Intent(MainActivity.this, SearchUserActivity.class);
-            startActivity(in);
-        });
-
-        navChat.setOnClickListener(v -> {
-            Intent in = new Intent(MainActivity.this, ChatActivity.class);
-            startActivity(in);
-        });
-        notification.setOnClickListener(v -> {
-            Intent in = new Intent(this, Notifications.class);
-            startActivity(in);
-        });
 
         if (savedInstanceState == null) {
             loadFragment(new Home());
             highlight(navHome);
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null || oneSignalLoggedIn) return;
+
+        try {
+            OneSignal.login(user.getUid());
+            oneSignalLoggedIn = true;
+        } catch (Exception e) {
+            Log.w("OneSignal", "Not ready yet, retrying later");
+        }
+    }
+
+    private void initViews() {
+        navHome = findViewById(R.id.navHome);
+        navBell = findViewById(R.id.navBell);
+        navAdd = findViewById(R.id.navAdd);
+        navChat = findViewById(R.id.navChat);
+        navActivity = findViewById(R.id.navActivity);
+
+        txtNewsFeed = findViewById(R.id.txtNewsfeed);
+        btnSearch = findViewById(R.id.btnSearch);
+        notification = findViewById(R.id.btnBell);
+        Profile = findViewById(R.id.Profile);
+    }
+
+    private void initNavigation() {
+
+        txtNewsFeed.setOnClickListener(v -> {
+            startActivity(new Intent(this, WorkersLocationMap.class));
+            Toast.makeText(this, "Opening Location..", Toast.LENGTH_SHORT).show();
+        });
+
+        btnSearch.setOnClickListener(v ->
+                startActivity(new Intent(this, SearchUserActivity.class))
+        );
+
+        notification.setOnClickListener(v ->
+                startActivity(new Intent(this, Notifications.class))
+        );
 
         navHome.setOnClickListener(v -> {
             loadFragment(new Home());
@@ -173,15 +164,16 @@ public class MainActivity extends AppCompatActivity {
             highlight(navChat);
         });
 
-        Profile.setOnClickListener(v -> {
-            loadFragment(new ProfileFragment());
-        });
+        Profile.setOnClickListener(v ->
+                loadFragment(new ProfileFragment())
+        );
+
         navActivity.setOnClickListener(v -> {
-            //add function list of projects of user
-           loadFragment(new history());
-           highlight(navActivity);
+            loadFragment(new history());
+            highlight(navActivity);
         });
     }
+
     private void loadFragment(Fragment fragment) {
         getSupportFragmentManager()
                 .beginTransaction()
@@ -189,7 +181,6 @@ public class MainActivity extends AppCompatActivity {
                 .commit();
     }
 
-    // Highlight selected icon
     private void highlight(ImageButton selected) {
         navHome.setColorFilter(getColor(R.color.text_secondary));
         navBell.setColorFilter(getColor(R.color.text_secondary));
@@ -200,8 +191,8 @@ public class MainActivity extends AppCompatActivity {
             selected.setColorFilter(getColor(R.color.primary));
         }
     }
-    private void getUserLocationFromDatabase() {
 
+    private void getUserLocationFromDatabase() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) return;
 
@@ -209,47 +200,31 @@ public class MainActivity extends AppCompatActivity {
                 .document(user.getUid())
                 .get()
                 .addOnSuccessListener(document -> {
-
-                    if (isFinishing() || isDestroyed() || document == null || !document.exists())
-                        return;
-
-                    userLocation = document.getString("location");
-
-                    if (userLocation != null && !userLocation.isEmpty()) {
-                        txtNewsFeed.setText(userLocation);
-                    } else {
-                        txtNewsFeed.setText("Location not specified");
+                    if (document != null && document.exists()) {
+                        String location = document.getString("location");
+                        txtNewsFeed.setText(
+                                location != null ? location : "Location not specified"
+                        );
                     }
                 })
                 .addOnFailureListener(e ->
-                        Log.e("FIRESTORE", "Failed to get location", e));
-
+                        Log.e("FIRESTORE", "Failed to get location", e)
+                );
     }
 
-    void getFCMToken(){
-        FirebaseMessaging.getInstance().getToken().addOnCompleteListener(new OnCompleteListener<String>() {
-            @Override
-            public void onComplete(@NonNull Task<String> task) {
-                task.addOnCompleteListener(taskResult -> {
-                    if (!taskResult.isSuccessful()) {
-                        return;
-                    }
+    private void getFCMToken() {
+        FirebaseMessaging.getInstance().getToken()
+                .addOnCompleteListener(task -> {
+                    if (!task.isSuccessful()) return;
 
-                    String token = taskResult.getResult();
                     FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-
                     if (user == null) return;
 
-                    String userId = user.getUid();
                     Map<String, Object> updates = new HashMap<>();
-                    updates.put("fcmToken", token);
-                    updates.put("userId", userId);
+                    updates.put("fcmToken", task.getResult());
+                    updates.put("userId", user.getUid());
 
                     FirebaseUtil.currentUserDetails().update(updates);
                 });
-
-            }
-        });
     }
 }
-

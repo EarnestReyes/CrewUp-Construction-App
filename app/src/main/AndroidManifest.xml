@@ -26,6 +26,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Fragments_Reyes">
 
+        <!-- ✅ OneSignal App ID (DECLARE ONCE ONLY) -->
+        <meta-data
+            android:name="onesignal_app_id"
+            android:value="254e48ce-a715-4098-b271-4db6a05eda17" />
+
         <!-- ================= ACTIVITIES ================= -->
 
         <activity
@@ -161,9 +166,6 @@
             android:name="workers.auth.WorkerDetails"
             android:exported="false"
             android:screenOrientation="portrait" />
-        <meta-data
-            android:name="onesignal_app_id"
-            android:value="254e48ce-a715-4098-b271-4db6a05eda17" />
 
         <!-- ================= LAUNCHER ================= -->
 
@@ -173,11 +175,12 @@
             android:theme="@style/Theme.Material3.DayNight.NoActionBar"
             android:screenOrientation="fullSensor">
 
+            <!-- ❌ REMOVED duplicate OneSignal meta-data -->
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
         </activity>
 
         <!-- ================= FIREBASE SERVICE ================= -->

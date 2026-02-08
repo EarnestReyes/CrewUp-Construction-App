@@ -1,6 +1,7 @@
 package app;
 
 import android.app.Application;
+import android.util.Log;
 
 import com.cloudinary.android.MediaManager;
 import com.onesignal.OneSignal;
@@ -14,13 +15,24 @@ public class MyAppOneSignal extends Application {
     public void onCreate() {
         super.onCreate();
 
-        // -------- OneSignal --------
-        OneSignal.initWithContext(this);
+        try {
+            // ✅ OneSignal MUST be first
+            OneSignal.initWithContext(getApplicationContext());
+            Log.d("APP_INIT", "OneSignal initialized");
 
-        // -------- Cloudinary (SAFE: unsigned upload) --------
-        Map<String, Object> config = new HashMap<>();
-        config.put("cloud_name", "djkzs1iso"); // from Cloudinary dashboard
+        } catch (Exception e) {
+            Log.e("APP_INIT", "OneSignal init failed", e);
+        }
 
-        MediaManager.init(this, config);
+        // ✅ Cloudinary (safe init)
+        try {
+            Map<String, Object> config = new HashMap<>();
+            config.put("cloud_name", "djkzs1iso");
+            MediaManager.init(this, config);
+            Log.d("APP_INIT", "Cloudinary initialized");
+
+        } catch (IllegalStateException e) {
+            Log.w("APP_INIT", "Cloudinary already initialized");
+        }
     }
 }
