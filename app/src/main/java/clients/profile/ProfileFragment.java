@@ -33,10 +33,12 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 
 import adapters.PostAdapter;
+import clients.posts.Posts;
 import data.FirebaseUtil;
 import com.example.ConstructionApp.R;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -61,6 +63,7 @@ public class ProfileFragment extends Fragment {
     private FirebaseAuth mAuth;
 
     private Button logout;
+    private FloatingActionButton btnAddPost;
     private ImageView imgProfile, imgCoverPhoto;
     private TextView username, birthday, Gender, Location, Mobile, Social;
     private RecyclerView recyclerView;
@@ -138,6 +141,7 @@ public class ProfileFragment extends Fragment {
         Mobile = view.findViewById(R.id.mobile);
         Social = view.findViewById(R.id.social);
         switchLocation = view.findViewById(R.id.switchLocation);
+        btnAddPost = view.findViewById(R.id.btnAddPost);
 
         progressLoading = view.findViewById(R.id.progressLoading);
         swipeRefresh = view.findViewById(R.id.swipeRefresh);
@@ -171,6 +175,16 @@ public class ProfileFragment extends Fragment {
         imgProfile.setOnClickListener(v -> permission(imagePickerLauncher));
         imgCoverPhoto.setOnClickListener(v -> permission(coverImagePickerLauncher));
         logout.setOnClickListener(v -> logout());
+
+        btnAddPost.setOnClickListener(v -> {
+            requireActivity()
+                    .getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragmentContainerView, new Posts())
+                    .addToBackStack(null)
+                    .commit();
+        });
+
 
         return view;
     }

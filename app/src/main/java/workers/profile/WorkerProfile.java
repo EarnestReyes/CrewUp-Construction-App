@@ -34,6 +34,7 @@ import com.bumptech.glide.Glide;
 import com.example.ConstructionApp.R;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -52,6 +53,7 @@ import java.util.Map;
 
 import adapters.PostAdapter;
 import app.Splash_activity;
+import clients.posts.Posts;
 import data.FirebaseUtil;
 import models.Post;
 
@@ -71,6 +73,7 @@ public class WorkerProfile extends Fragment {
     private SwipeRefreshLayout swipeRefresh;
 
     private String currentUserProfilePicUrl;
+    private FloatingActionButton btnAddPost;
 
     private SwitchCompat switchLocation;
     private FusedLocationProviderClient fusedLocationClient;
@@ -130,6 +133,7 @@ public class WorkerProfile extends Fragment {
         Location = view.findViewById(R.id.location);
         Mobile = view.findViewById(R.id.mobile);
         Social = view.findViewById(R.id.social);
+        btnAddPost = view.findViewById(R.id.btnAddPost);
 
         switchLocation = view.findViewById(R.id.switchLocation);
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
@@ -143,6 +147,15 @@ public class WorkerProfile extends Fragment {
         posts = new ArrayList<>();
         adapter = new PostAdapter(requireContext(), posts);
         recyclerView.setAdapter(adapter);
+
+        btnAddPost.setOnClickListener(v -> {
+            requireActivity()
+                    .getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragmentContainerView, new Posts())
+                    .addToBackStack(null)
+                    .commit();
+        });
 
         swipeRefresh.setColorSchemeResources(
                 R.color.primary,
