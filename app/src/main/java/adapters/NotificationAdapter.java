@@ -46,45 +46,40 @@ public class NotificationAdapter
 
         NotificationModel model = list.get(position);
 
-        // Message text
-        holder.txtMessage.setText(
-                model.getTitle() + " " + model.getMessage()
-        );
+        // Message text (SAFE)
+        String title = model.getTitle() == null ? "" : model.getTitle();
+        String message = model.getMessage() == null ? "" : model.getMessage();
+        holder.txtMessage.setText(title + " " + message);
 
         // Timestamp (SAFE)
-        Timestamp ts = model.getTimestamp();
-        if (ts != null) {
+        if (model.getTimestamp() != null) {
             String time = new SimpleDateFormat(
                     "MMM dd • hh:mm a",
                     Locale.getDefault()
-            ).format(ts.toDate());
+            ).format(model.getTimestamp().toDate());
             holder.txtTime.setText(time);
         } else {
             holder.txtTime.setText("");
         }
 
-        // Icon (SAFE switch)
-        String type = model.getType();
-        if (type == null) type = "";
+        // Icon
+        String type = model.getType() == null ? "" : model.getType();
 
         switch (type) {
             case "like":
                 holder.icon.setImageResource(R.drawable.ic_filled);
                 break;
-
             case "message":
                 holder.icon.setImageResource(R.drawable.baseline_post_add_24);
                 break;
-
             case "hire":
                 holder.icon.setImageResource(R.drawable.ic_hire);
                 break;
-
             default:
                 holder.icon.setImageResource(R.drawable.ic_notification);
         }
 
-        // Optional: dim read notifications
+        // Dim if read
         holder.itemView.setAlpha(model.isRead() ? 0.5f : 1f);
     }
 

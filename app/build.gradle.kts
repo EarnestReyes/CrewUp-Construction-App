@@ -73,10 +73,11 @@ dependencies {
 
     implementation("org.osmdroid:osmdroid-android:6.1.18")
     implementation("com.google.android.gms:play-services-location:21.0.1")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
     implementation("com.squareup.okhttp3:okhttp:5.3.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
-
+    implementation("com.onesignal:OneSignal:5.0.4")
 
 }

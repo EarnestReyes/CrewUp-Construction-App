@@ -169,7 +169,7 @@ public class ProfileFragment extends Fragment {
         String uid = FirebaseUtil.currentUserId();
         if (uid != null && isAdded()) {
             FirebaseUtil.listenToProfilePic(requireContext(), imgProfile, uid);
-            FirebaseUtil.CoverlistenToProfilePic(requireContext(), imgCoverPhoto, uid);
+            FirebaseUtil.coverListenToProfilePic(requireContext(), imgCoverPhoto, uid);
         }
 
         imgProfile.setOnClickListener(v -> permission(imagePickerLauncher));

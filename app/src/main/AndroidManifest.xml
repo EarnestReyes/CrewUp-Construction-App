@@ -18,7 +18,7 @@
 
     <!-- ================= APPLICATION ================= -->
     <application
-        android:name="app.MyApplication"
+        android:name="app.MyAppOneSignal"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -161,6 +161,9 @@
             android:name="workers.auth.WorkerDetails"
             android:exported="false"
             android:screenOrientation="portrait" />
+        <meta-data
+            android:name="onesignal_app_id"
+            android:value="254e48ce-a715-4098-b271-4db6a05eda17" />
 
         <!-- ================= LAUNCHER ================= -->
 

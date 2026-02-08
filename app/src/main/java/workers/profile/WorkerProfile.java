@@ -31,6 +31,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+
+import adapters.PostAdapter;
+import clients.posts.Posts;
+import data.FirebaseUtil;
 import com.example.ConstructionApp.R;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -38,7 +42,6 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.SetOptions;
@@ -51,20 +54,20 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import adapters.PostAdapter;
 import app.Splash_activity;
-import clients.posts.Posts;
-import data.FirebaseUtil;
 import models.Post;
 
 public class WorkerProfile extends Fragment {
 
     private FirebaseFirestore db;
-    private ListenerRegistration postsListener;
+    private FirebaseAuth mAuth;
+
     private Button logout;
+    private FloatingActionButton btnAddPost;
     private ImageView imgProfile, imgCoverPhoto;
     private TextView username, birthday, Gender, Location, Mobile, Social;
     private RecyclerView recyclerView;
+    private SwitchCompat switchLocation;
 
     private ArrayList<Post> posts;
     private PostAdapter adapter;
@@ -73,10 +76,11 @@ public class WorkerProfile extends Fragment {
     private SwipeRefreshLayout swipeRefresh;
 
     private String currentUserProfilePicUrl;
-    private FloatingActionButton btnAddPost;
-
-    private SwitchCompat switchLocation;
     private FusedLocationProviderClient fusedLocationClient;
+
+    private boolean isFirstLoad = true;
+    private boolean isRefreshing = false;
+    private int lastItemCount = -1;
 
     // ================= IMAGE PICKERS =================
 
@@ -114,6 +118,9 @@ public class WorkerProfile extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         db = FirebaseFirestore.getInstance();
+        mAuth = FirebaseAuth.getInstance();
+        fusedLocationClient =
+                LocationServices.getFusedLocationProviderClient(requireContext());
     }
 
     @Override
@@ -133,10 +140,8 @@ public class WorkerProfile extends Fragment {
         Location = view.findViewById(R.id.location);
         Mobile = view.findViewById(R.id.mobile);
         Social = view.findViewById(R.id.social);
-        btnAddPost = view.findViewById(R.id.btnAddPost);
-
         switchLocation = view.findViewById(R.id.switchLocation);
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
+        btnAddPost = view.findViewById(R.id.btnAddPost);
 
         progressLoading = view.findViewById(R.id.progressLoading);
         swipeRefresh = view.findViewById(R.id.swipeRefresh);
@@ -148,27 +153,13 @@ public class WorkerProfile extends Fragment {
         adapter = new PostAdapter(requireContext(), posts);
         recyclerView.setAdapter(adapter);
 
-        btnAddPost.setOnClickListener(v -> {
-            requireActivity()
-                    .getSupportFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.fragmentContainerView, new Posts())
-                    .addToBackStack(null)
-                    .commit();
-        });
-
-        swipeRefresh.setColorSchemeResources(
-                R.color.primary,
-                R.color.icon_share,
-                R.color.icon_comment
-        );
+        progressLoading.setVisibility(View.VISIBLE);
 
         swipeRefresh.setOnRefreshListener(() -> {
+            isRefreshing = true;
             progressLoading.setVisibility(View.VISIBLE);
             loadPosts();
         });
-
-        progressLoading.setVisibility(View.VISIBLE);
 
         loadUserDetails();
         loadCurrentUserProfilePic();
@@ -178,13 +169,22 @@ public class WorkerProfile extends Fragment {
         String uid = FirebaseUtil.currentUserId();
         if (uid != null && isAdded()) {
             FirebaseUtil.listenToProfilePic(requireContext(), imgProfile, uid);
-            FirebaseUtil.CoverlistenToProfilePic(requireContext(), imgCoverPhoto, uid);
+            FirebaseUtil.coverListenToProfilePic(requireContext(), imgCoverPhoto, uid);
         }
 
         imgProfile.setOnClickListener(v -> permission(imagePickerLauncher));
         imgCoverPhoto.setOnClickListener(v -> permission(coverImagePickerLauncher));
-
         logout.setOnClickListener(v -> logout());
+
+        btnAddPost.setOnClickListener(v -> {
+            requireActivity()
+                    .getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragmentContainerView, new Posts())
+                    .addToBackStack(null)
+                    .commit();
+        });
+
 
         return view;
     }
@@ -192,7 +192,7 @@ public class WorkerProfile extends Fragment {
     // ================= USER DATA =================
 
     private void loadUserDetails() {
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        FirebaseUser user = mAuth.getCurrentUser();
         if (user == null) return;
 
         db.collection("users")
@@ -210,7 +210,7 @@ public class WorkerProfile extends Fragment {
     }
 
     private void loadCurrentUserProfilePic() {
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        FirebaseUser user = mAuth.getCurrentUser();
         if (user == null) return;
 
         db.collection("users")
@@ -224,62 +224,58 @@ public class WorkerProfile extends Fragment {
     // ================= POSTS =================
 
     private void loadPosts() {
-
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        FirebaseUser user = mAuth.getCurrentUser();
         if (user == null) {
             stopLoading();
             return;
         }
 
-        if (postsListener != null) postsListener.remove();
-
-        postsListener = db.collection("posts")
+        db.collection("posts")
                 .whereEqualTo("userId", user.getUid())
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .addSnapshotListener((value, error) -> {
 
-                    posts.clear();
-
-                    if (error == null && value != null) {
-                        for (QueryDocumentSnapshot doc : value) {
-
-                            long timestamp;
-                            Object rawTime = doc.get("timestamp");
-
-                            if (rawTime instanceof com.google.firebase.Timestamp) {
-                                timestamp = ((com.google.firebase.Timestamp) rawTime)
-                                        .toDate().getTime();
-                            } else if (rawTime instanceof Long) {
-                                timestamp = (Long) rawTime;
-                            } else {
-                                timestamp = System.currentTimeMillis();
-                            }
-
-                            Post post = new Post(
-                                    user.getUid(),
-                                    doc.getString("userName"),
-                                    "",
-                                    doc.getString("content"),
-                                    timestamp,
-                                    currentUserProfilePicUrl,
-                                    doc.getString("imageUrl")
-                            );
-
-                            post.setPostId(doc.getId());
-                            posts.add(post);
-                        }
+                    if (error != null || value == null) {
+                        stopLoading();
+                        return;
                     }
 
+                    int newCount = value.size();
+
+                    if (!isRefreshing && !isFirstLoad && newCount == lastItemCount) {
+                        stopLoading();
+                        return;
+                    }
+
+                    posts.clear();
+
+                    for (QueryDocumentSnapshot doc : value) {
+
+                        Post post = new Post(
+                                user.getUid(),
+                                doc.getString("userName"),
+                                "",
+                                doc.getString("content"),
+                                System.currentTimeMillis(),
+                                currentUserProfilePicUrl,
+                                doc.getString("imageUrl")
+                        );
+
+                        post.setPostId(doc.getId());
+                        posts.add(post);
+                    }
+
+                    lastItemCount = newCount;
                     adapter.notifyDataSetChanged();
                     stopLoading();
                 });
     }
 
     private void stopLoading() {
-        if (isAdded()) {
-            swipeRefresh.setRefreshing(false);
-            progressLoading.setVisibility(View.GONE);
-        }
+        progressLoading.setVisibility(View.GONE);
+        swipeRefresh.setRefreshing(false);
+        isFirstLoad = false;
+        isRefreshing = false;
     }
 
     // ================= LOCATION SWITCH =================
@@ -289,8 +285,7 @@ public class WorkerProfile extends Fragment {
         String uid = FirebaseUtil.currentUserId();
         if (uid == null) return;
 
-        FirebaseFirestore.getInstance()
-                .collection("users")
+        db.collection("users")
                 .document(uid)
                 .get()
                 .addOnSuccessListener(doc -> {
@@ -298,63 +293,85 @@ public class WorkerProfile extends Fragment {
                     switchLocation.setChecked(enabled != null && enabled);
                 });
 
-        switchLocation.setOnCheckedChangeListener((buttonView, isChecked) -> {
+        switchLocation.setOnCheckedChangeListener((btn, enabled) -> {
 
             Map<String, Object> update = new HashMap<>();
-            update.put("shareLocation", isChecked);
+            update.put("shareLocation", enabled);
 
-            FirebaseFirestore.getInstance()
-                    .collection("users")
+            db.collection("users")
                     .document(uid)
-                    .set(update, SetOptions.merge());
+                    .update(update);
 
-            if (isChecked) {
-                fetchAndSaveLocation();
+            if (enabled) {
+                requestLocationPermission();
             } else {
                 stopLocationUpdates();
             }
         });
     }
 
-    private void fetchAndSaveLocation() {
-
+    private void requestLocationPermission() {
         if (ActivityCompat.checkSelfPermission(
                 requireContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION
-        ) != PackageManager.PERMISSION_GRANTED) return;
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            requestPermissions(
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    101
+            );
+        } else {
+            fetchAndSaveLocation();
+        }
+    }
+
+    private void fetchAndSaveLocation() {
+        if (ActivityCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) return;
 
         fusedLocationClient.getLastLocation()
-                .addOnSuccessListener(location -> {
-                    if (location != null) saveLocationAsync(location);
-                });
+                .addOnSuccessListener(this::saveLocationAsync);
+    }
+
+    private void stopLocationUpdates() {
+        Log.d("LOCATION", "Location sharing disabled");
     }
 
     private void saveLocationAsync(Location location) {
 
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user == null) return;
-
-        double lat = location.getLatitude();
-        double lng = location.getLongitude();
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user == null || location == null) return;
 
         new Thread(() -> {
+
             String address = "Unknown location";
 
             try {
-                Geocoder geocoder = new Geocoder(requireContext(), Locale.getDefault());
-                List<Address> list = geocoder.getFromLocation(lat, lng, 1);
+                Geocoder geocoder =
+                        new Geocoder(requireContext(), Locale.getDefault());
+                List<Address> list =
+                        geocoder.getFromLocation(
+                                location.getLatitude(),
+                                location.getLongitude(),
+                                1
+                        );
+
                 if (list != null && !list.isEmpty()) {
                     Address a = list.get(0);
                     address = a.getLocality() + ", " + a.getAdminArea();
                 }
+
             } catch (IOException ignored) {}
 
             String finalAddress = address;
 
             requireActivity().runOnUiThread(() -> {
+
                 Map<String, Object> data = new HashMap<>();
-                data.put("lat", lat);
-                data.put("lng", lng);
+                data.put("lat", location.getLatitude());
+                data.put("lng", location.getLongitude());
                 data.put("location", finalAddress);
                 data.put("locationUpdatedAt", System.currentTimeMillis());
 
@@ -362,20 +379,10 @@ public class WorkerProfile extends Fragment {
                         .document(user.getUid())
                         .set(data, SetOptions.merge());
 
-                Log.d("LOCATION", "Saved location");
+                Log.d("LOCATION_DEBUG", "Saved: " + finalAddress);
             });
+
         }).start();
-    }
-
-    private void stopLocationUpdates() {
-        Map<String, Object> update = new HashMap<>();
-        update.put("lat", null);
-        update.put("lng", null);
-
-        FirebaseFirestore.getInstance()
-                .collection("users")
-                .document(FirebaseUtil.currentUserId())
-                .set(update, SetOptions.merge());
     }
 
     // ================= LOGOUT =================
@@ -404,14 +411,5 @@ public class WorkerProfile extends Fragment {
                 .setPositiveButton("Yes", (d, w) -> launcher.launch("image/*"))
                 .setNegativeButton("No", null)
                 .show();
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        if (postsListener != null) {
-            postsListener.remove();
-            postsListener = null;
-        }
     }
 }
