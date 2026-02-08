@@ -127,8 +127,6 @@ public class WorkerProfile extends Fragment {
         adapter = new PostAdapter(requireContext(), posts);
         recyclerView.setAdapter(adapter);
 
-        progressLoading.setVisibility(View.VISIBLE);
-
         swipeRefresh.setColorSchemeResources(
                 R.color.primary,
                 R.color.icon_share,
@@ -136,8 +134,11 @@ public class WorkerProfile extends Fragment {
         );
 
         swipeRefresh.setOnRefreshListener(() -> {
-            swipeRefresh.setRefreshing(false);
+            progressLoading.setVisibility(View.VISIBLE);
+            loadPosts();
         });
+
+        progressLoading.setVisibility(View.VISIBLE);
 
         loadUserDetails();
         loadCurrentUserProfilePic();
@@ -194,9 +195,11 @@ public class WorkerProfile extends Fragment {
     private void loadPosts() {
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user == null) return;
+        if (user == null) {
+            stopLoading();
+            return;
+        }
 
-        // ❌ Remove old listener before adding a new one
         if (postsListener != null) {
             postsListener.remove();
         }
@@ -206,52 +209,57 @@ public class WorkerProfile extends Fragment {
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .addSnapshotListener((value, error) -> {
 
-                    if (error != null || value == null) return;
-
                     posts.clear();
 
-                    for (QueryDocumentSnapshot doc : value) {
+                    if (error == null && value != null) {
+                        for (QueryDocumentSnapshot doc : value) {
 
-                        String content = doc.getString("content");
-                        String imageUrl = doc.getString("imageUrl");
-                        String userName = doc.getString("userName");
+                            String content = doc.getString("content");
+                            String imageUrl = doc.getString("imageUrl");
+                            String userName = doc.getString("userName");
 
-                        long timestamp;
-                        Object rawTime = doc.get("timestamp");
+                            long timestamp;
+                            Object rawTime = doc.get("timestamp");
 
-                        if (rawTime instanceof com.google.firebase.Timestamp) {
-                            timestamp = ((com.google.firebase.Timestamp) rawTime)
-                                    .toDate().getTime();
-                        } else if (rawTime instanceof Long) {
-                            timestamp = (Long) rawTime;
-                        } else {
-                            timestamp = System.currentTimeMillis();
+                            if (rawTime instanceof com.google.firebase.Timestamp) {
+                                timestamp = ((com.google.firebase.Timestamp) rawTime)
+                                        .toDate().getTime();
+                            } else if (rawTime instanceof Long) {
+                                timestamp = (Long) rawTime;
+                            } else {
+                                timestamp = System.currentTimeMillis();
+                            }
+
+                            Post post = new Post(
+                                    user.getUid(),
+                                    userName != null ? userName : "You",
+                                    "",
+                                    content != null ? content : "",
+                                    timestamp,
+                                    currentUserProfilePicUrl,
+                                    imageUrl
+                            );
+
+                            post.setPostId(doc.getId());
+
+                            Long likes = doc.getLong("likeCount");
+                            post.setLikeCount(likes != null ? likes.intValue() : 0);
+
+                            posts.add(post);
                         }
-
-                        Post post = new Post(
-                                user.getUid(),
-                                userName != null ? userName : "You",
-                                "",
-                                content != null ? content : "",
-                                timestamp,
-                                currentUserProfilePicUrl,
-                                imageUrl
-                        );
-
-                        post.setPostId(doc.getId());
-
-                        Long likes = doc.getLong("likeCount");
-                        post.setLikeCount(likes != null ? likes.intValue() : 0);
-
-                        posts.add(post);
                     }
 
                     adapter.notifyDataSetChanged();
-                    swipeRefresh.setRefreshing(false);
-                    progressLoading.setVisibility(View.GONE);
+                    stopLoading();
                 });
     }
 
+    private void stopLoading() {
+        if (isAdded()) {
+            swipeRefresh.setRefreshing(false);
+            progressLoading.setVisibility(View.GONE);
+        }
+    }
 
     // ================= LOGOUT =================
 
@@ -261,7 +269,6 @@ public class WorkerProfile extends Fragment {
                 .setMessage("Are you sure you want to logout?")
                 .setPositiveButton("Yes", (d, w) ->
                         FirebaseMessaging.getInstance().deleteToken()
-                                .addOnCompleteListener(Task::isSuccessful)
                                 .addOnSuccessListener(v -> {
                                     FirebaseUtil.logout();
                                     startActivity(new Intent(getContext(), Splash_activity.class));
@@ -281,6 +288,7 @@ public class WorkerProfile extends Fragment {
                 .setNegativeButton("No", null)
                 .show();
     }
+
     @Override
     public void onStop() {
         super.onStop();
@@ -289,7 +297,7 @@ public class WorkerProfile extends Fragment {
             postsListener = null;
         }
     }
-
 }
+
 
 

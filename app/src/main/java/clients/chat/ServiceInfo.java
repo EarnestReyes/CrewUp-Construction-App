@@ -57,7 +57,6 @@ public class ServiceInfo extends AppCompatActivity {
     private String photo3 = null;
     private int photoCount = 0;
 
-
     //For image uploader
     private final ActivityResultLauncher<String> UploadedImage =
             registerForActivityResult(
@@ -75,7 +74,6 @@ public class ServiceInfo extends AppCompatActivity {
                                 uri,
                                 imageUrl -> {
 
-                                    // 🔥 SHOW IMAGE IMMEDIATELY (REALTIME)
                                     if (photoCount == 0) {
                                         photo1 = imageUrl;
                                         Glide.with(this)
@@ -101,8 +99,6 @@ public class ServiceInfo extends AppCompatActivity {
                         );
                     }
             );
-
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -138,6 +134,7 @@ public class ServiceInfo extends AppCompatActivity {
         map.setOnClickListener(v -> {
             Toast.makeText(this, "Opening location..", Toast.LENGTH_SHORT).show();
             Intent in = new Intent(this, RealTimeLocation.class);
+            in.putExtra("projectId", projectId);
             startActivity(in);
         });
 
@@ -306,5 +303,4 @@ public class ServiceInfo extends AppCompatActivity {
                     }
                 });
     }
-
 }

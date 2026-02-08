@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 
 import androidx.annotation.NonNull;
@@ -40,10 +41,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 
 public class RealTimeLocation extends AppCompatActivity {
-//USE THIS FOR CLIENT TO WORKER
     private MapView map;
-
-    // YOU
     private Marker myMarker;
     private GeoPoint myCurrentPoint;
 
@@ -61,6 +59,14 @@ public class RealTimeLocation extends AppCompatActivity {
     // FIREBASE
     private FirebaseFirestore db;
     private FirebaseAuth auth;
+    String WorkerId;
+    String projectId;
+
+    private ListenerRegistration bookingListener;
+    private ListenerRegistration workerListener;
+    private String currentWorkerId;
+    private long lastRouteUpdate = 0;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,6 +74,8 @@ public class RealTimeLocation extends AppCompatActivity {
         setContentView(R.layout.activity_real_time_location);
 
         Configuration.getInstance().setUserAgentValue(getPackageName());
+
+        projectId = getIntent().getStringExtra("projectId");
 
         map = findViewById(R.id.map);
         map.setTileSource(org.osmdroid.tileprovider.tilesource.TileSourceFactory.MAPNIK);
@@ -94,9 +102,7 @@ public class RealTimeLocation extends AppCompatActivity {
         startLocationUpdates();
         listenToWorkers();
     }
-
     // ================= LOCATION =================
-
     private void setupLocationCallback() {
         locationCallback = new LocationCallback() {
             @Override
@@ -172,24 +178,65 @@ public class RealTimeLocation extends AppCompatActivity {
 
     private void listenToWorkers() {
 
-        db.collection("users")
-                .whereEqualTo("Role", "worker")
-                .addSnapshotListener((snapshots, error) -> {
+        bookingListener = db.collection("BookingOrder")
+                .document(projectId)
+                .addSnapshotListener((bookingSnapshot, error) -> {
 
-                    if (error != null || snapshots == null) return;
+                    if (error != null || bookingSnapshot == null || !bookingSnapshot.exists()) return;
 
-                    for (DocumentSnapshot doc : snapshots) {
+                    String workerId = bookingSnapshot.getString("workerId");
 
-                        Double lat = doc.getDouble("lat");
-                        Double lng = doc.getDouble("lng");
-                        String profileUrl = doc.getString("profilePicUrl");
-
-                        if (lat == null || lng == null) continue;
-
-                        GeoPoint point = new GeoPoint(lat, lng);
-                        updateWorkerMarker(doc.getId(), point, profileUrl);
+                    if (workerId == null) {
+                        removeWorkerMarker(currentWorkerId);
+                        detachWorkerListener();
+                        currentWorkerId = null;
+                        return;
                     }
+
+                    if (workerId.equals(currentWorkerId)) return;
+
+                    detachWorkerListener();
+                    currentWorkerId = workerId;
+
+                    workerListener = db.collection("users")
+                            .document(workerId)
+                            .addSnapshotListener((userSnapshot, userError) -> {
+
+                                if (userError != null || userSnapshot == null || !userSnapshot.exists())
+                                    return;
+
+                                Double lat = userSnapshot.getDouble("lat");
+                                Double lng = userSnapshot.getDouble("lng");
+                                String profileUrl = userSnapshot.getString("profilePicUrl");
+
+                                if (lat == null || lng == null) return;
+
+                                GeoPoint point = new GeoPoint(lat, lng);
+                                updateWorkerMarker(workerId, point, profileUrl);
+                            });
                 });
+    }
+    private void detachWorkerListener() {
+        if (workerListener != null) {
+            workerListener.remove();
+            workerListener = null;
+        }
+    }
+    private void removeWorkerMarker(String workerId) {
+        if (workerId == null) return;
+
+        Marker marker = workerMarkers.remove(workerId);
+        if (marker != null) {
+            map.getOverlays().remove(marker);
+            map.invalidate();
+        }
+
+        selectedWorkerPoint = null;
+
+        if (routeLine != null) {
+            map.getOverlays().remove(routeLine);
+            routeLine = null;
+        }
     }
 
     private void updateWorkerMarker(
@@ -258,8 +305,16 @@ public class RealTimeLocation extends AppCompatActivity {
 
     private void redrawRoute() {
         if (myCurrentPoint == null || selectedWorkerPoint == null) return;
+
+        long now = System.currentTimeMillis();
+
+        // only redraw every 10 seconds
+        if (now - lastRouteUpdate < 10_000) return;
+
+        lastRouteUpdate = now;
         drawRouteToWorker(myCurrentPoint, selectedWorkerPoint);
     }
+
 
     private void drawRouteToWorker(GeoPoint from, GeoPoint to) {
 
@@ -345,5 +400,20 @@ public class RealTimeLocation extends AppCompatActivity {
         super.onPause();
         map.onPause();
     }
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        if (bookingListener != null) {
+            bookingListener.remove();
+            bookingListener = null;
+        }
+
+        if (workerListener != null) {
+            workerListener.remove();
+            workerListener = null;
+        }
+    }
+
 }
 

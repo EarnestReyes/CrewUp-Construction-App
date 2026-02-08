@@ -53,6 +53,7 @@ public class WorkerSignUp extends AppCompatActivity {
     private static final String CHANNEL_ID = "crew_up_channel";
 
     private TextInputEditText username, email, password, confirmPass;
+    private Button btnSignUp;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,69 +82,59 @@ public class WorkerSignUp extends AppCompatActivity {
         password = findViewById(R.id.edtPassword);
         confirmPass = findViewById(R.id.edtConfirmPassword);
 
-
-
-        Button btnSignUp = findViewById(R.id.btnSignUp);
+        btnSignUp = findViewById(R.id.btnSignUp);
         TextView txtLogin = findViewById(R.id.txtLogin);
         ImageButton btnBack = findViewById(R.id.btnBack);
 
         btnBack.setOnClickListener(v -> finish());
-        btnSignUp.setOnClickListener(v -> registerWorker());
         txtLogin.setOnClickListener(v ->
-                startActivity(new Intent(this, TopUpWallet.class)));
+                startActivity(new Intent(this, Login.class)));
+
+        btnSignUp.setOnClickListener(v -> registerWorker());
     }
+
+    // ================= SIGN UP =================
 
     private void registerWorker() {
 
-        String rawName = username.getText().toString().trim();
-        String emailTxt = email.getText().toString().trim();
-        String passTxt = password.getText().toString().trim();
-        String confirmTxt = confirmPass.getText().toString().trim();
+        String rawName = getText(username);
+        String emailTxt = getText(email);
+        String passTxt = getText(password);
+        String confirmTxt = getText(confirmPass);
 
         if (rawName.isEmpty() || emailTxt.isEmpty()
                 || passTxt.isEmpty() || confirmTxt.isEmpty()) {
-            Toast.makeText(this, "All fields are required", Toast.LENGTH_SHORT).show();
+            toast("All fields are required");
             return;
         }
 
         if (!passTxt.equals(confirmTxt)) {
-            Toast.makeText(this, "Passwords do not match", Toast.LENGTH_SHORT).show();
+            toast("Passwords do not match");
             return;
         }
 
         if (passTxt.length() < 6) {
-            Toast.makeText(this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show();
+            toast("Password must be at least 6 characters");
             return;
         }
+
+        btnSignUp.setEnabled(false);
 
         String formattedName = formatName(rawName);
 
         mAuth.createUserWithEmailAndPassword(emailTxt, passTxt)
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        saveWorkerToFirestore(formattedName, emailTxt);
-                        createNotification(formattedName);
-                        showLocationDialog();
-                    } else {
-                        Toast.makeText(
-                                this,
-                                task.getException() != null
-                                        ? task.getException().getMessage()
-                                        : "Registration failed",
-                                Toast.LENGTH_LONG
-                        ).show();
-                    }
+                .addOnSuccessListener(result -> {
+                    saveWorkerToFirestore(formattedName, emailTxt);
+                    createNotification(formattedName);
+                    showLocationDialog();
+                })
+                .addOnFailureListener(e -> {
+                    btnSignUp.setEnabled(true);
+                    toast(e.getMessage());
                 });
     }
 
-    private String formatName(String name) {
-        String[] parts = name.split("\\s+");
-        for (int i = 0; i < parts.length && i < 2; i++) {
-            parts[i] = parts[i].substring(0, 1).toUpperCase()
-                    + parts[i].substring(1).toLowerCase();
-        }
-        return String.join(" ", parts);
-    }
+    // ================= FIRESTORE =================
 
     private void saveWorkerToFirestore(String username, String email) {
 
@@ -154,13 +145,16 @@ public class WorkerSignUp extends AppCompatActivity {
         data.put("username", username);
         data.put("username_lower", username.toLowerCase());
         data.put("email", email);
-        data.put("Role", "worker");
+        data.put("role", "worker");
+        data.put("balance", 0);
         data.put("createdAt", System.currentTimeMillis());
 
         db.collection("users")
                 .document(user.getUid())
                 .set(data, SetOptions.merge());
     }
+
+    // ================= LOCATION =================
 
     private void showLocationDialog() {
         new AlertDialog.Builder(this)
@@ -189,10 +183,14 @@ public class WorkerSignUp extends AppCompatActivity {
     private void getUserLocation() {
         if (ActivityCompat.checkSelfPermission(
                 this, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) return;
+                != PackageManager.PERMISSION_GRANTED) {
+            goToUserDetails();
+            return;
+        }
 
         fusedLocationClient.getLastLocation()
                 .addOnSuccessListener(location -> {
+
                     if (location != null) {
                         saveLocationToFirestore(
                                 getAddressFromLocation(
@@ -237,11 +235,14 @@ public class WorkerSignUp extends AppCompatActivity {
                 .set(data, SetOptions.merge());
     }
 
+    // ================= NAVIGATION =================
+
     private void goToUserDetails() {
-        Intent intent = new Intent(this, UserDetails.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        Intent intent = new Intent(this, workers.auth.WorkerDetails.class);
         startActivity(intent);
     }
+
+    // ================= NOTIFICATION =================
 
     private void createNotification(String name) {
 
@@ -263,10 +264,41 @@ public class WorkerSignUp extends AppCompatActivity {
                         .setSmallIcon(R.drawable.crewup_logo)
                         .setContentTitle("Worker Account Created!")
                         .setContentText("Welcome " + name + "!")
-                        .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+                        .setAutoCancel(true);
 
         manager.notify(1, builder.build());
     }
+
+    // ================= UTILS =================
+
+    private String getText(TextInputEditText et) {
+        return et.getText() == null ? "" : et.getText().toString().trim();
+    }
+
+    private void toast(String msg) {
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+    }
+
+    private String formatName(String name) {
+        if (name == null || name.trim().isEmpty()) return "";
+
+        String[] parts = name.trim().toLowerCase().split("\\s+");
+        StringBuilder formatted = new StringBuilder();
+
+        for (String part : parts) {
+            if (!part.isEmpty()) {
+                formatted.append(
+                        part.substring(0, 1).toUpperCase()
+                                + part.substring(1)
+                ).append(" ");
+            }
+        }
+
+        return formatted.toString().trim();
+    }
+
+
+    // ================= PERMISSION RESULT =================
 
     @Override
     public void onRequestPermissionsResult(
@@ -286,3 +318,4 @@ public class WorkerSignUp extends AppCompatActivity {
         }
     }
 }
+

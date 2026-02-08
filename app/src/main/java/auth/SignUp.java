@@ -113,14 +113,14 @@ public class SignUp extends AppCompatActivity {
 
         mAuth.createUserWithEmailAndPassword(emailTxt, passTxt)
                 .addOnSuccessListener(authResult -> {
-                    saveUserToFirestore(name, emailTxt);
+                    String formattedName = formatName(name);
+                    saveUserToFirestore(formattedName, emailTxt);
                     createNotification(name);
                     showLocationDialog();
                 })
                 .addOnFailureListener(e ->
                         toast(e.getMessage()));
     }
-
     private void saveUserToFirestore(String username, String email) {
         String role = getIntent().getStringExtra("client");
         FirebaseUser user = mAuth.getCurrentUser();
@@ -265,5 +265,23 @@ public class SignUp extends AppCompatActivity {
         } else {
             goToUserDetails();
         }
+
+    }
+    private String formatName(String name) {
+        if (name == null || name.trim().isEmpty()) return "";
+
+        String[] parts = name.trim().toLowerCase().split("\\s+");
+        StringBuilder formatted = new StringBuilder();
+
+        for (String part : parts) {
+            if (!part.isEmpty()) {
+                formatted.append(
+                        part.substring(0, 1).toUpperCase()
+                                + part.substring(1)
+                ).append(" ");
+            }
+        }
+
+        return formatted.toString().trim();
     }
 }

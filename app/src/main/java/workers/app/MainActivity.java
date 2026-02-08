@@ -104,6 +104,10 @@ public class MainActivity extends AppCompatActivity {
         Notification = findViewById(R.id.btnBell);
         navActivity = findViewById(R.id.navActivity);
 
+        txtNewsFeed.setOnClickListener(v -> {
+            startActivity(new Intent(this, UserAroundLocation.class));
+        });
+
         Notification.setOnClickListener(v -> {
             Intent in = new Intent(this, NotificationsWorker.class);
             startActivity(in);
