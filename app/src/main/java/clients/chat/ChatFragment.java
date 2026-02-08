@@ -1,6 +1,7 @@
 package clients.chat;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +20,7 @@ import data.FirebaseUtil;
 import com.example.ConstructionApp.R;
 import adapters.RecentChatRecyclerAdapter;
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.Query;
 
 public class ChatFragment extends Fragment {
@@ -50,7 +52,6 @@ public class ChatFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerView.setItemAnimator(null);
 
-        // Initial UI state
         progressLoading.setVisibility(View.VISIBLE);
         txtEmpty.setVisibility(View.GONE);
 
@@ -93,16 +94,20 @@ public class ChatFragment extends Fragment {
 
                 int newCount = getItemCount();
 
-                if (!isRefreshing && !isFirstLoad && newCount == lastItemCount) {
-                    stopLoading();
-                    return;
-                }
-
                 lastItemCount = newCount;
 
-                // Empty state
                 txtEmpty.setVisibility(newCount == 0 ? View.VISIBLE : View.GONE);
 
+                stopLoading();
+            }
+
+            @Override
+            public void onError(@NonNull FirebaseFirestoreException e) {
+
+                // 🔥 THIS is the missing piece
+                Log.e("ChatFragment", "Firestore error", e);
+
+                txtEmpty.setVisibility(View.VISIBLE);
                 stopLoading();
             }
         };
