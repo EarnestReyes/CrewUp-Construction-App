@@ -1,7 +1,11 @@
 package workers.profile;
 
+import android.Manifest;
 import android.content.Intent;
-import android.net.Uri;
+import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
 import android.os.Bundle;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -9,11 +13,14 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.SwitchCompat;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,22 +32,26 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.example.ConstructionApp.R;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.messaging.FirebaseMessaging;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import adapters.PostAdapter;
-import app.MainActivity;
 import app.Splash_activity;
-import auth.GetStartedActivity;
 import data.FirebaseUtil;
 import models.Post;
 
@@ -60,6 +71,9 @@ public class WorkerProfile extends Fragment {
     private SwipeRefreshLayout swipeRefresh;
 
     private String currentUserProfilePicUrl;
+
+    private SwitchCompat switchLocation;
+    private FusedLocationProviderClient fusedLocationClient;
 
     // ================= IMAGE PICKERS =================
 
@@ -117,6 +131,9 @@ public class WorkerProfile extends Fragment {
         Mobile = view.findViewById(R.id.mobile);
         Social = view.findViewById(R.id.social);
 
+        switchLocation = view.findViewById(R.id.switchLocation);
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
+
         progressLoading = view.findViewById(R.id.progressLoading);
         swipeRefresh = view.findViewById(R.id.swipeRefresh);
 
@@ -143,6 +160,7 @@ public class WorkerProfile extends Fragment {
         loadUserDetails();
         loadCurrentUserProfilePic();
         loadPosts();
+        setupLocationSwitch(switchLocation);
 
         String uid = FirebaseUtil.currentUserId();
         if (uid != null && isAdded()) {
@@ -200,9 +218,7 @@ public class WorkerProfile extends Fragment {
             return;
         }
 
-        if (postsListener != null) {
-            postsListener.remove();
-        }
+        if (postsListener != null) postsListener.remove();
 
         postsListener = db.collection("posts")
                 .whereEqualTo("userId", user.getUid())
@@ -213,10 +229,6 @@ public class WorkerProfile extends Fragment {
 
                     if (error == null && value != null) {
                         for (QueryDocumentSnapshot doc : value) {
-
-                            String content = doc.getString("content");
-                            String imageUrl = doc.getString("imageUrl");
-                            String userName = doc.getString("userName");
 
                             long timestamp;
                             Object rawTime = doc.get("timestamp");
@@ -232,19 +244,15 @@ public class WorkerProfile extends Fragment {
 
                             Post post = new Post(
                                     user.getUid(),
-                                    userName != null ? userName : "You",
+                                    doc.getString("userName"),
                                     "",
-                                    content != null ? content : "",
+                                    doc.getString("content"),
                                     timestamp,
                                     currentUserProfilePicUrl,
-                                    imageUrl
+                                    doc.getString("imageUrl")
                             );
 
                             post.setPostId(doc.getId());
-
-                            Long likes = doc.getLong("likeCount");
-                            post.setLikeCount(likes != null ? likes.intValue() : 0);
-
                             posts.add(post);
                         }
                     }
@@ -259,6 +267,102 @@ public class WorkerProfile extends Fragment {
             swipeRefresh.setRefreshing(false);
             progressLoading.setVisibility(View.GONE);
         }
+    }
+
+    // ================= LOCATION SWITCH =================
+
+    private void setupLocationSwitch(SwitchCompat switchLocation) {
+
+        String uid = FirebaseUtil.currentUserId();
+        if (uid == null) return;
+
+        FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(uid)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    Boolean enabled = doc.getBoolean("shareLocation");
+                    switchLocation.setChecked(enabled != null && enabled);
+                });
+
+        switchLocation.setOnCheckedChangeListener((buttonView, isChecked) -> {
+
+            Map<String, Object> update = new HashMap<>();
+            update.put("shareLocation", isChecked);
+
+            FirebaseFirestore.getInstance()
+                    .collection("users")
+                    .document(uid)
+                    .set(update, SetOptions.merge());
+
+            if (isChecked) {
+                fetchAndSaveLocation();
+            } else {
+                stopLocationUpdates();
+            }
+        });
+    }
+
+    private void fetchAndSaveLocation() {
+
+        if (ActivityCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+        ) != PackageManager.PERMISSION_GRANTED) return;
+
+        fusedLocationClient.getLastLocation()
+                .addOnSuccessListener(location -> {
+                    if (location != null) saveLocationAsync(location);
+                });
+    }
+
+    private void saveLocationAsync(Location location) {
+
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return;
+
+        double lat = location.getLatitude();
+        double lng = location.getLongitude();
+
+        new Thread(() -> {
+            String address = "Unknown location";
+
+            try {
+                Geocoder geocoder = new Geocoder(requireContext(), Locale.getDefault());
+                List<Address> list = geocoder.getFromLocation(lat, lng, 1);
+                if (list != null && !list.isEmpty()) {
+                    Address a = list.get(0);
+                    address = a.getLocality() + ", " + a.getAdminArea();
+                }
+            } catch (IOException ignored) {}
+
+            String finalAddress = address;
+
+            requireActivity().runOnUiThread(() -> {
+                Map<String, Object> data = new HashMap<>();
+                data.put("lat", lat);
+                data.put("lng", lng);
+                data.put("location", finalAddress);
+                data.put("locationUpdatedAt", System.currentTimeMillis());
+
+                db.collection("users")
+                        .document(user.getUid())
+                        .set(data, SetOptions.merge());
+
+                Log.d("LOCATION", "Saved location");
+            });
+        }).start();
+    }
+
+    private void stopLocationUpdates() {
+        Map<String, Object> update = new HashMap<>();
+        update.put("lat", null);
+        update.put("lng", null);
+
+        FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(FirebaseUtil.currentUserId())
+                .set(update, SetOptions.merge());
     }
 
     // ================= LOGOUT =================
@@ -298,6 +402,3 @@ public class WorkerProfile extends Fragment {
         }
     }
 }
-
-
-

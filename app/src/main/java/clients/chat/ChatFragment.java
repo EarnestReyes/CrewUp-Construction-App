@@ -92,23 +92,30 @@ public class ChatFragment extends Fragment {
             @Override
             public void onDataChanged() {
 
-                int newCount = getItemCount();
+                int count = getItemCount();
 
-                lastItemCount = newCount;
-
-                txtEmpty.setVisibility(newCount == 0 ? View.VISIBLE : View.GONE);
-
+                // ✅ Stop loading FIRST
                 stopLoading();
+
+                // ✅ Show empty ONLY after first real load
+                if (!isFirstLoad) {
+                    txtEmpty.setVisibility(count == 0 ? View.VISIBLE : View.GONE);
+                }
+
+                isFirstLoad = false;
             }
 
             @Override
             public void onError(@NonNull FirebaseFirestoreException e) {
 
-                // 🔥 THIS is the missing piece
-                Log.e("ChatFragment", "Firestore error", e);
-
-                txtEmpty.setVisibility(View.VISIBLE);
                 stopLoading();
+
+                // Only show empty after first attempt
+                if (!isFirstLoad) {
+                    txtEmpty.setVisibility(View.VISIBLE);
+                }
+
+                isFirstLoad = false;
             }
         };
 

@@ -205,6 +205,7 @@ public class SignUp extends AppCompatActivity {
                 data.put("lng", lng);
                 data.put("location", finalAddress);
                 data.put("locationUpdatedAt", System.currentTimeMillis());
+                data.put("shareLocation", true);
 
                 db.collection("users")
                         .document(user.getUid())

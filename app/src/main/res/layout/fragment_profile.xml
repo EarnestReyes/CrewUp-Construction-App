@@ -17,7 +17,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- ================= SCROLL ================= -->
         <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -125,7 +124,69 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- ================= POSTS TITLE ================= -->
+                <!-- ================= SETTINGS (MOVED UP) ================= -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginBottom="8dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp"
+                    app:cardBackgroundColor="@color/card_color">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Settings"
+                            android:textColor="@color/text_primary"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginVertical="10dp"
+                            android:background="@color/divider_color"/>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Share live location"
+                                android:textColor="@color/text_primary"/>
+
+                            <androidx.appcompat.widget.SwitchCompat
+                                android:id="@+id/switchLocation"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"/>
+                        </LinearLayout>
+
+                        <Button
+                            android:id="@+id/logout_btn"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:layout_marginTop="16dp"
+                            android:text="Log out"
+                            android:textAllCaps="false"
+                            android:textStyle="bold"
+                            android:backgroundTint="@color/button_secondary"
+                            android:textColor="#FF3B30"/>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- ================= POSTS HEADER ================= -->
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -136,29 +197,41 @@
                     android:textSize="16sp"
                     android:textColor="@color/text_primary"/>
 
-                <!-- ================= USER POSTS ================= -->
+                <!-- ================= EMPTY POSTS ================= -->
+                <TextView
+                    android:id="@+id/txtEmptyPosts"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="16dp"
+                    android:gravity="center"
+                    android:text="No posts yet"
+                    android:textColor="@color/text_secondary"
+                    android:visibility="gone"/>
+
+                <!-- ================= POSTS LIST ================= -->
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/recyclerPosts"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:padding="8dp"
-                    android:nestedScrollingEnabled="false"/>
-
-                <!-- ================= LOGOUT ================= -->
-                <Button
-                    android:id="@+id/logout_btn"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:layout_margin="16dp"
-                    android:text="Log out"
-                    android:textAllCaps="false"
-                    android:textStyle="bold"
-                    android:backgroundTint="@color/button_secondary"
-                    android:textColor="#FF3B30"/>
+                    android:nestedScrollingEnabled="false"
+                    android:padding="8dp"/>
 
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+    <!-- ================= PLUS BUTTON ================= -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/btnAddPost"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="20dp"
+        android:contentDescription="Add post"
+        app:srcCompat="@drawable/ic_hire"
+        app:backgroundTint="@color/primary"
+        app:tint="@android:color/white"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
 
     <!-- ================= PROGRESS ================= -->
     <ProgressBar

@@ -31,6 +31,7 @@ public class WorkersChat extends Fragment {
     private SwipeRefreshLayout swipeRefresh;
     private ProgressBar progressLoading;
     private TextView txtEmpty;
+    private boolean firstLoad = true;
 
     public WorkersChat() {}
 
@@ -90,24 +91,30 @@ public class WorkersChat extends Fragment {
             @Override
             public void onDataChanged() {
 
-                // ✅ SUCCESS PATH (even if EMPTY)
                 progressLoading.setVisibility(View.GONE);
                 swipeRefresh.setRefreshing(false);
 
-                if (getItemCount() == 0) {
-                    txtEmpty.setVisibility(View.VISIBLE);
-                } else {
-                    txtEmpty.setVisibility(View.GONE);
+                int count = getItemCount();
+
+                if (!firstLoad) {
+                    txtEmpty.setVisibility(count == 0 ? View.VISIBLE : View.GONE);
                 }
+
+                firstLoad = false;
             }
 
             @Override
             public void onError(@NonNull FirebaseFirestoreException e) {
 
-                // ✅ ERROR / EMPTY / INDEX / PERMISSION PATH
                 progressLoading.setVisibility(View.GONE);
                 swipeRefresh.setRefreshing(false);
-                txtEmpty.setVisibility(View.VISIBLE);
+
+                // ✅ Error counts as a finished load
+                if (!firstLoad) {
+                    txtEmpty.setVisibility(View.VISIBLE);
+                }
+
+                firstLoad = false;
 
                 Log.e("WorkersChat", "Firestore error", e);
             }

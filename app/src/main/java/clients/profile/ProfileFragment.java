@@ -1,7 +1,11 @@
 package clients.profile;
 
+import android.Manifest;
 import android.content.Intent;
-import android.net.Uri;
+import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
 import android.os.Bundle;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -9,11 +13,14 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.SwitchCompat;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,22 +33,24 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 
 import adapters.PostAdapter;
-import clients.chat.ChatActivity;
 import data.FirebaseUtil;
 import com.example.ConstructionApp.R;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.messaging.FirebaseMessaging;
 
-import java.text.SimpleDateFormat;
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import app.Splash_activity;
 import models.Post;
@@ -49,10 +58,13 @@ import models.Post;
 public class ProfileFragment extends Fragment {
 
     private FirebaseFirestore db;
+    private FirebaseAuth mAuth;
+
     private Button logout;
     private ImageView imgProfile, imgCoverPhoto;
     private TextView username, birthday, Gender, Location, Mobile, Social;
     private RecyclerView recyclerView;
+    private SwitchCompat switchLocation;
 
     private ArrayList<Post> posts;
     private PostAdapter adapter;
@@ -61,12 +73,14 @@ public class ProfileFragment extends Fragment {
     private SwipeRefreshLayout swipeRefresh;
 
     private String currentUserProfilePicUrl;
+    private FusedLocationProviderClient fusedLocationClient;
 
     private boolean isFirstLoad = true;
     private boolean isRefreshing = false;
     private int lastItemCount = -1;
 
     // ================= IMAGE PICKERS =================
+
     private final ActivityResultLauncher<String> imagePickerLauncher =
             registerForActivityResult(
                     new ActivityResultContracts.GetContent(),
@@ -101,6 +115,9 @@ public class ProfileFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         db = FirebaseFirestore.getInstance();
+        mAuth = FirebaseAuth.getInstance();
+        fusedLocationClient =
+                LocationServices.getFusedLocationProviderClient(requireContext());
     }
 
     @Override
@@ -120,6 +137,7 @@ public class ProfileFragment extends Fragment {
         Location = view.findViewById(R.id.location);
         Mobile = view.findViewById(R.id.mobile);
         Social = view.findViewById(R.id.social);
+        switchLocation = view.findViewById(R.id.switchLocation);
 
         progressLoading = view.findViewById(R.id.progressLoading);
         swipeRefresh = view.findViewById(R.id.swipeRefresh);
@@ -133,22 +151,16 @@ public class ProfileFragment extends Fragment {
 
         progressLoading.setVisibility(View.VISIBLE);
 
-        swipeRefresh.setColorSchemeResources(
-                R.color.primary,
-                R.color.icon_share,
-                R.color.icon_comment
-        );
-
         swipeRefresh.setOnRefreshListener(() -> {
             isRefreshing = true;
             progressLoading.setVisibility(View.VISIBLE);
-            adapter.notifyDataSetChanged();
+            loadPosts();
         });
-
 
         loadUserDetails();
         loadCurrentUserProfilePic();
         loadPosts();
+        setupLocationSwitch(switchLocation);
 
         String uid = FirebaseUtil.currentUserId();
         if (uid != null && isAdded()) {
@@ -158,7 +170,6 @@ public class ProfileFragment extends Fragment {
 
         imgProfile.setOnClickListener(v -> permission(imagePickerLauncher));
         imgCoverPhoto.setOnClickListener(v -> permission(coverImagePickerLauncher));
-
         logout.setOnClickListener(v -> logout());
 
         return view;
@@ -167,7 +178,7 @@ public class ProfileFragment extends Fragment {
     // ================= USER DATA =================
 
     private void loadUserDetails() {
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        FirebaseUser user = mAuth.getCurrentUser();
         if (user == null) return;
 
         db.collection("users")
@@ -185,7 +196,7 @@ public class ProfileFragment extends Fragment {
     }
 
     private void loadCurrentUserProfilePic() {
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        FirebaseUser user = mAuth.getCurrentUser();
         if (user == null) return;
 
         db.collection("users")
@@ -199,7 +210,7 @@ public class ProfileFragment extends Fragment {
     // ================= POSTS =================
 
     private void loadPosts() {
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        FirebaseUser user = mAuth.getCurrentUser();
         if (user == null) {
             stopLoading();
             return;
@@ -217,7 +228,6 @@ public class ProfileFragment extends Fragment {
 
                     int newCount = value.size();
 
-                    // 🔒 If nothing changed and not refreshing → STOP
                     if (!isRefreshing && !isFirstLoad && newCount == lastItemCount) {
                         stopLoading();
                         return;
@@ -227,24 +237,12 @@ public class ProfileFragment extends Fragment {
 
                     for (QueryDocumentSnapshot doc : value) {
 
-                        long timestamp;
-                        Object rawTime = doc.get("timestamp");
-
-                        if (rawTime instanceof com.google.firebase.Timestamp) {
-                            timestamp = ((com.google.firebase.Timestamp) rawTime)
-                                    .toDate().getTime();
-                        } else if (rawTime instanceof Long) {
-                            timestamp = (Long) rawTime;
-                        } else {
-                            timestamp = System.currentTimeMillis();
-                        }
-
                         Post post = new Post(
                                 user.getUid(),
                                 doc.getString("userName"),
                                 "",
                                 doc.getString("content"),
-                                timestamp,
+                                System.currentTimeMillis(),
                                 currentUserProfilePicUrl,
                                 doc.getString("imageUrl")
                         );
@@ -255,11 +253,123 @@ public class ProfileFragment extends Fragment {
 
                     lastItemCount = newCount;
                     adapter.notifyDataSetChanged();
-
                     stopLoading();
                 });
     }
 
+    private void stopLoading() {
+        progressLoading.setVisibility(View.GONE);
+        swipeRefresh.setRefreshing(false);
+        isFirstLoad = false;
+        isRefreshing = false;
+    }
+
+    // ================= LOCATION SWITCH =================
+
+    private void setupLocationSwitch(SwitchCompat switchLocation) {
+
+        String uid = FirebaseUtil.currentUserId();
+        if (uid == null) return;
+
+        db.collection("users")
+                .document(uid)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    Boolean enabled = doc.getBoolean("shareLocation");
+                    switchLocation.setChecked(enabled != null && enabled);
+                });
+
+        switchLocation.setOnCheckedChangeListener((btn, enabled) -> {
+
+            Map<String, Object> update = new HashMap<>();
+            update.put("shareLocation", enabled);
+
+            db.collection("users")
+                    .document(uid)
+                    .update(update);
+
+            if (enabled) {
+                requestLocationPermission();
+            } else {
+                stopLocationUpdates();
+            }
+        });
+    }
+
+    private void requestLocationPermission() {
+        if (ActivityCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            requestPermissions(
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    101
+            );
+        } else {
+            fetchAndSaveLocation();
+        }
+    }
+
+    private void fetchAndSaveLocation() {
+        if (ActivityCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) return;
+
+        fusedLocationClient.getLastLocation()
+                .addOnSuccessListener(this::saveLocationAsync);
+    }
+
+    private void stopLocationUpdates() {
+        Log.d("LOCATION", "Location sharing disabled");
+    }
+
+    private void saveLocationAsync(Location location) {
+
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user == null || location == null) return;
+
+        new Thread(() -> {
+
+            String address = "Unknown location";
+
+            try {
+                Geocoder geocoder =
+                        new Geocoder(requireContext(), Locale.getDefault());
+                List<Address> list =
+                        geocoder.getFromLocation(
+                                location.getLatitude(),
+                                location.getLongitude(),
+                                1
+                        );
+
+                if (list != null && !list.isEmpty()) {
+                    Address a = list.get(0);
+                    address = a.getLocality() + ", " + a.getAdminArea();
+                }
+
+            } catch (IOException ignored) {}
+
+            String finalAddress = address;
+
+            requireActivity().runOnUiThread(() -> {
+
+                Map<String, Object> data = new HashMap<>();
+                data.put("lat", location.getLatitude());
+                data.put("lng", location.getLongitude());
+                data.put("location", finalAddress);
+                data.put("locationUpdatedAt", System.currentTimeMillis());
+
+                db.collection("users")
+                        .document(user.getUid())
+                        .set(data, SetOptions.merge());
+
+                Log.d("LOCATION_DEBUG", "Saved: " + finalAddress);
+            });
+
+        }).start();
+    }
 
     // ================= LOGOUT =================
 
@@ -269,7 +379,6 @@ public class ProfileFragment extends Fragment {
                 .setMessage("Are you sure you want to logout?")
                 .setPositiveButton("Yes", (d, w) ->
                         FirebaseMessaging.getInstance().deleteToken()
-                                .addOnCompleteListener(Task::isSuccessful)
                                 .addOnSuccessListener(v -> {
                                     FirebaseUtil.logout();
                                     startActivity(new Intent(getContext(), Splash_activity.class));
@@ -289,12 +398,4 @@ public class ProfileFragment extends Fragment {
                 .setNegativeButton("No", null)
                 .show();
     }
-    private void stopLoading() {
-        progressLoading.setVisibility(View.GONE);
-        swipeRefresh.setRefreshing(false);
-        isFirstLoad = false;
-        isRefreshing = false;
-    }
-
 }
-

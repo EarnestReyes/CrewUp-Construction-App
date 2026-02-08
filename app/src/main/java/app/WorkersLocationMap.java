@@ -54,6 +54,10 @@ public class WorkersLocationMap extends AppCompatActivity {
     private FirebaseFirestore db;
     private FirebaseAuth auth;
 
+    // 🔐 LISTENERS
+    private ListenerRegistration workersListener;
+    private ListenerRegistration selfListener;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,7 +70,6 @@ public class WorkersLocationMap extends AppCompatActivity {
         map.setTileSource(
                 org.osmdroid.tileprovider.tilesource.TileSourceFactory.MAPNIK
         );
-
 
         db = FirebaseFirestore.getInstance();
         auth = FirebaseAuth.getInstance();
@@ -84,13 +87,6 @@ public class WorkersLocationMap extends AppCompatActivity {
                 new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                 101
         );
-
-        map.getOverlays().add(new org.osmdroid.views.overlay.Overlay() {
-            @Override
-            public boolean onSingleTapConfirmed(android.view.MotionEvent e, MapView mapView) {
-                return false;
-            }
-        });
 
         setupLocationCallback();
         startLocationUpdates();
@@ -153,16 +149,50 @@ public class WorkersLocationMap extends AppCompatActivity {
         map.invalidate();
     }
 
-    // ================= WORKERS =================
+    // ================= WORKERS (PRIVACY ENFORCED) =================
 
     private void listenToWorkers() {
-        db.collection("users")
+
+        if (auth.getCurrentUser() == null) return;
+        String uid = auth.getCurrentUser().getUid();
+
+        // 🔥 LISTEN TO CURRENT USER shareLocation
+        selfListener = db.collection("users")
+                .document(uid)
+                .addSnapshotListener((userDoc, error) -> {
+
+                    if (error != null || userDoc == null || !userDoc.exists()) return;
+
+                    Boolean shareLocation = userDoc.getBoolean("shareLocation");
+
+                    if (shareLocation == null || !shareLocation) {
+                        // 🚫 USER DISABLED SHARING
+                        removeAllWorkerMarkers();
+                        stopWorkersListener();
+                    } else {
+                        // ✅ USER ENABLED SHARING
+                        startWorkersListener();
+                    }
+                });
+    }
+
+    private void startWorkersListener() {
+
+        if (workersListener != null) return;
+
+        workersListener = db.collection("users")
                 .whereEqualTo("Role", "worker")
+                .whereEqualTo("shareLocation", true) // 🔐 ONLY SHARING WORKERS
                 .addSnapshotListener((snapshots, error) -> {
 
                     if (error != null || snapshots == null) return;
 
                     for (DocumentSnapshot doc : snapshots) {
+
+                        // ❌ Skip self
+                        if (auth.getCurrentUser() != null &&
+                                doc.getId().equals(auth.getCurrentUser().getUid()))
+                            continue;
 
                         Double lat = doc.getDouble("lat");
                         Double lng = doc.getDouble("lng");
@@ -174,6 +204,21 @@ public class WorkersLocationMap extends AppCompatActivity {
                         updateWorkerMarker(doc.getId(), point, profileUrl);
                     }
                 });
+    }
+
+    private void stopWorkersListener() {
+        if (workersListener != null) {
+            workersListener.remove();
+            workersListener = null;
+        }
+    }
+
+    private void removeAllWorkerMarkers() {
+        for (Marker marker : workerMarkers.values()) {
+            map.getOverlays().remove(marker);
+        }
+        workerMarkers.clear();
+        map.invalidate();
     }
 
     private void updateWorkerMarker(
@@ -191,14 +236,11 @@ public class WorkersLocationMap extends AppCompatActivity {
             marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
             marker.setTitle("Worker");
 
-            // 🔥 STORE WORKER ID INSIDE MARKER
             marker.setRelatedObject(workerId);
 
-            // 🔥 TAP LISTENER
             marker.setOnMarkerClickListener((m, mapView) -> {
-                String id = (String) m.getRelatedObject();
-                openWorkerProfile(id);
-                return true; // consume click
+                openWorkerProfile((String) m.getRelatedObject());
+                return true;
             });
 
             map.getOverlays().add(marker);
@@ -242,9 +284,10 @@ public class WorkersLocationMap extends AppCompatActivity {
                     public void onLoadCleared(android.graphics.drawable.Drawable placeholder) {}
                 });
     }
+
     private void openWorkerProfile(String workerId) {
         Intent intent = new Intent(this, UserProfile.class);
-        intent.putExtra("userId", workerId); // ✅ FIX
+        intent.putExtra("userId", workerId);
         startActivity(intent);
     }
 
@@ -253,7 +296,21 @@ public class WorkersLocationMap extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        locationClient.removeLocationUpdates(locationCallback);
+
+        if (locationCallback != null) {
+            locationClient.removeLocationUpdates(locationCallback);
+        }
+
+        if (workersListener != null) {
+            workersListener.remove();
+            workersListener = null;
+        }
+
+        if (selfListener != null) {
+            selfListener.remove();
+            selfListener = null;
+        }
+
         map.onDetach();
     }
 
@@ -268,6 +325,7 @@ public class WorkersLocationMap extends AppCompatActivity {
         super.onPause();
         map.onPause();
     }
+
     @Override
     public void onRequestPermissionsResult(
             int requestCode,

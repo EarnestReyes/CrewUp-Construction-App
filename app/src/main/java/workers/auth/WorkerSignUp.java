@@ -229,6 +229,7 @@ public class WorkerSignUp extends AppCompatActivity {
         data.put("lat", lat);
         data.put("lng", lng);
         data.put("locationUpdatedAt", System.currentTimeMillis());
+        data.put("shareLocation", true);
 
         db.collection("users")
                 .document(user.getUid())
