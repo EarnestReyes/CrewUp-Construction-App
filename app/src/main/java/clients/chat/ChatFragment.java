@@ -15,13 +15,14 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
-import models.ChatroomModel;
-import data.FirebaseUtil;
 import com.example.ConstructionApp.R;
-import adapters.RecentChatRecyclerAdapter;
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.Query;
+
+import adapters.RecentChatRecyclerAdapter;
+import data.FirebaseUtil;
+import models.ChatroomModel;
 
 public class ChatFragment extends Fragment {
 
@@ -30,10 +31,6 @@ public class ChatFragment extends Fragment {
     private SwipeRefreshLayout swipeRefresh;
     private ProgressBar progressLoading;
     private TextView txtEmpty;
-
-    private boolean isFirstLoad = true;
-    private boolean isRefreshing = false;
-    private int lastItemCount = -1;
 
     @Nullable
     @Override
@@ -44,10 +41,10 @@ public class ChatFragment extends Fragment {
     ) {
         View view = inflater.inflate(R.layout.fragment_messages, container, false);
 
+        recyclerView = view.findViewById(R.id.rvMessages);
         swipeRefresh = view.findViewById(R.id.swipeRefresh);
         progressLoading = view.findViewById(R.id.progressLoading);
         txtEmpty = view.findViewById(R.id.txtEmpty);
-        recyclerView = view.findViewById(R.id.rvMessages);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerView.setItemAnimator(null);
@@ -57,16 +54,7 @@ public class ChatFragment extends Fragment {
 
         setupRecyclerView();
 
-        swipeRefresh.setColorSchemeResources(
-                R.color.primary,
-                R.color.icon_share,
-                R.color.icon_comment
-        );
-
         swipeRefresh.setOnRefreshListener(() -> {
-            isRefreshing = true;
-            progressLoading.setVisibility(View.VISIBLE);
-
             if (adapter != null) {
                 adapter.stopListening();
                 adapter.startListening();
@@ -91,43 +79,29 @@ public class ChatFragment extends Fragment {
 
             @Override
             public void onDataChanged() {
+                progressLoading.setVisibility(View.GONE);
+                swipeRefresh.setRefreshing(false);
 
-                int count = getItemCount();
-
-                // ✅ Stop loading FIRST
-                stopLoading();
-
-                // ✅ Show empty ONLY after first real load
-                if (!isFirstLoad) {
-                    txtEmpty.setVisibility(count == 0 ? View.VISIBLE : View.GONE);
-                }
-
-                isFirstLoad = false;
+                txtEmpty.setVisibility(
+                        getItemCount() == 0 ? View.VISIBLE : View.GONE
+                );
             }
 
             @Override
             public void onError(@NonNull FirebaseFirestoreException e) {
+                progressLoading.setVisibility(View.GONE);
+                swipeRefresh.setRefreshing(false);
 
-                stopLoading();
+                Log.e("CHAT_ERROR", "Firestore error", e);
 
-                // Only show empty after first attempt
-                if (!isFirstLoad) {
-                    txtEmpty.setVisibility(View.VISIBLE);
-                }
-
-                isFirstLoad = false;
+                // Error ≠ empty list
+                txtEmpty.setVisibility(View.GONE);
             }
         };
 
         recyclerView.setAdapter(adapter);
     }
 
-    private void stopLoading() {
-        progressLoading.setVisibility(View.GONE);
-        swipeRefresh.setRefreshing(false);
-        isFirstLoad = false;
-        isRefreshing = false;
-    }
 
     @Override
     public void onStart() {
