@@ -109,12 +109,15 @@ public class MainActivity extends AppCompatActivity {
         if (user == null || oneSignalLoggedIn) return;
 
         try {
+            Log.e("ONESIGNAL", "UID = " + user.getUid());
             OneSignal.login(user.getUid());
+
             oneSignalLoggedIn = true;
         } catch (Exception e) {
-            Log.w("OneSignal", "Not ready yet, retrying later");
+            Log.w("OneSignal", "OneSignal not ready yet", e);
         }
     }
+
 
     private void initViews() {
         navHome = findViewById(R.id.navHome);
@@ -228,3 +231,4 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 }
+

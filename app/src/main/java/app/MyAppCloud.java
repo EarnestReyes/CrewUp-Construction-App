@@ -1,3 +1,5 @@
+
+
 package app;
 
 import android.app.Application;
@@ -21,3 +23,5 @@ public class MyAppCloud extends Application {
         MediaManager.init(this, config);
     }
 }
+
+

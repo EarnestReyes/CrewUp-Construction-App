@@ -79,5 +79,6 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
     implementation("com.onesignal:OneSignal:5.0.4")
+    implementation("com.onesignal:OneSignal:[5.0.0, 5.99.99]")
 
 }

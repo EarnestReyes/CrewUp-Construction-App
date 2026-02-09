@@ -15,24 +15,16 @@ public class MyAppOneSignal extends Application {
     public void onCreate() {
         super.onCreate();
 
-        try {
-            // ✅ OneSignal MUST be first
-            OneSignal.initWithContext(getApplicationContext());
-            Log.d("APP_INIT", "OneSignal initialized");
+        Log.e("APP_INIT", " MyAppOneSignal LOADED !!");
 
-        } catch (Exception e) {
-            Log.e("APP_INIT", "OneSignal init failed", e);
-        }
+        // ✅ Explicit App ID (fixes v5 warning)
+        OneSignal.initWithContext(
+                this,
+                "b1a8faac-dde0-4e43-b1f1-8dbd1cd3d340"
+        );
 
-        // ✅ Cloudinary (safe init)
-        try {
-            Map<String, Object> config = new HashMap<>();
-            config.put("cloud_name", "djkzs1iso");
-            MediaManager.init(this, config);
-            Log.d("APP_INIT", "Cloudinary initialized");
-
-        } catch (IllegalStateException e) {
-            Log.w("APP_INIT", "Cloudinary already initialized");
-        }
+        Map<String, Object> config = new HashMap<>();
+        config.put("cloud_name", "djkzs1iso");
+        MediaManager.init(this, config);
     }
 }

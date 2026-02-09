@@ -11,6 +11,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -42,6 +43,8 @@ import workers.works.works;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final int NOTIFICATION_PERMISSION_CODE = 1001;
+
     ImageButton navHome, navBell, navAdd, navChat, navActivity;
     ImageView btnSearch, Notification, Profile;
     TextView txtNewsFeed;
@@ -49,24 +52,16 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private boolean oneSignalLoggedIn = false;
 
+    // ----------------------------------------------------
+    // LIFECYCLE
+    // ----------------------------------------------------
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState); // ✅ MUST BE FIRST
+        super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main2);
 
-        // Android 13+ notification permission
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.POST_NOTIFICATIONS
-            ) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(
-                        this,
-                        new String[]{Manifest.permission.POST_NOTIFICATIONS},
-                        1001
-                );
-            }
-        }
+        requestNotificationPermissionIfNeeded();
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) {
@@ -88,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
         initNavigation();
 
         getUserLocationFromDatabase();
-        getFCMToken();
+        saveFCMToken();
 
         if (savedInstanceState == null) {
             loadFragment(new Home());
@@ -99,18 +94,80 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        attemptOneSignalLogin();
+    }
 
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user == null || oneSignalLoggedIn) return;
+    // ----------------------------------------------------
+    // NOTIFICATION PERMISSION
+    // ----------------------------------------------------
 
-        try {
-            OneSignal.login(user.getUid());
-            oneSignalLoggedIn = true;
-        } catch (Exception e) {
-            Log.w("OneSignal", "Not ready yet, retrying later");
+    private void requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED) {
+
+                ActivityCompat.requestPermissions(
+                        this,
+                        new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                        NOTIFICATION_PERMISSION_CODE
+                );
+            }
         }
     }
 
+    @Override
+    public void onRequestPermissionsResult(
+            int requestCode,
+            @NonNull String[] permissions,
+            @NonNull int[] grantResults
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == NOTIFICATION_PERMISSION_CODE) {
+            if (grantResults.length > 0 &&
+                    grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                Log.e("ONESIGNAL", "Notification permission GRANTED");
+                oneSignalLoggedIn = false;
+                attemptOneSignalLogin();
+
+            } else {
+                Log.e("ONESIGNAL", "Notification permission DENIED");
+            }
+        }
+    }
+
+    // ----------------------------------------------------
+    // ONESIGNAL LOGIN (SAFE + RETRYABLE)
+    // ----------------------------------------------------
+
+    private void attemptOneSignalLogin() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null || oneSignalLoggedIn) return;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED) {
+                return; // wait until permission granted
+            }
+        }
+
+        try {
+            Log.e("ONESIGNAL", "Worker UID = " + user.getUid());
+            OneSignal.login(user.getUid());
+            oneSignalLoggedIn = true;
+        } catch (Exception e) {
+            Log.w("ONESIGNAL", "OneSignal not ready yet", e);
+        }
+    }
+
+    // ----------------------------------------------------
+    // UI SETUP
+    // ----------------------------------------------------
 
     private void initViews() {
         navHome = findViewById(R.id.navHome);
@@ -137,10 +194,6 @@ public class MainActivity extends AppCompatActivity {
 
         btnSearch.setOnClickListener(v ->
                 startActivity(new Intent(this, SearchUserActivity.class))
-        );
-
-        navChat.setOnClickListener(v ->
-                startActivity(new Intent(this, ChatActivity.class))
         );
 
         navHome.setOnClickListener(v -> {
@@ -191,6 +244,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // ----------------------------------------------------
+    // FIREBASE DATA
+    // ----------------------------------------------------
+
     private void getUserLocationFromDatabase() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) return;
@@ -199,37 +256,29 @@ public class MainActivity extends AppCompatActivity {
                 .document(user.getUid())
                 .get()
                 .addOnSuccessListener(document -> {
-                    if (document != null && document.exists()) {
+                    if (document.exists()) {
                         String location = document.getString("location");
                         txtNewsFeed.setText(
                                 location != null ? location : "Location not specified"
                         );
                     }
-                })
-                .addOnFailureListener(e ->
-                        Log.e("FIRESTORE", "Failed to get location", e)
-                );
+                });
     }
 
-    private void getFCMToken() {
+    private void saveFCMToken() {
         FirebaseMessaging.getInstance().getToken()
                 .addOnSuccessListener(token -> {
-
                     FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
                     if (user == null) return;
 
                     Map<String, Object> data = new HashMap<>();
                     data.put("userId", user.getUid());
-                    data.put("Role", "worker");
+                    data.put("role", "worker");
                     data.put("fcmToken", token);
 
                     db.collection("users")
                             .document(user.getUid())
-                            .set(data, SetOptions.merge())
-                            .addOnSuccessListener(unused ->
-                                    Log.d("FIRESTORE", "Worker data saved"))
-                            .addOnFailureListener(e ->
-                                    Log.e("FIRESTORE", "Worker save failed", e));
+                            .set(data, SetOptions.merge());
                 });
     }
 }
