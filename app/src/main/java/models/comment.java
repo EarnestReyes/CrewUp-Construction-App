@@ -8,6 +8,7 @@ public class comment {
     private String profilePicUrl;
     private String text;
     private long timestamp;
+    private long OtherUserId;
 
     public comment() {}
 

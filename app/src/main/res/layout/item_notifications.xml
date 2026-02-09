@@ -10,6 +10,7 @@
     app:cardElevation="0dp">
 
     <LinearLayout
+        android:id="@+id/body"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -21,7 +22,7 @@
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:src="@drawable/ic_notification"
-            app:tint="@color/primary"/>
+            app:tint="@color/primary" />
 
         <!-- TEXT -->
         <LinearLayout
@@ -35,20 +36,20 @@
                 android:id="@+id/txtMessage"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="2"
                 android:text="Earnest Reyes liked your post"
                 android:textColor="@color/text_primary"
-                android:textSize="14sp"
-                android:maxLines="2"
-                android:ellipsize="end"/>
+                android:textSize="14sp" />
 
             <TextView
                 android:id="@+id/txtTime"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
                 android:text="2 hours ago"
                 android:textColor="@color/text_secondary"
-                android:textSize="12sp"
-                android:layout_marginTop="4dp"/>
+                android:textSize="12sp" />
 
         </LinearLayout>
 

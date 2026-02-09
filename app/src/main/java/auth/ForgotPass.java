@@ -2,83 +2,102 @@ package auth;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
+import android.util.Patterns;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.example.ConstructionApp.R;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
 
-import app.MainActivity;
+import java.util.HashMap;
+import java.util.Map;
+
+import models.UserModel;
 
 public class ForgotPass extends AppCompatActivity {
 
-    FirebaseAuth mAuth;
+    private FirebaseAuth mAuth;
+    private EditText emailEt;
+    private Button resetBtn;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_forgot_pass);
+
         mAuth = FirebaseAuth.getInstance();
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
 
+        emailEt = findViewById(R.id.emailEt);
+        resetBtn = findViewById(R.id.resetBtn);
+        ImageView backBtn = findViewById(R.id.backBtn);
 
-        View main = findViewById(R.id.main);
-        ViewCompat.setOnApplyWindowInsetsListener(main, (v, insets) -> {
-            int topInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
-            v.setPadding(
-                    v.getPaddingLeft(),
-                    topInset,
-                    v.getPaddingRight(),
-                    v.getPaddingBottom()
-            );
-            return insets;
-        });
+        backBtn.setOnClickListener(v -> finish());
 
-        Button resetBtn = findViewById(R.id.resetBtn);
-        EditText emailEt = findViewById(R.id.emailEt);
-        ImageView backbtn = findViewById(R.id.backBtn);
+        resetBtn.setOnClickListener(v -> sendResetEmail());
+    }
 
-        backbtn.setOnClickListener(view -> {
-            finish();
-        });
+    private void sendResetEmail() {
+        String email = emailEt.getText().toString().trim();
 
-        resetBtn.setOnClickListener(v -> {
-            String email = emailEt.getText().toString().trim();
+        // 🔥 Email validation
+        if (email.isEmpty()) {
+            emailEt.setError("Email is required");
+            return;
+        }
 
-            if (email.isEmpty()) {
-                emailEt.setError("Email required");
-                return;
-            }
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            emailEt.setError("Enter a valid email address");
+            return;
+        }
 
-            mAuth.sendPasswordResetEmail(email)
-                    .addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                            Toast.makeText(this,
-                                    "Reset link sent to your email",
-                                    Toast.LENGTH_LONG).show();
-                            Intent in = new Intent(ForgotPass.this, MainActivity.class);
-                            startActivity(in);
-                        } else {
-                            Toast.makeText(this,
-                                    task.getException().getMessage(),
-                                    Toast.LENGTH_LONG).show();
+        resetBtn.setEnabled(false);
+
+        mAuth.sendPasswordResetEmail(email)
+                .addOnCompleteListener(task -> {
+                    resetBtn.setEnabled(true);
+
+                    if (task.isSuccessful()) {
+                        Toast.makeText(
+                                this,
+                                "Password reset link sent. Check your email.",
+                                Toast.LENGTH_LONG
+                        ).show();
+                        pushNotification();
+                        startActivity(new Intent(this, Login.class));
+                        finish();
+
+                    } else {
+                        String errorMsg = "Something went wrong. Try again.";
+
+                        if (task.getException() != null) {
+                            errorMsg = task.getException().getMessage();
                         }
-                    });
-        });
 
+                        Toast.makeText(this, errorMsg, Toast.LENGTH_LONG).show();
+                    }
+                });
+    }
+    public static void pushNotification() {
 
+        String uid = FirebaseAuth.getInstance().getUid();
+        if (uid == null) return;
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("toUserId", uid);
+        data.put("title", "CrewUp Email Reset!");
+        data.put("message", "Password reset link is sent to your Gmail account.");
+        data.put("type", "system");
+        data.put("timestamp", Timestamp.now());
+        data.put("read", false);
+
+        FirebaseFirestore.getInstance()
+                .collection("notifications")
+                .add(data);
     }
 }

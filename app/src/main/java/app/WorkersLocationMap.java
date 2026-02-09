@@ -38,22 +38,17 @@ import clients.profile.UserProfile;
 public class WorkersLocationMap extends AppCompatActivity {
 
     private MapView map;
-
     // CLIENT
     private Marker myMarker;
     private GeoPoint myCurrentPoint;
-
     // WORKERS
     private final Map<String, Marker> workerMarkers = new HashMap<>();
-
     // LOCATION
     private FusedLocationProviderClient locationClient;
     private LocationCallback locationCallback;
-
     // FIREBASE
     private FirebaseFirestore db;
     private FirebaseAuth auth;
-
     // 🔐 LISTENERS
     private ListenerRegistration workersListener;
     private ListenerRegistration selfListener;

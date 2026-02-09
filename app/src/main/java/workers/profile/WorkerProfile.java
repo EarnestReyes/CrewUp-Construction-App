@@ -39,6 +39,7 @@ import com.example.ConstructionApp.R;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -337,6 +338,7 @@ public class WorkerProfile extends Fragment {
 
     private void stopLocationUpdates() {
         Log.d("LOCATION", "Location sharing disabled");
+        pushLocationOffNotification();
     }
 
     private void saveLocationAsync(Location location) {
@@ -411,5 +413,22 @@ public class WorkerProfile extends Fragment {
                 .setPositiveButton("Yes", (d, w) -> launcher.launch("image/*"))
                 .setNegativeButton("No", null)
                 .show();
+    }
+    public static void pushLocationOffNotification() {
+
+        String uid = FirebaseAuth.getInstance().getUid();
+        if (uid == null) return;
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("toUserId", uid);
+        data.put("title", "Location Disabled");
+        data.put("message", "You turned off your location services");
+        data.put("type", "warning");
+        data.put("timestamp", Timestamp.now());
+        data.put("read", false);
+
+        FirebaseFirestore.getInstance()
+                .collection("notifications")
+                .add(data);
     }
 }

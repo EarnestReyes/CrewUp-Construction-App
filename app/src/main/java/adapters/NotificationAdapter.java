@@ -1,10 +1,12 @@
 package adapters;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -44,7 +46,7 @@ public class NotificationAdapter
     @Override
     public void onBindViewHolder(
             @NonNull NotificationViewHolder holder, int position) {
-
+        holder.body.setBackgroundColor(Color.TRANSPARENT);
         NotificationModel model = list.get(position);
 
         // Message text (SAFE)
@@ -63,7 +65,6 @@ public class NotificationAdapter
             holder.txtTime.setText("");
         }
 
-        // Icon
         String type = model.getType() == null ? "" : model.getType();
 
         switch (type) {
@@ -71,24 +72,25 @@ public class NotificationAdapter
                 holder.icon.setImageResource(R.drawable.ic_filled);
                 break;
             case "message":
-                holder.icon.setImageResource(R.drawable.baseline_post_add_24);
+                holder.icon.setImageResource(R.drawable.ic_send);
                 break;
             case "hire":
-                holder.icon.setImageResource(R.drawable.ic_hire);
+                holder.icon.setImageResource(R.drawable.ic_event);
+                break;
+            case "warning":
+                holder.icon.setImageResource(R.drawable.ic_location);
                 break;
             default:
                 holder.icon.setImageResource(R.drawable.ic_notification);
         }
 
-        // Dim if read
         holder.itemView.setAlpha(model.isRead() ? 0.5f : 1f);
         holder.itemView.setOnClickListener(v -> {
             FirebaseFirestore.getInstance()
-                    .collection("appNotifications")
+                    .collection("notifications")
                     .document(model.getId())
                     .update("read", true);
         });
-
     }
 
     @Override
@@ -100,12 +102,14 @@ public class NotificationAdapter
 
         ImageView icon;
         TextView txtMessage, txtTime;
+        LinearLayout body;
 
         public NotificationViewHolder(@NonNull View itemView) {
             super(itemView);
             icon = itemView.findViewById(R.id.imgIcon);
             txtMessage = itemView.findViewById(R.id.txtMessage);
             txtTime = itemView.findViewById(R.id.txtTime);
+            body = itemView.findViewById(R.id.body);
         }
     }
 }

@@ -30,6 +30,10 @@
         <meta-data
             android:name="onesignal_app_id"
             android:value="b1a8faac-dde0-4e43-b1f1-8dbd1cd3d340" />
+        <meta-data
+            android:name="com.onesignal.NotificationIcon"
+            android:resource="@drawable/crewup_logo" />
+
 
         <!-- ================= ACTIVITIES ================= -->
 

@@ -94,7 +94,7 @@ public class Notifications extends AppCompatActivity {
         if (uid == null) return;
 
         FirebaseFirestore.getInstance()
-                .collection("appNotifications")
+                .collection("notifications")
                 .whereEqualTo("toUserId", uid)
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .addSnapshotListener((value, error) -> {

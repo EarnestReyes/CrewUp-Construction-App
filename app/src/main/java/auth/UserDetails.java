@@ -17,6 +17,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.ConstructionApp.R;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
@@ -67,6 +68,7 @@ public class UserDetails extends AppCompatActivity {
 
         btnSubmit.setOnClickListener(v -> {
             saveUserToFirestore();
+            pushNotification();
             Intent in = new Intent(this, MainActivity.class);
             startActivity(in);
         });
@@ -138,6 +140,24 @@ public class UserDetails extends AppCompatActivity {
         db.collection("users")
                 .document(uid)
                 .set(user, SetOptions.merge());
+    }
+
+    public static void pushNotification() {
+
+        String uid = FirebaseAuth.getInstance().getUid();
+        if (uid == null) return;
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("toUserId", uid);
+        data.put("title", "Account Created!");
+        data.put("message", "Welcome to CrewUp, enjoy your stay!");
+        data.put("type", "system");
+        data.put("timestamp", Timestamp.now());
+        data.put("read", false);
+
+        FirebaseFirestore.getInstance()
+                .collection("notifications")
+                .add(data);
     }
 
 }
