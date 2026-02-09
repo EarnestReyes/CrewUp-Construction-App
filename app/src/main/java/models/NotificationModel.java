@@ -5,17 +5,14 @@ import com.google.firebase.Timestamp;
 public class NotificationModel {
 
     private String id;
-
-    // 🔥 MUST MATCH FIRESTORE FIELD
     private String toUserId;
-
     private String title;
     private String message;
     private String type;
     private Timestamp timestamp;
     private boolean read;
 
-    // Required empty constructor
+    // REQUIRED empty constructor
     public NotificationModel() {}
 
     // Getters
@@ -27,7 +24,12 @@ public class NotificationModel {
     public Timestamp getTimestamp() { return timestamp; }
     public boolean isRead() { return read; }
 
-    // Setters
+    // 🔥 ADD ALL SETTERS
     public void setId(String id) { this.id = id; }
     public void setToUserId(String toUserId) { this.toUserId = toUserId; }
+    public void setTitle(String title) { this.title = title; }
+    public void setMessage(String message) { this.message = message; }
+    public void setType(String type) { this.type = type; }
+    public void setTimestamp(Timestamp timestamp) { this.timestamp = timestamp; }
+    public void setRead(boolean read) { this.read = read; }
 }

@@ -94,8 +94,8 @@ public class Notifications extends AppCompatActivity {
         if (uid == null) return;
 
         FirebaseFirestore.getInstance()
-                .collection("notifications")
-                .whereEqualTo("toUserId", uid) // 🔥 FIX
+                .collection("appNotifications")
+                .whereEqualTo("toUserId", uid)
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .addSnapshotListener((value, error) -> {
 
@@ -135,6 +135,7 @@ public class Notifications extends AppCompatActivity {
                     updateEmptyState();
                 });
     }
+
 
     private void updateEmptyState() {
         boolean isEmpty =

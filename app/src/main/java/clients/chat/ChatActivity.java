@@ -239,7 +239,6 @@ public class ChatActivity extends AppCompatActivity {
                         model = new ChatroomModel(
                                 chatroomId,
                                 Arrays.asList(
-
                                         FirebaseUtil.currentUserId(),
                                         otherUserId
                                 ),
@@ -266,12 +265,14 @@ public class ChatActivity extends AppCompatActivity {
 
                                 FirebaseUtil.getChatroomMessageReference(chatroomId)
                                         .add(chatMessage)
-                                        .addOnSuccessListener(ref ->
-                                                messageInput.setText("")
-                                        );
+                                        .addOnSuccessListener(ref -> {
+                                            messageInput.setText("");
+
+                                            // 🔥 SEND NOTIFICATION ONLY HERE
+                                            sendNotification(message);
+                                        });
                             });
                 });
-       sendNotification(message);
     }
 
     /* ---------------- CREATE CHATROOM ---------------- */
@@ -328,7 +329,7 @@ public class ChatActivity extends AppCompatActivity {
         notif.put("fromUserId", user.getUid());
         notif.put("toUserId", otherUser.getUserId());
         notif.put("message", message);
-        notif.put("timestamp", System.currentTimeMillis());
+        notif.put("timestamp", com.google.firebase.Timestamp.now());
         notif.put("type", "message"); // optional but useful later
         notif.put("read", false);     // optional for unread badges
 

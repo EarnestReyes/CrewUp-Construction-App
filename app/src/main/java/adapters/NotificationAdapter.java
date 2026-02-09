@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.ConstructionApp.R;
 import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -81,6 +82,13 @@ public class NotificationAdapter
 
         // Dim if read
         holder.itemView.setAlpha(model.isRead() ? 0.5f : 1f);
+        holder.itemView.setOnClickListener(v -> {
+            FirebaseFirestore.getInstance()
+                    .collection("appNotifications")
+                    .document(model.getId())
+                    .update("read", true);
+        });
+
     }
 
     @Override

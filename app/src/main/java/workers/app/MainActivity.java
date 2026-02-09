@@ -1,6 +1,8 @@
 package workers.app;
 
 import android.Manifest;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -52,15 +54,12 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private boolean oneSignalLoggedIn = false;
 
-    // ----------------------------------------------------
-    // LIFECYCLE
-    // ----------------------------------------------------
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main2);
 
+        createNotificationChannel();
         requestNotificationPermissionIfNeeded();
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
@@ -117,6 +116,26 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+
+            NotificationChannel channel = new NotificationChannel(
+                    "default", // 🔥 MUST MATCH Cloud Function
+                    "General Notifications",
+                    NotificationManager.IMPORTANCE_HIGH
+            );
+
+            channel.setDescription("CrewUp notifications");
+
+            NotificationManager manager =
+                    getSystemService(NotificationManager.class);
+
+            if (manager != null) {
+                manager.createNotificationChannel(channel);
+            }
+        }
+    }
+
     @Override
     public void onRequestPermissionsResult(
             int requestCode,
@@ -152,18 +171,31 @@ public class MainActivity extends AppCompatActivity {
                     this,
                     Manifest.permission.POST_NOTIFICATIONS
             ) != PackageManager.PERMISSION_GRANTED) {
-                return; // wait until permission granted
+                return;
             }
         }
 
         try {
-            Log.e("ONESIGNAL", "Worker UID = " + user.getUid());
-            OneSignal.login(user.getUid());
+            String uid = user.getUid();
+
+            Log.e("ONESIGNAL", "Logging in UID = " + uid);
+
+            // ✅ LOGIN
+            OneSignal.login(uid);
+
+            // ✅ THIS IS THE MISSING PIECE
+            OneSignal.getUser().addTag("userId", uid);
+
             oneSignalLoggedIn = true;
+
+            Log.e("ONESIGNAL", "Tag set: userId = " + uid);
+
         } catch (Exception e) {
             Log.w("ONESIGNAL", "OneSignal not ready yet", e);
         }
     }
+
+
 
     // ----------------------------------------------------
     // UI SETUP
