@@ -74,7 +74,7 @@ public class ProjectDetailsFragment extends Fragment {
                 Glide.with(requireContext())
                         .load(photos.get(0))
                         .placeholder(R.drawable.bg_bottom_nav)
-                        .error(com.cloudinary.android.ui.R.drawable.lock)
+                        .error(R.drawable.ic_close)
                         .into(imgPhoto);
             } else {
                 imgPhoto.setVisibility(View.GONE);

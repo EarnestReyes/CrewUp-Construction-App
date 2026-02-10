@@ -52,7 +52,7 @@ public class WorkerSignUp extends AppCompatActivity {
     private static final int LOCATION_REQUEST_CODE = 100;
     private static final String CHANNEL_ID = "crew_up_channel";
 
-    private TextInputEditText  email, password, confirmPass;
+    private TextInputEditText username, email, password, confirmPass;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,7 +76,7 @@ public class WorkerSignUp extends AppCompatActivity {
                     return insets;
                 });
 
-
+        username = findViewById(R.id.edtUsername);
         email = findViewById(R.id.edtEmail);
         password = findViewById(R.id.edtPassword);
         confirmPass = findViewById(R.id.edtConfirmPassword);
@@ -95,11 +95,16 @@ public class WorkerSignUp extends AppCompatActivity {
 
     private void registerWorker() {
 
-
+        String rawName = username.getText().toString().trim();
         String emailTxt = email.getText().toString().trim();
         String passTxt = password.getText().toString().trim();
         String confirmTxt = confirmPass.getText().toString().trim();
 
+        if (rawName.isEmpty() || emailTxt.isEmpty()
+                || passTxt.isEmpty() || confirmTxt.isEmpty()) {
+            Toast.makeText(this, "All fields are required", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         if (!passTxt.equals(confirmTxt)) {
             Toast.makeText(this, "Passwords do not match", Toast.LENGTH_SHORT).show();
@@ -111,12 +116,13 @@ public class WorkerSignUp extends AppCompatActivity {
             return;
         }
 
+        String formattedName = formatName(rawName);
 
         mAuth.createUserWithEmailAndPassword(emailTxt, passTxt)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        saveWorkerToFirestore(emailTxt);
-
+                        saveWorkerToFirestore(formattedName, emailTxt);
+                        createNotification(formattedName);
                         showLocationDialog();
                     } else {
                         Toast.makeText(
@@ -139,13 +145,14 @@ public class WorkerSignUp extends AppCompatActivity {
         return String.join(" ", parts);
     }
 
-    private void saveWorkerToFirestore( String email) {
+    private void saveWorkerToFirestore(String username, String email) {
 
         FirebaseUser user = mAuth.getCurrentUser();
         if (user == null) return;
 
         Map<String, Object> data = new HashMap<>();
-
+        data.put("username", username);
+        data.put("username_lower", username.toLowerCase());
         data.put("email", email);
         data.put("Role", "worker");
         data.put("createdAt", System.currentTimeMillis());
@@ -231,7 +238,7 @@ public class WorkerSignUp extends AppCompatActivity {
     }
 
     private void goToUserDetails() {
-        Intent intent = new Intent(this, WorkerDetails.class);
+        Intent intent = new Intent(this, UserDetails.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
     }

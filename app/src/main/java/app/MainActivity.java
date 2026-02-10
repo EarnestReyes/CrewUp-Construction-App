@@ -20,8 +20,7 @@ import androidx.fragment.app.Fragment;
 import clients.Notifications;
 import clients.chat.ChatActivity;
 import clients.chat.ChatFragment;
-import clients.works.ClientHistoryFragment;
-import clients.works.ClientProjectDetailsActivity;
+import clients.works.history;
 import data.FirebaseUtil;
 import clients.home.Home;
 import clients.posts.Posts;
@@ -29,9 +28,6 @@ import clients.profile.ProfileFragment;
 import com.example.ConstructionApp.R;
 import clients.home.SearchUserActivity;
 import clients.workers.workers;
-import workers.works.WorkerHistoryFragment;
-import workers.works.works;
-
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
@@ -161,7 +157,7 @@ public class MainActivity extends AppCompatActivity {
         });
         navActivity.setOnClickListener(v -> {
             //add function list of projects of user
-           loadFragment(new ClientHistoryFragment());
+           loadFragment(new history());
            highlight(navActivity);
         });
     }

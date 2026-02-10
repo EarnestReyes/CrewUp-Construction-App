@@ -3,6 +3,7 @@ package workers.chat;
 import androidx.fragment.app.Fragment;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +21,7 @@ import data.FirebaseUtil;
 import com.example.ConstructionApp.R;
 import adapters.RecentChatRecyclerAdapter;
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.Query;
 
 public class WorkersChat extends Fragment {
@@ -29,11 +31,8 @@ public class WorkersChat extends Fragment {
     private SwipeRefreshLayout swipeRefresh;
     private ProgressBar progressLoading;
     private TextView txtEmpty;
-    private boolean firstLoad = true;
 
-    public WorkersChat() {
-
-    }
+    public WorkersChat() {}
 
     @Nullable
     @Override
@@ -48,6 +47,7 @@ public class WorkersChat extends Fragment {
         progressLoading = view.findViewById(R.id.progressLoading);
         txtEmpty = view.findViewById(R.id.txtEmpty);
         recyclerView = view.findViewById(R.id.rvMessages);
+
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerView.setItemAnimator(null);
 
@@ -63,10 +63,12 @@ public class WorkersChat extends Fragment {
         );
 
         swipeRefresh.setOnRefreshListener(() -> {
-            swipeRefresh.postDelayed(
-                    () -> swipeRefresh.setRefreshing(false),
-                    600
-            );
+            progressLoading.setVisibility(View.VISIBLE);
+
+            if (adapter != null) {
+                adapter.stopListening();
+                adapter.startListening();
+            }
         });
 
         return view;
@@ -87,18 +89,23 @@ public class WorkersChat extends Fragment {
 
             @Override
             public void onDataChanged() {
-                if (firstLoad) {
-                    progressLoading.setVisibility(View.GONE);
-                    firstLoad = false;
-                }
-
+                progressLoading.setVisibility(View.GONE);
                 swipeRefresh.setRefreshing(false);
 
-                if (getItemCount() == 0) {
-                    txtEmpty.setVisibility(View.VISIBLE);
-                } else {
-                    txtEmpty.setVisibility(View.GONE);
-                }
+                txtEmpty.setVisibility(
+                        getItemCount() == 0 ? View.VISIBLE : View.GONE
+                );
+            }
+
+            @Override
+            public void onError(@NonNull FirebaseFirestoreException e) {
+                progressLoading.setVisibility(View.GONE);
+                swipeRefresh.setRefreshing(false);
+
+                Log.e("CHAT_ERROR", "Firestore error", e);
+
+                // Error ≠ empty list
+                txtEmpty.setVisibility(View.GONE);
             }
         };
 

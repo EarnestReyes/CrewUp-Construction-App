@@ -14,6 +14,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.ConstructionApp.R;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
@@ -22,6 +23,9 @@ import com.google.firebase.firestore.SetOptions;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import clients.workers.workers;
+import workers.app.MainActivity;
 
 public class TopUpWallet extends AppCompatActivity {
 
@@ -77,41 +81,41 @@ public class TopUpWallet extends AppCompatActivity {
             return;
         }
 
-        if (topUpAmount <= 0) {
-            topUpInput.setError("Amount must be greater than 0");
+        if (topUpAmount <= 200) {
+            topUpInput.setError("Amount must be greater than 200");
             return;
         }
 
         String uid = currentUser.getUid();
+        DocumentReference walletRef =
+                db.collection("users").document(uid);
 
-        DocumentReference workerWalletRef = db
-                .collection("users")
-                .document(uid);
+        db.runTransaction(transaction -> {
 
-        workerWalletRef.get().addOnSuccessListener(snapshot -> {
+            Double currentBalance = transaction
+                    .get(walletRef)
+                    .getDouble("balance");
 
-            double currentBalance = 0.0;
-            if (snapshot.exists() && snapshot.getDouble("balance") != null) {
-                currentBalance = snapshot.getDouble("balance");
-            }
+            if (currentBalance == null) currentBalance = 0.0;
 
             double newBalance = currentBalance + topUpAmount;
 
-            Map<String, Object> walletUpdate = new HashMap<>();
-            walletUpdate.put("balance", newBalance);
-            walletUpdate.put("lastUpdated", com.google.firebase.Timestamp.now());
+            Map<String, Object> updates = new HashMap<>();
+            updates.put("balance", newBalance);
+            updates.put("lastUpdated", Timestamp.now());
 
-            workerWalletRef.set(walletUpdate, SetOptions.merge())
-                    .addOnSuccessListener(unused -> {
-                        Toast.makeText(this, "Top-up successful!", Toast.LENGTH_SHORT).show();
-                        finish();
-                    })
-                    .addOnFailureListener(e ->
-                            Toast.makeText(this, "Failed to top up: " + e.getMessage(), Toast.LENGTH_SHORT).show()
-                    );
+            transaction.set(walletRef, updates, SetOptions.merge());
+
+            return null;
+
+        }).addOnSuccessListener(unused -> {
+
+            Intent in = new Intent(this, MainActivity.class);
+            startActivity(in);
+            Toast.makeText(this, "Top-up successful!", Toast.LENGTH_SHORT).show();
 
         }).addOnFailureListener(e ->
-                Toast.makeText(this, "Failed to load wallet", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Top-up failed: " + e.getMessage(), Toast.LENGTH_SHORT).show()
         );
     }
 }

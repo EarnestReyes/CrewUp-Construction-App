@@ -95,7 +95,7 @@ public class Notifications extends AppCompatActivity {
 
         FirebaseFirestore.getInstance()
                 .collection("notifications")
-                .whereEqualTo("userId", uid)
+                .whereEqualTo("toUserId", uid)
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .addSnapshotListener((value, error) -> {
 
@@ -109,23 +109,20 @@ public class Notifications extends AppCompatActivity {
 
                     for (var doc : value.getDocuments()) {
 
-                        NotificationModel model = doc.toObject(NotificationModel.class);
+                        NotificationModel model =
+                                doc.toObject(NotificationModel.class);
+
                         if (model == null || model.getTimestamp() == null) continue;
 
                         model.setId(doc.getId());
 
-                        Timestamp ts = model.getTimestamp();
-                        long diff = now - ts.toDate().getTime();
+                        long diff =
+                                now - model.getTimestamp().toDate().getTime();
 
-                        // ≤ 24 hours → Recently
                         if (diff <= 24 * 60 * 60 * 1000) {
                             recentList.add(model);
-
-                            // ≤ 3 days → Earlier
                         } else if (diff <= 3 * 24 * 60 * 60 * 1000) {
                             earlierList.add(model);
-
-                            // > 3 days → Few Days Ago
                         } else {
                             fewDaysList.add(model);
                         }
@@ -138,6 +135,7 @@ public class Notifications extends AppCompatActivity {
                     updateEmptyState();
                 });
     }
+
 
     private void updateEmptyState() {
         boolean isEmpty =

@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.ConstructionApp.R;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -26,6 +27,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 import clients.profile.UserProfile;
 import models.Post;
@@ -150,6 +152,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
                             ? R.drawable.ic_filled
                             : R.drawable.ic_like
             );
+            pushNotification();
         });
     }
 
@@ -235,4 +238,22 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             postImage = v.findViewById(R.id.postImage);
         }
     }
+    public static void pushNotification() {
+
+        String uid = FirebaseAuth.getInstance().getUid();
+        if (uid == null) return;
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("toUserId", uid);
+        data.put("title", "CrewUp");
+        data.put("message", "Someone liked you post, check it out!");
+        data.put("type", "Like");
+        data.put("timestamp", Timestamp.now());
+        data.put("read", false);
+
+        FirebaseFirestore.getInstance()
+                .collection("notifications")
+                .add(data);
+    }
+
 }

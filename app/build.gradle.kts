@@ -76,7 +76,18 @@ dependencies {
     implementation("com.google.android.material:material:1.11.0")
     implementation("com.facebook.shimmer:shimmer:0.5.0")
 
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
+    implementation("com.google.android.gms:play-services-location:21.0.1")
+
+    implementation("org.osmdroid:osmdroid-android:6.1.18")
+    implementation("com.google.android.gms:play-services-location:21.0.1")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
     implementation("com.squareup.okhttp3:okhttp:5.3.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
+    implementation("com.onesignal:OneSignal:5.0.4")
+    implementation("com.onesignal:OneSignal:[5.0.0, 5.99.99]")
 
     //ADDED 2/07/26
 

@@ -5,15 +5,12 @@ import static android.view.View.GONE;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.result.ActivityResultLauncher;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
@@ -24,6 +21,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+
 import models.ChatMessageModel;
 import models.ChatroomModel;
 import data.FirebaseUtil;
@@ -35,7 +33,6 @@ import com.firebase.ui.firestore.FirestoreRecyclerOptions;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 
@@ -54,6 +51,7 @@ public class ChatActivity extends AppCompatActivity {
     private TextView otherUsername;
     private RecyclerView recyclerView;
     private ImageView profilePic;
+    private String message;
     FirebaseAuth mAuth;
     FirebaseFirestore db;
 
@@ -155,12 +153,13 @@ public class ChatActivity extends AppCompatActivity {
         getOrCreateChatroomModel();
 
         sendMessageBtn.setOnClickListener(v -> {
-            String message = messageInput.getText().toString().trim();
+            message = messageInput.getText().toString().trim();
             if (!message.isEmpty()) {
                 sendMessageToUser(message);
             }
         });
     }
+
     private void loadOtherUser() {
         FirebaseUtil.getUserReference(otherUserId)
                 .get()
@@ -240,7 +239,6 @@ public class ChatActivity extends AppCompatActivity {
                         model = new ChatroomModel(
                                 chatroomId,
                                 Arrays.asList(
-
                                         FirebaseUtil.currentUserId(),
                                         otherUserId
                                 ),
@@ -267,12 +265,14 @@ public class ChatActivity extends AppCompatActivity {
 
                                 FirebaseUtil.getChatroomMessageReference(chatroomId)
                                         .add(chatMessage)
-                                        .addOnSuccessListener(ref ->
-                                                messageInput.setText("")
-                                        );
+                                        .addOnSuccessListener(ref -> {
+                                            messageInput.setText("");
+
+                                            // 🔥 SEND NOTIFICATION ONLY HERE
+                                            sendNotification(message);
+                                        });
                             });
                 });
-       sendNotification(message);
     }
 
     /* ---------------- CREATE CHATROOM ---------------- */
@@ -323,13 +323,15 @@ public class ChatActivity extends AppCompatActivity {
     void sendNotification(String message) {
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user == null) return;
+        if (user == null || otherUser == null) return;
 
         Map<String, Object> notif = new HashMap<>();
         notif.put("fromUserId", user.getUid());
         notif.put("toUserId", otherUser.getUserId());
         notif.put("message", message);
-        notif.put("timestamp", System.currentTimeMillis());
+        notif.put("timestamp", com.google.firebase.Timestamp.now());
+        notif.put("type", "message"); // optional but useful later
+        notif.put("read", false);     // optional for unread badges
 
         FirebaseFirestore.getInstance()
                 .collection("notifications")
