@@ -8,7 +8,6 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -20,7 +19,8 @@ import androidx.fragment.app.Fragment;
 import clients.Notifications;
 import clients.chat.ChatActivity;
 import clients.chat.ChatFragment;
-import clients.works.history;
+import clients.works.ClientHistoryFragment;
+import clients.works.ClientProjectListFragment;
 import data.FirebaseUtil;
 import clients.home.Home;
 import clients.posts.Posts;
@@ -157,7 +157,7 @@ public class MainActivity extends AppCompatActivity {
         });
         navActivity.setOnClickListener(v -> {
             //add function list of projects of user
-           loadFragment(new history());
+           loadFragment(new ClientHistoryFragment());
            highlight(navActivity);
         });
     }

@@ -116,7 +116,7 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
         btnCancelProject.setOnClickListener(v -> showCancelDialog());
     }
     private void loadProjectDetails() {
-        db.collection("BookingOrder")
+        db.collection("WorkerInput")
                 .document(projectId)
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {

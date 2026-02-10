@@ -10,7 +10,7 @@ public class InvoiceProposalModel {
 
     private String proposalId;
     private String workerId;
-    private String clientId;
+    private String userId;
     private String projectId; // Link to BookingOrder
 
     // Invoice details
@@ -48,10 +48,10 @@ public class InvoiceProposalModel {
         this.createdAt = Timestamp.now();
     }
 
-    public InvoiceProposalModel(Invoice invoice, String workerId, String clientId) {
+    public InvoiceProposalModel(Invoice invoice, String workerId, String userId) {
         this();
         this.workerId = workerId;
-        this.clientId = clientId;
+        this.userId = userId;
 
         // Copy invoice data
         this.workerName = invoice.getCompanyName();
@@ -125,11 +125,11 @@ public class InvoiceProposalModel {
     }
 
     public String getClientId() {
-        return clientId;
+        return userId;
     }
 
     public void setClientId(String clientId) {
-        this.clientId = clientId;
+        this.userId= clientId;
     }
 
     public String getProjectId() {

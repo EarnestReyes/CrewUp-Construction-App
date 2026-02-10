@@ -9,7 +9,7 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
-        android:name="app.MyApplication"
+        android:name="app.MyAppOneSignal"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -20,8 +20,11 @@
             android:name="workers.auth.TopUpWallet"
             android:exported="false" />
         <activity
-            android:name="workers.wallet.WalletProfile"
-            android:exported="false" />
+            android:name="workers.auth.WorkerDetails"
+            android:exported="false"/>
+        <activity
+            android:name="clients.works.ClientProjectDetailsActivity"
+            android:exported="false"/>
         <activity
             android:name="clients.chat.ServiceBreakdown"
             android:exported="false" />
