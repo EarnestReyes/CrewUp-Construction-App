@@ -15,7 +15,7 @@ import com.example.ConstructionApp.R;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
-import clients.works.ProjectListFragment;
+import workers.works.WorkerProjectListFragment;
 
 public class works extends Fragment {
 
@@ -34,15 +34,15 @@ public class works extends Fragment {
             public Fragment createFragment(int pos) {
                 switch (pos) {
                     case 0:
-                        return workers.works.ProjectListFragment.newInstance("active");
+                        return WorkerProjectListFragment.newInstance("active");
                     case 1:
-                        return workers.works.ProjectListFragment.newInstance("completed");
+                        return WorkerProjectListFragment.newInstance("completed");
                     case 2:
-                        return workers.works.ProjectListFragment.newInstance("cancelled");
+                        return WorkerProjectListFragment.newInstance("cancelled");
                     case 3:
-                        return workers.works.ProjectListFragment.newInstance("pending");
+                        return WorkerProjectListFragment.newInstance("pending");
                     default:
-                        return ProjectListFragment.newInstance("all");
+                        return WorkerProjectListFragment.newInstance("all");
                 }
             }
 

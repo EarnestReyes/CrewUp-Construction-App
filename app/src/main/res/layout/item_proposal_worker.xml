@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="4dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/tvClientName"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Client Name"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/black"/>
+
+            <TextView
+                android:id="@+id/tvStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pending"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="4dp"
+                android:background="@drawable/bg_status_pending"
+                android:textColor="@android:color/white"/>
+
+        </LinearLayout>
+
+        <!-- Project Description -->
+        <TextView
+            android:id="@+id/tvWorkDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Work Description"
+            android:textSize="14sp"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:textColor="@android:color/darker_gray"/>
+
+        <!-- Date Sent -->
+        <TextView
+            android:id="@+id/tvProposalDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Sent: Jan 15, 2026"
+            android:textSize="12sp"
+            android:textColor="@android:color/darker_gray"/>
+        <TextView
+            android:id="@+id/tvLocation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="There"
+            android:textSize="12sp"
+            android:textColor="@android:color/darker_gray"/>
+
+
+        <TextView
+            android:id="@+id/tvActiveIndicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="⏳ Awaiting Response"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="#FFA726"
+            android:visibility="visible"/>
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginVertical="12dp"
+            android:background="#E0E0E0"/>
+
+        <!-- Proposal Amount -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="PROPOSAL AMOUNT:"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/black"/>
+
+            <TextView
+                android:id="@+id/tvProposalAmount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="₱0.00"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#FFA726"/>
+
+            <!-- Active / Pending Indicator -->
+
+
+        </LinearLayout>
+
+        <!-- Action hint based on status -->
+        <TextView
+            android:id="@+id/tvActionHint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Tap to view details"
+            android:textSize="12sp"
+            android:textStyle="italic"
+            android:textColor="#1976D2"
+            android:gravity="center"/>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

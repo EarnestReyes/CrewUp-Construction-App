@@ -1,0 +1,168 @@
+package workers.works.invoice;
+
+import java.util.List;
+
+public class Invoice {
+    // Company Information
+    private String companyName;
+    private String companyAddress;
+    private String companyPhone;
+    private String companyEmail;
+
+    
+    // Client Information
+    private String clientName;
+    private String clientAddress;
+    private String clientPhone;
+    private String clientEmail;
+    
+    // Work Description
+    private String workDescription;
+    
+    // Line Items
+    private List<MaterialItem> materials;
+    private List<LaborItem> labor;
+    private List<MiscItem> miscellaneous;
+    
+
+    // Constructors
+    public Invoice() {
+    }
+    
+    // Getters and Setters
+    public String getCompanyName() {
+        return companyName;
+    }
+    
+    public void setCompanyName(String companyName) {
+        this.companyName = companyName;
+    }
+    
+    public String getCompanyAddress() {
+        return companyAddress;
+    }
+    
+    public void setCompanyAddress(String companyAddress) {
+        this.companyAddress = companyAddress;
+    }
+    
+    public String getCompanyPhone() {
+        return companyPhone;
+    }
+    
+    public void setCompanyPhone(String companyPhone) {
+        this.companyPhone = companyPhone;
+    }
+    
+    public String getCompanyEmail() {
+        return companyEmail;
+    }
+    
+    public void setCompanyEmail(String companyEmail) {
+        this.companyEmail = companyEmail;
+    }
+
+    public String getClientName() {
+        return clientName;
+    }
+    
+    public void setClientName(String clientName) {
+        this.clientName = clientName;
+    }
+    
+    public String getClientAddress() {
+        return clientAddress;
+    }
+    
+    public void setClientAddress(String clientAddress) {
+        this.clientAddress = clientAddress;
+    }
+    
+    public String getClientPhone() {
+        return clientPhone;
+    }
+    
+    public void setClientPhone(String clientPhone) {
+        this.clientPhone = clientPhone;
+    }
+    
+    public String getClientEmail() {
+        return clientEmail;
+    }
+    
+    public void setClientEmail(String clientEmail) {
+        this.clientEmail = clientEmail;
+    }
+    
+    public String getWorkDescription() {
+        return workDescription;
+    }
+    
+    public void setWorkDescription(String workDescription) {
+        this.workDescription = workDescription;
+    }
+    
+    public List<MaterialItem> getMaterials() {
+        return materials;
+    }
+    
+    public void setMaterials(List<MaterialItem> materials) {
+        this.materials = materials;
+    }
+    
+    public List<LaborItem> getLabor() {
+        return labor;
+    }
+    
+    public void setLabor(List<LaborItem> labor) {
+        this.labor = labor;
+    }
+    
+    public List<MiscItem> getMiscellaneous() {
+        return miscellaneous;
+    }
+    
+    public void setMiscellaneous(List<MiscItem> miscellaneous) {
+        this.miscellaneous = miscellaneous;
+    }
+
+
+    
+    // Calculate totals
+    public double getTotalMaterials() {
+        if (materials == null) return 0;
+        double total = 0;
+        for (MaterialItem item : materials) {
+            total += item.getTotal();
+        }
+        return total;
+    }
+    
+    public double getTotalLabor() {
+        if (labor == null) return 0;
+        double total = 0;
+        for (LaborItem item : labor) {
+            total += item.getAmount();
+        }
+        return total;
+    }
+    
+    public double getTotalMiscellaneous() {
+        if (miscellaneous == null) return 0;
+        double total = 0;
+        for (MiscItem item : miscellaneous) {
+            total += item.getAmount();
+        }
+        return total;
+    }
+    
+    public double getSubtotal() {
+        return getTotalMaterials() + getTotalLabor() + getTotalMiscellaneous();
+    }
+
+
+
+    public double getGrandTotal() {
+        return getSubtotal();
+    }
+}

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <resources>
+
+        <color name="status_pending">#FFA726</color>
+        <color name="status_pending_light">#FFE0B2</color>
+
+        <color name="status_accepted">#66BB6A</color>
+        <color name="status_accepted_light">#E8F5E9</color>
+        <color name="status_accepted_dark">#2E7D32</color>
+
+        <color name="status_declined">#EF5350</color>
+        <color name="status_declined_light">#FFEBEE</color>
+        <color name="status_declined_dark">#C62828</color>
+    </resources>
+
+</resources>

@@ -1,74 +1,127 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView
+<com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:id="@+id/main"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="12dp"
-    android:layout_marginVertical="6dp"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="3dp"
-    app:cardBackgroundColor="@color/card_color">
+    android:layout_margin="8dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="4dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- SERVICE TITLE -->
-        <TextView
-            android:id="@+id/tvService"
-            android:layout_width="0dp"
+        <!-- Header: Worker Name and Status -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/text_primary"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toStartOf="@id/tvStatus"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
-        <!-- STATUS BADGE -->
-        <TextView
-            android:id="@+id/tvStatus"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingHorizontal="10dp"
-            android:paddingVertical="4dp"
-            android:text="ONGOING"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            android:textColor="@android:color/white"
-            android:background="@drawable/bg_status_chip"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            <TextView
+                android:id="@+id/tvWorkerName"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Contractor Name"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:textColor="#212121"
+                android:ellipsize="end"
+                android:maxLines="1"/>
 
-        <!-- CLIENT / WORKER NAME -->
+            <TextView
+                android:id="@+id/tvStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Status"
+                android:padding="6dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:background="@drawable/bg_status_pending"/>
+
+        </LinearLayout>
+
+        <!-- Work Description -->
         <TextView
-            android:id="@+id/tvName"
-            android:layout_width="0dp"
+            android:id="@+id/tvWorkDescription"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Juan Dela Cruz"
+            android:text="Work description goes here"
             android:textSize="14sp"
-            android:textColor="@color/text_secondary"
-            app:layout_constraintTop_toBottomOf="@id/tvService"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            android:textColor="#424242"
+            android:maxLines="2"
+            android:ellipsize="end"/>
 
-        <!-- BUDGET -->
+        <!-- Location -->
         <TextView
-            android:id="@+id/tvBudget"
-            android:layout_width="wrap_content"
+            android:id="@+id/tvLocation"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:text="₱5,000"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:textColor="@color/primary"
-            app:layout_constraintTop_toBottomOf="@id/tvName"
-            app:layout_constraintStart_toStartOf="parent" />
+            android:text="📍 Location"
+            android:textSize="12sp"
+            android:textColor="#757575"
+            android:drawablePadding="4dp"/>
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        <!-- Date -->
+        <TextView
+            android:id="@+id/tvDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Created: Date"
+            android:textSize="12sp"
+            android:textColor="#757575"/>
 
-</androidx.cardview.widget.CardView>
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="12dp"
+            android:background="#E0E0E0"/>
+
+        <!-- Bottom Section: Cost and Proposal Indicator -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/tvTotalCost"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="₱0.00"
+                android:textStyle="bold"
+                android:textSize="18sp"
+                android:textColor="@color/colorPrimary"/>
+
+            <TextView
+                android:id="@+id/tvProposalIndicator"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0 proposals"
+                android:textSize="12sp"
+                android:textColor="#757575"
+                android:drawableStart="@drawable/ic_proposal"
+                android:drawablePadding="4dp"
+                android:visibility="gone"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

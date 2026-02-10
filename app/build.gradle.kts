@@ -5,17 +5,19 @@ plugins {
     id("com.google.gms.google-services")
 }
 
-
 android {
     namespace = "com.example.ConstructionApp"
     compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.ConstructionApp"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
+
+            multiDexEnabled = true
+
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -34,7 +36,13 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
+    buildFeatures {
+        viewBinding = true
+    }
+
 }
+
 
 dependencies {
     // AndroidX
@@ -70,4 +78,13 @@ dependencies {
 
     implementation("com.squareup.okhttp3:okhttp:5.3.0")
 
+    //ADDED 2/07/26
+
+    // Material Design
+    implementation("org.slf4j:slf4j-android:1.7.36")
+    implementation("com.google.android.material:material:1.11.0")
+    implementation("org.apache.poi:poi:5.2.5")
+    implementation("org.apache.poi:poi-ooxml:5.2.5")
+    implementation("androidx.multidex:multidex:2.0.1")
+    implementation("androidx.core:core:1.12.0")
 }

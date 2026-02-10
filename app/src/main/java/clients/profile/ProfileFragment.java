@@ -92,7 +92,7 @@ public class ProfileFragment extends Fragment {
                     }
             );
 
-    // ================= LIFECYCLE =================
+
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {

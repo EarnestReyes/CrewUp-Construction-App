@@ -53,7 +53,7 @@ public class SignUp extends AppCompatActivity {
 
     private String userAddress = "";
 
-    private TextInputEditText username, email, password, confirmPassword;
+    private TextInputEditText  email, password, confirmPassword;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,7 +77,6 @@ public class SignUp extends AppCompatActivity {
                     return insets;
                 });
 
-        username = findViewById(R.id.edtUsername);
         email = findViewById(R.id.edtEmail);
         password = findViewById(R.id.edtPassword);
         confirmPassword = findViewById(R.id.edtConfirmPassword);
@@ -95,16 +94,12 @@ public class SignUp extends AppCompatActivity {
     }
     private void registerUser() {
 
-        String rawName = username.getText().toString().trim();
+
         String emailTxt = email.getText().toString().trim();
         String passTxt = password.getText().toString().trim();
         String confirmTxt = confirmPassword.getText().toString().trim();
 
-        if (rawName.isEmpty() || emailTxt.isEmpty()
-                || passTxt.isEmpty() || confirmTxt.isEmpty()) {
-            Toast.makeText(this, "All fields are required", Toast.LENGTH_SHORT).show();
-            return;
-        }
+
 
         if (!passTxt.equals(confirmTxt)) {
             Toast.makeText(this, "Passwords do not match", Toast.LENGTH_SHORT).show();
@@ -116,14 +111,13 @@ public class SignUp extends AppCompatActivity {
             return;
         }
 
-        String formattedName = formatName(rawName);
+
 
         mAuth.createUserWithEmailAndPassword(emailTxt, passTxt)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
 
-                        saveUserToFirestore(formattedName, emailTxt);
-                        createNotification(formattedName);
+                        saveUserToFirestore(emailTxt);
                         showLocationDialog();
 
                     } else {
@@ -145,7 +139,7 @@ public class SignUp extends AppCompatActivity {
         }
         return String.join(" ", parts);
     }
-    private void saveUserToFirestore(String username, String email) {
+    private void saveUserToFirestore( String email) {
 
         FirebaseUser user = mAuth.getCurrentUser();
         if (user == null) return;
@@ -154,8 +148,6 @@ public class SignUp extends AppCompatActivity {
         if (role == null) role = "client";
 
         Map<String, Object> data = new HashMap<>();
-        data.put("username", username);
-        data.put("username_lower", username.toLowerCase());
         data.put("email", email);
         data.put("Role", role);
         data.put("createdAt", System.currentTimeMillis());
