@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="8dp"
+    android:background="@color/bg_color"
     app:cardCornerRadius="8dp"
     app:cardElevation="4dp">
 
@@ -18,8 +18,8 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
             <TextView
                 android:id="@+id/tvWorkerName"
@@ -27,21 +27,21 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Worker Name"
+                android:textColor="@color/text_primary"
                 android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@android:color/black"/>
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/tvStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Pending"
-                android:textSize="12sp"
-                android:textStyle="bold"
+                android:background="@drawable/bg_status_pending"
                 android:paddingHorizontal="12dp"
                 android:paddingVertical="4dp"
-                android:background="@drawable/bg_status_pending"
-                android:textColor="@android:color/white"/>
+                android:text="Pending"
+                android:textColor="@android:color/white"
+                android:textSize="12sp"
+                android:textStyle="bold" />
 
         </LinearLayout>
 
@@ -51,11 +51,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Work Description"
-            android:textSize="14sp"
-            android:maxLines="2"
             android:ellipsize="end"
-            android:textColor="@android:color/darker_gray"/>
+            android:maxLines="2"
+            android:text="Work Description"
+            android:textColor="@android:color/darker_gray"
+            android:textSize="14sp" />
 
         <!-- Date -->
         <TextView
@@ -64,15 +64,15 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:text="Received: Jan 15, 2026"
-            android:textSize="12sp"
-            android:textColor="@android:color/darker_gray"/>
+            android:textColor="@android:color/darker_gray"
+            android:textSize="12sp" />
 
         <!-- Divider -->
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:layout_marginVertical="12dp"
-            android:background="#E0E0E0"/>
+            android:background="#E0E0E0" />
 
         <!-- Cost Breakdown -->
         <LinearLayout
@@ -90,7 +90,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="Materials:"
-                    android:textSize="13sp"/>
+                    android:textSize="13sp" />
 
                 <TextView
                     android:id="@+id/tvMaterialsCost"
@@ -98,22 +98,22 @@
                     android:layout_height="wrap_content"
                     android:text="₱0.00"
                     android:textSize="13sp"
-                    android:textStyle="bold"/>
+                    android:textStyle="bold" />
 
             </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="4dp">
+                android:layout_marginTop="4dp"
+                android:orientation="horizontal">
 
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="Labor:"
-                    android:textSize="13sp"/>
+                    android:textSize="13sp" />
 
                 <TextView
                     android:id="@+id/tvLaborCost"
@@ -121,22 +121,22 @@
                     android:layout_height="wrap_content"
                     android:text="₱0.00"
                     android:textSize="13sp"
-                    android:textStyle="bold"/>
+                    android:textStyle="bold" />
 
             </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="4dp">
+                android:layout_marginTop="4dp"
+                android:orientation="horizontal">
 
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="Miscellaneous:"
-                    android:textSize="13sp"/>
+                    android:textSize="13sp" />
 
                 <TextView
                     android:id="@+id/tvMiscCost"
@@ -144,7 +144,7 @@
                     android:layout_height="wrap_content"
                     android:text="₱0.00"
                     android:textSize="13sp"
-                    android:textStyle="bold"/>
+                    android:textStyle="bold" />
 
             </LinearLayout>
 
@@ -155,7 +155,7 @@
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:layout_marginVertical="8dp"
-            android:background="#E0E0E0"/>
+            android:background="#E0E0E0" />
 
         <!-- Total -->
         <LinearLayout
@@ -168,18 +168,18 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="TOTAL COST:"
+                android:textColor="@color/text_primary"
                 android:textSize="16sp"
-                android:textStyle="bold"
-                android:textColor="@android:color/black"/>
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/tvTotalCost"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="₱0.00"
+                android:textColor="#FFA726"
                 android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="#FFA726"/>
+                android:textStyle="bold" />
 
         </LinearLayout>
 
@@ -188,11 +188,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
+            android:gravity="center"
             android:text="Tap to view full details and respond"
-            android:textSize="12sp"
-            android:textStyle="italic"
             android:textColor="#1976D2"
-            android:gravity="center"/>
+            android:textSize="12sp"
+            android:textStyle="italic" />
 
     </LinearLayout>
 

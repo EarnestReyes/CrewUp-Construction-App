@@ -20,13 +20,16 @@
             android:name="workers.auth.TopUpWallet"
             android:exported="false" />
         <activity
+            android:name="workers.auth.WorkerDetails"
+            android:exported="false"/>
+        <activity
+            android:name="clients.works.ClientProjectDetailsActivity"
+            android:exported="false"/>
+        <activity
+            android:name="app.WorkersLocationMap"
+            android:exported="false"/>
+        <activity
             android:name="clients.chat.ServiceBreakdown"
-            android:exported="false" />
-        <activity
-            android:name="workers.works.WorkerProjectDetailsActivity"
-            android:exported="false" />
-        <activity
-            android:name="workers.works.invoice.ProjectCostQuote"
             android:exported="false" />
         <activity
             android:name="clients.chat.ReviewDetails"
@@ -95,9 +98,14 @@
             android:name="app.Splash_activity"
             android:exported="true"
             android:theme="@style/Theme.Material3.DayNight.NoActionBar" >
+            <meta-data
+                android:name="com.onesignal.NotificationIcon"
+                android:resource="@drawable/ic_construction_cap" />
+            <meta-data
+                android:name="com.onesignal.NotificationIconAccentColor"
+                android:value="FF2E7D32" /> <!-- optional -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity> <!-- Firebase Cloud Messaging Service -->
@@ -109,5 +117,4 @@
             </intent-filter>
         </service>
     </application>
-
 </manifest>

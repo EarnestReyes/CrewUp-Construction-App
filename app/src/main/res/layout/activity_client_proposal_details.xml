@@ -3,6 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
+    android:id="@+id/main"
     android:layout_height="match_parent"
     android:fillViewport="true"
     android:background="#F5F5F5">
@@ -10,6 +11,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@color/bg_color"
         android:orientation="vertical">
 
         <!-- App Bar -->
@@ -23,8 +25,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 android:background="?attr/colorPrimary"
-                app:title="Proposal Details"
-                app:navigationIcon="@drawable/ic_arrow_back"/>
+                app:navigationIcon="@drawable/ic_arrow_back"
+                app:title="Proposal Details" />
 
         </com.google.android.material.appbar.AppBarLayout>
 
@@ -46,54 +48,60 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Contractor Information"
+                    android:textColor="@color/text_primary"
                     android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/black"/>
+                    android:textStyle="bold" />
 
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
                     android:layout_marginVertical="12dp"
-                    android:background="#E0E0E0"/>
+                    android:background="#E0E0E0" />
 
                 <TextView
                     android:id="@+id/tvWorkerName"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:drawableTint="@color/text_primary"
                     android:text="Worker Name"
+                    android:textColor="@color/text_primary"
                     android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/black"/>
+                    android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/tvWorkerPhone"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="Phone"
                     android:drawableStart="@drawable/ic_phone"
                     android:drawablePadding="8dp"
-                    android:textSize="14sp"/>
+                    android:drawableTint="@color/text_primary"
+                    android:text="Phone"
+                    android:textSize="14sp" />
 
                 <TextView
                     android:id="@+id/tvWorkerEmail"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="Email"
                     android:drawableStart="@drawable/ic_email"
                     android:drawablePadding="8dp"
-                    android:textSize="14sp"/>
+                    android:drawableTint="@color/text_primary"
+                    android:text="Email"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp" />
 
                 <TextView
                     android:id="@+id/tvWorkerAddress"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="Address"
                     android:drawableStart="@drawable/ic_location"
                     android:drawablePadding="8dp"
-                    android:textSize="14sp"/>
+                    android:drawableTint="@color/text_primary"
+                    android:text="Address"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp" />
 
             </LinearLayout>
 
@@ -118,22 +126,30 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Work Description"
+                    android:textColor="@color/text_primary"
                     android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/black"/>
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/textView2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@color/text_primary"
+                    android:textColor="@color/text_primary" />
 
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
                     android:layout_marginVertical="12dp"
-                    android:background="#E0E0E0"/>
+                    android:background="#E0E0E0" />
 
                 <TextView
                     android:id="@+id/tvWorkDescription"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Description"
-                    android:textSize="14sp"/>
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp" />
 
             </LinearLayout>
 
@@ -165,18 +181,18 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="Materials"
+                        android:textColor="@color/text_primary"
                         android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:textColor="@android:color/black"/>
+                        android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/tvTotalMaterials"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="₱0.00"
+                        android:textColor="#FFA726"
                         android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:textColor="#FFA726"/>
+                        android:textStyle="bold" />
 
                 </LinearLayout>
 
@@ -184,13 +200,13 @@
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
                     android:layout_marginVertical="12dp"
-                    android:background="#E0E0E0"/>
+                    android:background="#E0E0E0" />
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvMaterials"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:nestedScrollingEnabled="false"/>
+                    android:nestedScrollingEnabled="false" />
 
             </LinearLayout>
 
@@ -222,18 +238,18 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="Labor"
+                        android:textColor="@color/text_primary"
                         android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:textColor="@android:color/black"/>
+                        android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/tvTotalLabor"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="₱0.00"
+                        android:textColor="#FFA726"
                         android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:textColor="#FFA726"/>
+                        android:textStyle="bold" />
 
                 </LinearLayout>
 
@@ -241,13 +257,13 @@
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
                     android:layout_marginVertical="12dp"
-                    android:background="#E0E0E0"/>
+                    android:background="#E0E0E0" />
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvLabor"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:nestedScrollingEnabled="false"/>
+                    android:nestedScrollingEnabled="false" />
 
             </LinearLayout>
 
@@ -279,18 +295,18 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="Miscellaneous"
+                        android:textColor="@color/text_primary"
                         android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:textColor="@android:color/black"/>
+                        android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/tvTotalMisc"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="₱0.00"
+                        android:textColor="#FFA726"
                         android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:textColor="#FFA726"/>
+                        android:textStyle="bold" />
 
                 </LinearLayout>
 
@@ -298,13 +314,13 @@
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
                     android:layout_marginVertical="12dp"
-                    android:background="#E0E0E0"/>
+                    android:background="#E0E0E0" />
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvMisc"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:nestedScrollingEnabled="false"/>
+                    android:nestedScrollingEnabled="false" />
 
             </LinearLayout>
 
@@ -316,9 +332,9 @@
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
             android:layout_marginBottom="16dp"
+            app:cardBackgroundColor="#FFA726"
             app:cardCornerRadius="12dp"
-            app:cardElevation="4dp"
-            app:cardBackgroundColor="#FFA726">
+            app:cardElevation="4dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -331,18 +347,18 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="TOTAL PROJECT COST"
+                    android:textColor="@android:color/white"
                     android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/white"/>
+                    android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/tvGrandTotal"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="₱0.00"
+                    android:textColor="@android:color/white"
                     android:textSize="24sp"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/white"/>
+                    android:textStyle="bold" />
 
             </LinearLayout>
 
@@ -367,36 +383,36 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
                     android:text="Your Decision"
+                    android:textColor="@color/text_primary"
                     android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/black"
-                    android:layout_marginBottom="12dp"/>
+                    android:textStyle="bold" />
 
                 <Button
                     android:id="@+id/btnAcceptProposal"
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
-                    android:text="Accept Proposal"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
                     android:backgroundTint="#66BB6A"
-                    android:textColor="@android:color/white"
                     android:drawableStart="@drawable/ic_check"
-                    android:drawablePadding="8dp"/>
+                    android:drawablePadding="8dp"
+                    android:text="Accept Proposal"
+                    android:textColor="@android:color/white"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
 
                 <Button
                     android:id="@+id/btnDeclineProposal"
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
                     android:layout_marginTop="12dp"
-                    android:text="Decline Proposal"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
                     android:backgroundTint="#EF5350"
-                    android:textColor="@android:color/white"
                     android:drawableStart="@drawable/ic_close"
-                    android:drawablePadding="8dp"/>
+                    android:drawablePadding="8dp"
+                    android:text="Decline Proposal"
+                    android:textColor="@android:color/white"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
 
             </LinearLayout>
 
@@ -409,9 +425,9 @@
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
             android:layout_marginBottom="16dp"
+            android:visibility="gone"
             app:cardCornerRadius="12dp"
-            app:cardElevation="4dp"
-            android:visibility="gone">
+            app:cardElevation="4dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -424,9 +440,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Proposal Accepted"
+                    android:textColor="#66BB6A"
                     android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="#66BB6A"/>
+                    android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/tvResponseMessage"
@@ -434,7 +450,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:text="Response message"
-                    android:textSize="14sp"/>
+                    android:textSize="14sp" />
 
                 <TextView
                     android:id="@+id/tvResponseDate"
@@ -442,8 +458,8 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="Responded on: Jan 20, 2026"
-                    android:textSize="12sp"
-                    android:textColor="@android:color/darker_gray"/>
+                    android:textColor="@android:color/darker_gray"
+                    android:textSize="12sp" />
 
             </LinearLayout>
 

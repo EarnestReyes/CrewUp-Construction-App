@@ -56,11 +56,18 @@ public class ClientProjectListFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        statusFilter = "all";
+
         if (getArguments() != null) {
-            statusFilter = getArguments().getString(ARG_STATUS, "all");
+            String argStatus = getArguments().getString(ARG_STATUS);
+            if (argStatus != null) {
+                statusFilter = argStatus;
+            }
         }
 
         db = FirebaseFirestore.getInstance();
+
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser != null) {
             clientId = currentUser.getUid();
@@ -69,6 +76,7 @@ public class ClientProjectListFragment extends Fragment {
 
         projectList = new ArrayList<>();
     }
+
 
     @Nullable
     @Override
@@ -109,7 +117,7 @@ public class ClientProjectListFragment extends Fragment {
         Log.d(TAG, "Loading projects for client: " + clientId + ", filter: " + statusFilter);
 
         // FIXED: Query using 'userId' instead of 'clientId' to match Firebase structure
-        var query = db.collection("BookingOrder")
+        var query = db.collection("WorkerInput")
                 .whereEqualTo("userId", clientId);
 
         // Apply status filter if not "all"
@@ -162,6 +170,12 @@ public class ClientProjectListFragment extends Fragment {
     }
 
     private String getEmptyMessage() {
+
+        if (statusFilter == null) {
+            Log.w(TAG, "statusFilter is null, using default empty message");
+            return "No projects yet.\nCreate a booking request to get started!";
+        }
+
         switch (statusFilter) {
             case "pending":
                 return "No pending requests";

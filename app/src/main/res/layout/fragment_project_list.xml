@@ -2,15 +2,16 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F5F5">
+    android:background="@color/bg_color">
 
     <!-- RecyclerView for projects -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvProjects"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="8dp"
-        android:clipToPadding="false"/>
+        android:background="@color/bg_color"
+        android:clipToPadding="false"
+        android:padding="8dp" />
 
     <!-- Empty State -->
     <LinearLayout
@@ -18,8 +19,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:orientation="vertical"
         android:gravity="center"
+        android:orientation="vertical"
         android:padding="32dp"
         android:visibility="gone">
 
@@ -28,17 +29,17 @@
             android:layout_height="120dp"
 
             android:alpha="0.3"
-            android:contentDescription="No projects"/>
+            android:contentDescription="No projects" />
 
         <TextView
             android:id="@+id/tvEmptyMessage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
+            android:gravity="center"
             android:text="No projects yet"
-            android:textSize="16sp"
             android:textColor="#757575"
-            android:gravity="center"/>
+            android:textSize="16sp" />
 
     </LinearLayout>
 
@@ -48,6 +49,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:visibility="gone"/>
+        android:visibility="gone" />
 
 </FrameLayout>

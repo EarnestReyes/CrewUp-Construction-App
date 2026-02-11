@@ -38,7 +38,6 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
     private final Context context;
     private final ArrayList<Post> posts;
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
-
     private String currentUserName;
     private String currentUserProfilePic;
 
@@ -152,7 +151,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
                             ? R.drawable.ic_filled
                             : R.drawable.ic_like
             );
-            pushNotification();
+            pushNotification(post);
         });
     }
 
@@ -238,16 +237,19 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             postImage = v.findViewById(R.id.postImage);
         }
     }
-    public static void pushNotification() {
+    public static void pushNotification(Post post) {
+        String likerId = FirebaseAuth.getInstance().getUid();
+        if (likerId == null) return;
 
-        String uid = FirebaseAuth.getInstance().getUid();
-        if (uid == null) return;
+        if (likerId.equals(post.getUserId())) return;
 
         Map<String, Object> data = new HashMap<>();
-        data.put("toUserId", uid);
+        data.put("toUserId", post.getUserId());   // ✅ post owner
+        data.put("fromUserId", likerId);          // ✅ who liked
+        data.put("postId", post.getPostId());     // ✅ which post
         data.put("title", "CrewUp");
-        data.put("message", "Someone liked you post, check it out!");
-        data.put("type", "Like");
+        data.put("message", "Someone liked your post");
+        data.put("type", "LIKE");
         data.put("timestamp", Timestamp.now());
         data.put("read", false);
 
@@ -255,5 +257,4 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
                 .collection("notifications")
                 .add(data);
     }
-
 }
