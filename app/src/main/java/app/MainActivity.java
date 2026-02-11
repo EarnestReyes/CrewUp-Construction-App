@@ -8,6 +8,7 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -110,6 +111,11 @@ public class MainActivity extends AppCompatActivity {
         notification = findViewById(R.id.btnBell);
         Profile = findViewById((R.id.Profile));
 
+        txtNewsFeed.setOnClickListener(v -> {
+            Toast.makeText(this, "Opening worker maps..", Toast.LENGTH_SHORT).show();
+            Intent in = new Intent(this, WorkersLocationMap.class);
+            startActivity(in);
+                });
 
         btnSearch.setOnClickListener(v -> {
             Intent in = new Intent(MainActivity.this, SearchUserActivity.class);

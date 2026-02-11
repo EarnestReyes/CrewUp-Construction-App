@@ -26,6 +26,9 @@
             android:name="clients.works.ClientProjectDetailsActivity"
             android:exported="false"/>
         <activity
+            android:name="app.WorkersLocationMap"
+            android:exported="false"/>
+        <activity
             android:name="clients.chat.ServiceBreakdown"
             android:exported="false" />
         <activity

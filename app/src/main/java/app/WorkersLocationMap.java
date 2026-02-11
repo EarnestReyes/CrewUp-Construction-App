@@ -6,11 +6,13 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
 import android.view.View;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.graphics.Insets;
@@ -258,11 +260,17 @@ public class WorkersLocationMap extends AppCompatActivity {
             Marker marker,
             String imageUrl
     ) {
-        if (imageUrl == null || imageUrl.isEmpty()) return;
+        Object imageSource;
+
+        if (imageUrl == null || imageUrl.isEmpty()) {
+            imageSource = R.drawable.ic_profile_marker;
+        } else {
+            imageSource = imageUrl;
+        }
 
         Glide.with(context)
                 .asBitmap()
-                .load(imageUrl)
+                .load(imageSource)
                 .circleCrop()
                 .into(new CustomTarget<Bitmap>(96, 96) {
                     @Override
@@ -270,15 +278,21 @@ public class WorkersLocationMap extends AppCompatActivity {
                             @NonNull Bitmap bitmap,
                             Transition<? super Bitmap> transition
                     ) {
-                        marker.setIcon(new BitmapDrawable(getResources(), bitmap));
-                        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+                        marker.setIcon(
+                                new BitmapDrawable(context.getResources(), bitmap)
+                        );
+                        marker.setAnchor(
+                                Marker.ANCHOR_CENTER,
+                                Marker.ANCHOR_BOTTOM
+                        );
                         map.invalidate();
                     }
 
                     @Override
-                    public void onLoadCleared(android.graphics.drawable.Drawable placeholder) {}
+                    public void onLoadCleared(@Nullable Drawable placeholder) {}
                 });
     }
+
 
     private void openWorkerProfile(String workerId) {
         Intent intent = new Intent(this, UserProfile.class);
