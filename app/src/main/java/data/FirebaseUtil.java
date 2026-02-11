@@ -18,6 +18,7 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.List;
@@ -349,17 +350,16 @@ public class FirebaseUtil {
     }
     /* ================= SERVICE IMAGE UPLOAD ================= */
 
-    public static void UploadServiceType(
-            Context context,
-            Uri imageUri,
-            ImageUploadCallback callback
-    ) {
+    public static void UploadServiceType(Context context,
+                                         String filePath,
+                                         OnImageUploaded callback) {
+
         String uid = currentUserId();
-        if (uid == null || imageUri == null) return;
+        if (uid == null || filePath == null) return;
 
         Context appCtx = context.getApplicationContext();
 
-        MediaManager.get().upload(imageUri)
+        MediaManager.get().upload(filePath)   // ✅ USE FILE PATH
                 .unsigned("CrewUp")
                 .option("folder", "service_photos")
                 .callback(new UploadCallback() {
@@ -372,22 +372,38 @@ public class FirebaseUtil {
                     }
 
                     @Override
-                    public void onProgress(String requestId, long bytes, long totalBytes) {
+                    public void onProgress(String requestId,
+                                           long bytes,
+                                           long totalBytes) {
+                        // Optional: add progress bar later
                     }
 
                     @Override
-                    public void onSuccess(String requestId, Map resultData) {
+                    public void onSuccess(String requestId,
+                                          Map resultData) {
+
+                        if (resultData == null ||
+                                resultData.get("secure_url") == null) {
+                            Toast.makeText(appCtx,
+                                    "Upload failed",
+                                    Toast.LENGTH_SHORT).show();
+                            return;
+                        }
 
                         String imageUrl =
                                 resultData.get("secure_url").toString();
 
-                        // Return URL to caller (ServiceInfo)
+                        // 🔥 Delete temp file after upload
+                        new File(filePath).delete();
+
+                        // Return URL to caller
                         if (callback != null) {
                             callback.onUploaded(imageUrl);
                         }
 
-                        // Also save to Firestore (pending booking)
-                        FirebaseFirestore db = FirebaseFirestore.getInstance();
+                        // Save to Firestore
+                        FirebaseFirestore db =
+                                FirebaseFirestore.getInstance();
 
                         db.collection("BookingOrder")
                                 .whereEqualTo("userId", uid)
@@ -395,12 +411,16 @@ public class FirebaseUtil {
                                 .limit(1)
                                 .get()
                                 .addOnSuccessListener(q -> {
+
                                     if (q.isEmpty()) return;
 
                                     String projectId =
-                                            q.getDocuments().get(0).getId();
+                                            q.getDocuments()
+                                                    .get(0)
+                                                    .getId();
 
-                                    Map<String, Object> data = new HashMap<>();
+                                    Map<String, Object> data =
+                                            new HashMap<>();
                                     data.put("photos",
                                             FieldValue.arrayUnion(imageUrl));
 
@@ -411,17 +431,27 @@ public class FirebaseUtil {
                     }
 
                     @Override
-                    public void onError(String requestId, ErrorInfo error) {
+                    public void onError(String requestId,
+                                        ErrorInfo error) {
+
                         Toast.makeText(appCtx,
                                 "Upload failed",
                                 Toast.LENGTH_SHORT).show();
+
+                        // Cleanup temp file
+                        new File(filePath).delete();
                     }
 
                     @Override
-                    public void onReschedule(String requestId, ErrorInfo error) {
+                    public void onReschedule(String requestId,
+                                             ErrorInfo error) {
                     }
                 })
                 .dispatch();
+    }
+    // 👇 ADD THIS INTERFACE
+    public interface OnImageUploaded {
+        void onUploaded(String imageUrl);
     }
 
 }

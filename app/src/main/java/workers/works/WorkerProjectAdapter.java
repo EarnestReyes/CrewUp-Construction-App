@@ -54,7 +54,10 @@ public class WorkerProjectAdapter extends RecyclerView.Adapter<WorkerProjectAdap
             holder.tvDate.setText("Created: Recently");
         }
 
-        String status = project.getStatus() != null ? project.getStatus() : "pending";
+        String status = project.getStatus() != null
+                ? project.getStatus().trim().toLowerCase()
+                : "pending";
+
         holder.tvStatus.setText(getStatusText(status));
         holder.tvStatus.setBackgroundResource(getStatusBackground(status));
 
@@ -96,7 +99,9 @@ public class WorkerProjectAdapter extends RecyclerView.Adapter<WorkerProjectAdap
     }
 
     private String getStatusText(String status) {
-        switch (status.toLowerCase()) {
+        if (status == null) return "pending";
+
+        switch (status.trim().toLowerCase()) {
             case "pending":
                 return "Pending";
             case "active":
