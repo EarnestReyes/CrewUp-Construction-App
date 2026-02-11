@@ -1,9 +1,6 @@
 package clients.chat;
 
-import static data.FirebaseUtil.currentUserId;
-
 import android.content.Intent;
-import data.FirebaseUtil.ImageUploadCallback;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -21,7 +18,6 @@ import android.app.TimePickerDialog;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
 import java.util.Locale;
 
 import androidx.activity.EdgeToEdge;
@@ -35,25 +31,13 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.bumptech.glide.Glide;
 import com.example.ConstructionApp.R;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.SetOptions;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import data.FirebaseUtil;
 
 public class ServiceInfo extends AppCompatActivity {
 
-    FirebaseFirestore db;
-    FirebaseAuth mAuth;
-
     AutoCompleteTextView type;
     EditText etAddress, etDateTime, etDescription, etBudget;
-    String projectId;
 
     ImageView p1, p2, p3;
     LinearLayout Photos;
@@ -63,6 +47,9 @@ public class ServiceInfo extends AppCompatActivity {
     private String photo2 = null;
     private String photo3 = null;
     private int photoCount = 0;
+
+    // Data from previous activity
+    private String fullName, email, mobileNumber, homeAddress, otherId;
 
     /* ================= IMAGE PICKER ================= */
 
@@ -82,8 +69,7 @@ public class ServiceInfo extends AppCompatActivity {
                         FirebaseUtil.UploadServiceType(
                                 this,
                                 uri,
-                                (FirebaseUtil.ImageUploadCallback) imageUrl -> {
-
+                                imageUrl -> {
                                     if (photoCount == 0) {
                                         photo1 = imageUrl;
                                         Glide.with(this).load(imageUrl).into(p1);
@@ -98,16 +84,12 @@ public class ServiceInfo extends AppCompatActivity {
                                     photoCount++;
                                 }
                         );
-
                     }
             );
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        db = FirebaseFirestore.getInstance();
-        mAuth = FirebaseAuth.getInstance();
 
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_service_info);
@@ -118,9 +100,14 @@ public class ServiceInfo extends AppCompatActivity {
             return insets;
         });
 
-        projectId = getIntent().getStringExtra("projectId");
+        // Get data from previous activity
+        fullName = getIntent().getStringExtra("fullName");
+        email = getIntent().getStringExtra("email");
+        mobileNumber = getIntent().getStringExtra("mobileNumber");
+        homeAddress = getIntent().getStringExtra("homeAddress");
+        otherId = getIntent().getStringExtra("otherId");
 
-        Button nxt = findViewById(R.id.btnSubmit);
+        Button btnSubmit = findViewById(R.id.btnSubmit);
         type = findViewById(R.id.spServiceType);
         etAddress = findViewById(R.id.etAddress);
         etDateTime = findViewById(R.id.etDateTime);
@@ -138,15 +125,61 @@ public class ServiceInfo extends AppCompatActivity {
 
         map.setOnClickListener(v -> {
             Toast.makeText(this, "Opening location..", Toast.LENGTH_SHORT).show();
-            Intent in = new Intent(this, RealTimeLocation.class);
-            in.putExtra("projectId", projectId);
-            startActivity(in);
+            // TODO: Handle location selection
+            // You can implement RealTimeLocation activity here
         });
 
         Photos.setOnClickListener(v -> permission(UploadedImage));
 
-        loadPictures();
+        // Date and Time Picker
+        setupDateTimePicker();
 
+        // Service Type Dropdown
+        setupServiceTypeDropdown();
+
+        // Next button - collect service data and pass everything to ReviewDetails
+        btnSubmit.setOnClickListener(v -> {
+            String serviceType = type.getText().toString().trim();
+            String siteAddress = etAddress.getText().toString().trim();
+            String dateTime = etDateTime.getText().toString().trim();
+            String description = etDescription.getText().toString().trim();
+            String budget = etBudget.getText().toString().trim();
+
+            // Validation
+            if (serviceType.isEmpty() || siteAddress.isEmpty()) {
+                Toast.makeText(this, "Please fill in required fields", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Pass all data to ReviewDetails
+            Intent intent = new Intent(this, ReviewDetails.class);
+
+            // Personal info
+            intent.putExtra("fullName", fullName);
+            intent.putExtra("email", email);
+            intent.putExtra("mobileNumber", mobileNumber);
+            intent.putExtra("homeAddress", homeAddress);
+            intent.putExtra("otherId", otherId);
+
+            // Service info
+            intent.putExtra("serviceType", serviceType);
+            intent.putExtra("siteAddress", siteAddress);
+            intent.putExtra("dateTime", dateTime);
+            intent.putExtra("description", description);
+            intent.putExtra("budget", budget);
+
+            // Photos
+            intent.putExtra("photo1", photo1);
+            intent.putExtra("photo2", photo2);
+            intent.putExtra("photo3", photo3);
+
+            startActivity(intent);
+        });
+
+        findViewById(R.id.btnBack).setOnClickListener(v -> finish());
+    }
+
+    private void setupDateTimePicker() {
         Calendar selectedDateTime = Calendar.getInstance();
 
         etDateTime.setOnClickListener(v -> {
@@ -155,42 +188,42 @@ public class ServiceInfo extends AppCompatActivity {
             new DatePickerDialog(
                     this,
                     (view, year, month, dayOfMonth) -> {
-
                         selectedDateTime.set(year, month, dayOfMonth);
 
                         new TimePickerDialog(
                                 this,
                                 (timeView, hourOfDay, minute) -> {
-
                                     selectedDateTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
                                     selectedDateTime.set(Calendar.MINUTE, minute);
 
-                                    SimpleDateFormat sdf =
-                                            new SimpleDateFormat(
-                                                    "MMMM dd, yyyy • h:mm a",
-                                                    Locale.getDefault()
-                                            );
+                                    SimpleDateFormat sdf = new SimpleDateFormat(
+                                            "MMMM dd, yyyy • h:mm a",
+                                            Locale.getDefault()
+                                    );
 
                                     etDateTime.setText(sdf.format(selectedDateTime.getTime()));
-
                                 },
                                 now.get(Calendar.HOUR_OF_DAY),
                                 now.get(Calendar.MINUTE),
                                 false
                         ).show();
-
                     },
                     now.get(Calendar.YEAR),
                     now.get(Calendar.MONTH),
                     now.get(Calendar.DAY_OF_MONTH)
             ).show();
         });
+    }
 
+    private void setupServiceTypeDropdown() {
         String[] options = {
                 "Construction",
                 "Plumbing",
                 "Cement fix",
-                "Custom :"
+                "Electrical",
+                "Painting",
+                "Carpentry",
+                "Custom"
         };
 
         type.setAdapter(
@@ -202,38 +235,6 @@ public class ServiceInfo extends AppCompatActivity {
         );
         type.setKeyListener(null);
         type.setOnClickListener(v -> type.showDropDown());
-
-        nxt.setOnClickListener(v -> {
-            saveUserToFirestore(projectId);
-            Intent in = new Intent(this, ReviewDetails.class);
-            in.putExtra("projectId", projectId);
-            startActivity(in);
-        });
-
-        findViewById(R.id.btnBack).setOnClickListener(v -> finish());
-    }
-
-    /* ================= SAVE ================= */
-
-    private void saveUserToFirestore(String projectId) {
-
-        Map<String, Object> user = new HashMap<>();
-        user.put("Service_Type", type.getText().toString().trim());
-        user.put("Site_Address", etAddress.getText().toString().trim());
-        user.put("Date & Time", etDateTime.getText().toString().trim());
-        user.put("Description", etDescription.getText().toString().trim());
-        user.put("Budget", etBudget.getText().toString().trim());
-
-        List<String> photos = new ArrayList<>();
-        if (photo1 != null) photos.add(photo1);
-        if (photo2 != null) photos.add(photo2);
-        if (photo3 != null) photos.add(photo3);
-
-        user.put("photos", photos);
-
-        db.collection("BookingOrder")
-                .document(projectId)
-                .set(user, SetOptions.merge());
     }
 
     /* ================= PERMISSION ================= */
@@ -246,35 +247,8 @@ public class ServiceInfo extends AppCompatActivity {
                 .setPositiveButton("Yes", (d, w) -> act.launch("image/*"))
                 .setNegativeButton("No", (d, w) ->
                         Toast.makeText(this,
-                                "Permission required to proceed",
+                                "Permission required to upload photos",
                                 Toast.LENGTH_SHORT).show())
                 .show();
-    }
-
-    /* ================= LOAD ================= */
-
-    private void loadPictures() {
-
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-        if (currentUser == null) return;
-
-        db.collection("BookingOrder")
-                .whereEqualTo("status", "pending")
-                .whereEqualTo("userId", currentUser.getUid())
-                .limit(1)
-                .get()
-                .addOnSuccessListener(querySnapshot -> {
-
-                    if (querySnapshot.isEmpty()) return;
-
-                    DocumentSnapshot doc = querySnapshot.getDocuments().get(0);
-                    List<String> photos = (List<String>) doc.get("photos");
-
-                    if (photos != null) {
-                        if (photos.size() > 0) Glide.with(this).load(photos.get(0)).into(p1);
-                        if (photos.size() > 1) Glide.with(this).load(photos.get(1)).into(p2);
-                        if (photos.size() > 2) Glide.with(this).load(photos.get(2)).into(p3);
-                    }
-                });
     }
 }

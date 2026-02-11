@@ -101,6 +101,7 @@
                     android:drawablePadding="8dp"
                     android:drawableTint="@color/text_primary"
                     android:text="Home Address"
+
                     android:textColor="@color/text_primary"
                     android:textSize="14sp" />
 
@@ -172,12 +173,6 @@
                     android:textColor="@color/text_primary"
                     android:textSize="14sp" />
 
-                <TextView
-                    android:id="@+id/textView3"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@color/text_primary"
-                    android:textColor="@color/text_primary" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -192,7 +187,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:drawableStart="@drawable/ic_location"
+
                     android:drawablePadding="4dp"
                     android:text="Location"
                     android:textColor="@color/text_primary"
@@ -254,7 +249,6 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Timeline Card -->
         <!-- Project Photos Card -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardPhotos"
@@ -278,12 +272,6 @@
                     android:textColor="@color/text_primary"
                     android:textSize="18sp"
                     android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/textView4"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@color/text_primary" />
 
                 <View
                     android:layout_width="match_parent"

@@ -32,7 +32,6 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.SetOptions;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -41,7 +40,6 @@ import java.util.Locale;
 import java.util.Map;
 
 import auth.Login;
-import auth.UserDetails;
 
 public class WorkerSignUp extends AppCompatActivity {
 
@@ -51,6 +49,11 @@ public class WorkerSignUp extends AppCompatActivity {
 
     private static final int LOCATION_REQUEST_CODE = 100;
     private static final String CHANNEL_ID = "crew_up_channel";
+
+    private String userAddress = "";
+    private double userLat = 0.0;
+    private double userLng = 0.0;
+    private String userEmail = "";
 
     private TextInputEditText username, email, password, confirmPass;
 
@@ -76,12 +79,9 @@ public class WorkerSignUp extends AppCompatActivity {
                     return insets;
                 });
 
-        username = findViewById(R.id.edtUsername);
         email = findViewById(R.id.edtEmail);
         password = findViewById(R.id.edtPassword);
         confirmPass = findViewById(R.id.edtConfirmPassword);
-
-
 
         Button btnSignUp = findViewById(R.id.btnSignUp);
         TextView txtLogin = findViewById(R.id.txtLogin);
@@ -90,18 +90,16 @@ public class WorkerSignUp extends AppCompatActivity {
         btnBack.setOnClickListener(v -> finish());
         btnSignUp.setOnClickListener(v -> registerWorker());
         txtLogin.setOnClickListener(v ->
-                startActivity(new Intent(this, TopUpWallet.class)));
+                startActivity(new Intent(this, Login.class)));
     }
 
     private void registerWorker() {
 
-        String rawName = username.getText().toString().trim();
         String emailTxt = email.getText().toString().trim();
         String passTxt = password.getText().toString().trim();
         String confirmTxt = confirmPass.getText().toString().trim();
 
-        if (rawName.isEmpty() || emailTxt.isEmpty()
-                || passTxt.isEmpty() || confirmTxt.isEmpty()) {
+        if (emailTxt.isEmpty() || passTxt.isEmpty() || confirmTxt.isEmpty()) {
             Toast.makeText(this, "All fields are required", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -116,13 +114,13 @@ public class WorkerSignUp extends AppCompatActivity {
             return;
         }
 
-        String formattedName = formatName(rawName);
+        userEmail = emailTxt;
 
         mAuth.createUserWithEmailAndPassword(emailTxt, passTxt)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        saveWorkerToFirestore(formattedName, emailTxt);
-                        createNotification(formattedName);
+                        // Don't save to Firestore yet - wait until WorkerDetails is complete
+                        createNotification("Worker");
                         showLocationDialog();
                     } else {
                         Toast.makeText(
@@ -136,39 +134,13 @@ public class WorkerSignUp extends AppCompatActivity {
                 });
     }
 
-    private String formatName(String name) {
-        String[] parts = name.split("\\s+");
-        for (int i = 0; i < parts.length && i < 2; i++) {
-            parts[i] = parts[i].substring(0, 1).toUpperCase()
-                    + parts[i].substring(1).toLowerCase();
-        }
-        return String.join(" ", parts);
-    }
-
-    private void saveWorkerToFirestore(String username, String email) {
-
-        FirebaseUser user = mAuth.getCurrentUser();
-        if (user == null) return;
-
-        Map<String, Object> data = new HashMap<>();
-        data.put("username", username);
-        data.put("username_lower", username.toLowerCase());
-        data.put("email", email);
-        data.put("Role", "worker");
-        data.put("createdAt", System.currentTimeMillis());
-
-        db.collection("users")
-                .document(user.getUid())
-                .set(data, SetOptions.merge());
-    }
-
     private void showLocationDialog() {
         new AlertDialog.Builder(this)
                 .setTitle("Location Permission")
                 .setMessage("Allow app to access your location?")
                 .setCancelable(false)
                 .setPositiveButton("Yes", (d, w) -> requestLocationPermission())
-                .setNegativeButton("No", (d, w) -> goToUserDetails())
+                .setNegativeButton("No", (d, w) -> goToWorkerDetails())
                 .show();
     }
 
@@ -194,16 +166,11 @@ public class WorkerSignUp extends AppCompatActivity {
         fusedLocationClient.getLastLocation()
                 .addOnSuccessListener(location -> {
                     if (location != null) {
-                        saveLocationToFirestore(
-                                getAddressFromLocation(
-                                        location.getLatitude(),
-                                        location.getLongitude()
-                                ),
-                                location.getLatitude(),
-                                location.getLongitude()
-                        );
+                        userLat = location.getLatitude();
+                        userLng = location.getLongitude();
+                        userAddress = getAddressFromLocation(userLat, userLng);
                     }
-                    goToUserDetails();
+                    goToWorkerDetails();
                 });
     }
 
@@ -221,24 +188,12 @@ public class WorkerSignUp extends AppCompatActivity {
         return "Unknown location";
     }
 
-    private void saveLocationToFirestore(String address, double lat, double lng) {
-
-        FirebaseUser user = mAuth.getCurrentUser();
-        if (user == null) return;
-
-        Map<String, Object> data = new HashMap<>();
-        data.put("location", address);
-        data.put("lat", lat);
-        data.put("lng", lng);
-        data.put("locationUpdatedAt", System.currentTimeMillis());
-
-        db.collection("users")
-                .document(user.getUid())
-                .set(data, SetOptions.merge());
-    }
-
-    private void goToUserDetails() {
-        Intent intent = new Intent(this, UserDetails.class);
+    private void goToWorkerDetails() {
+        Intent intent = new Intent(this, WorkerDetails.class);
+        intent.putExtra("email", userEmail);
+        intent.putExtra("location", userAddress);
+        intent.putExtra("lat", userLat);
+        intent.putExtra("lng", userLng);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
     }
@@ -281,7 +236,7 @@ public class WorkerSignUp extends AppCompatActivity {
                     && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 getUserLocation();
             } else {
-                goToUserDetails();
+                goToWorkerDetails();
             }
         }
     }

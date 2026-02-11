@@ -52,8 +52,12 @@ public class SignUp extends AppCompatActivity {
     private static final String CHANNEL_ID = "crew_up_channel";
 
     private String userAddress = "";
+    private double userLat = 0.0;
+    private double userLng = 0.0;
 
-    private TextInputEditText username, email, password, confirmPassword;
+    private String userEmail = "";
+
+    private TextInputEditText  email, password, confirmPassword;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,7 +81,7 @@ public class SignUp extends AppCompatActivity {
                     return insets;
                 });
 
-        username = findViewById(R.id.edtUsername);
+
         email = findViewById(R.id.edtEmail);
         password = findViewById(R.id.edtPassword);
         confirmPassword = findViewById(R.id.edtConfirmPassword);
@@ -93,18 +97,12 @@ public class SignUp extends AppCompatActivity {
         txtLogin.setOnClickListener(v ->
                 startActivity(new Intent(this, Login.class)));
     }
+
     private void registerUser() {
 
-        String rawName = username.getText().toString().trim();
         String emailTxt = email.getText().toString().trim();
         String passTxt = password.getText().toString().trim();
         String confirmTxt = confirmPassword.getText().toString().trim();
-
-        if (rawName.isEmpty() || emailTxt.isEmpty()
-                || passTxt.isEmpty() || confirmTxt.isEmpty()) {
-            Toast.makeText(this, "All fields are required", Toast.LENGTH_SHORT).show();
-            return;
-        }
 
         if (!passTxt.equals(confirmTxt)) {
             Toast.makeText(this, "Passwords do not match", Toast.LENGTH_SHORT).show();
@@ -116,14 +114,13 @@ public class SignUp extends AppCompatActivity {
             return;
         }
 
-        String formattedName = formatName(rawName);
+
+        userEmail = emailTxt;
 
         mAuth.createUserWithEmailAndPassword(emailTxt, passTxt)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
 
-                        saveUserToFirestore(formattedName, emailTxt);
-                        createNotification(formattedName);
                         showLocationDialog();
 
                     } else {
@@ -137,6 +134,7 @@ public class SignUp extends AppCompatActivity {
                     }
                 });
     }
+
     private String formatName(String name) {
         String[] parts = name.split("\\s+");
         for (int i = 0; i < parts.length && i < 2; i++) {
@@ -145,25 +143,7 @@ public class SignUp extends AppCompatActivity {
         }
         return String.join(" ", parts);
     }
-    private void saveUserToFirestore(String username, String email) {
 
-        FirebaseUser user = mAuth.getCurrentUser();
-        if (user == null) return;
-
-        String role = getIntent().getStringExtra("client");
-        if (role == null) role = "client";
-
-        Map<String, Object> data = new HashMap<>();
-        data.put("username", username);
-        data.put("username_lower", username.toLowerCase());
-        data.put("email", email);
-        data.put("Role", role);
-        data.put("createdAt", System.currentTimeMillis());
-
-        db.collection("users")
-                .document(user.getUid())
-                .set(data);
-    }
     private void showLocationDialog() {
         new AlertDialog.Builder(this)
                 .setTitle("Location Permission")
@@ -173,6 +153,7 @@ public class SignUp extends AppCompatActivity {
                 .setNegativeButton("No", (d, w) -> goToUserDetails())
                 .show();
     }
+
     private void requestLocationPermission() {
         if (ContextCompat.checkSelfPermission(
                 this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -186,6 +167,7 @@ public class SignUp extends AppCompatActivity {
             getUserLocation();
         }
     }
+
     private void getUserLocation() {
         if (ActivityCompat.checkSelfPermission(
                 this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -195,14 +177,14 @@ public class SignUp extends AppCompatActivity {
                 .addOnSuccessListener(location -> {
 
                     if (location != null) {
-                        double lat = location.getLatitude();
-                        double lng = location.getLongitude();
-                        userAddress = getAddressFromLocation(lat, lng);
-                        saveLocationToFirestore(userAddress, lat, lng);
+                        userLat = location.getLatitude();
+                        userLng = location.getLongitude();
+                        userAddress = getAddressFromLocation(userLat, userLng);
                     }
                     goToUserDetails();
                 });
     }
+
     private String getAddressFromLocation(double lat, double lng) {
         Geocoder geocoder = new Geocoder(this, Locale.getDefault());
         try {
@@ -218,24 +200,12 @@ public class SignUp extends AppCompatActivity {
         return "Unknown location";
     }
 
-    private void saveLocationToFirestore(String address, double lat, double lng) {
-
-        FirebaseUser user = mAuth.getCurrentUser();
-        if (user == null) return;
-
-        Map<String, Object> data = new HashMap<>();
-        data.put("location", address);
-        data.put("lat", lat);
-        data.put("lng", lng);
-        data.put("locationUpdatedAt", System.currentTimeMillis());
-
-        db.collection("users")
-                .document(user.getUid())
-                .update(data);
-    }
-
     private void goToUserDetails() {
         Intent intent = new Intent(this, UserDetails.class);
+        intent.putExtra("email", userEmail);
+        intent.putExtra("location", userAddress);
+        intent.putExtra("lat", userLat);
+        intent.putExtra("lng", userLng);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
     }

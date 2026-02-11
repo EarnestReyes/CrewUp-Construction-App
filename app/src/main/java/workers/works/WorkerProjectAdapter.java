@@ -45,8 +45,7 @@ public class WorkerProjectAdapter extends RecyclerView.Adapter<WorkerProjectAdap
         holder.tvWorkDescription.setText(project.getWorkDescription() != null ?
                 project.getWorkDescription() : "No description");
 
-        holder.tvLocation.setText(project.getLocation() != null ?
-                "📍 " + project.getLocation() : "Location not specified");
+        holder.tvLocation.setText("📍 " + project.getLocation());
 
         if (project.getCreatedAt() != null) {
             String dateStr = project.getCreatedAt();

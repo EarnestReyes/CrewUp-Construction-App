@@ -23,6 +23,9 @@
             android:name="workers.auth.WorkerDetails"
             android:exported="false"/>
         <activity
+            android:name="clients.chat.RealTimeLocation"
+            android:exported="false"/>
+        <activity
             android:name="clients.works.ClientProjectDetailsActivity"
             android:exported="false"/>
         <activity
@@ -31,9 +34,6 @@
         <activity
             android:name="app.WorkersLocationMap"
             android:exported="false"/>
-        <activity
-            android:name="clients.chat.ServiceBreakdown"
-            android:exported="false" />
         <activity
             android:name="clients.chat.ReviewDetails"
             android:exported="false" />

@@ -87,7 +87,7 @@
                         android:layout_height="wrap_content"/>
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <!-- Last Name -->
+                <!-- MI and Last Name Row -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -120,6 +120,8 @@
                             android:inputType="textPersonName|textCapWords"/>
                     </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
+
+                <!-- Birthday -->
                 <com.google.android.material.textfield.TextInputLayout
                     style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
@@ -134,6 +136,7 @@
                         android:focusable="false"/>
                 </com.google.android.material.textfield.TextInputLayout>
 
+                <!-- Gender -->
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -149,9 +152,81 @@
                         android:padding="12dp" />
                 </com.google.android.material.textfield.TextInputLayout>
 
+                <!-- Fields of Expertise Section -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Fields of Expertise *"
+                    android:textStyle="bold"
+                    android:textSize="14sp"
+                    android:textColor="@color/text_primary"
+                    android:layout_marginTop="16dp"/>
 
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Select all that apply"
+                    android:textSize="12sp"
+                    android:textColor="@color/text_secondary"
+                    android:layout_marginTop="4dp"/>
 
-                <!-- Birthday -->
+                <!-- Expertise Dropdown -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    app:boxBackgroundMode="outline"
+                    app:endIconMode="dropdown_menu">
+                    <AutoCompleteTextView
+                        android:id="@+id/edtExpertise"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Add Expertise"
+                        android:inputType="none"
+                        android:padding="12dp" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Custom Expertise Field (Initially Hidden) -->
+                <LinearLayout
+                    android:id="@+id/layoutCustomExpertise"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="8dp"
+                    android:visibility="gone"
+                    android:gravity="center_vertical">
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="8dp"
+                        app:boxBackgroundMode="outline"
+                        android:hint="Enter Custom Expertise">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/edtCustomExpertise"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:maxLength="30"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <Button
+                        android:id="@+id/btnAddCustomExpertise"
+                        android:layout_width="wrap_content"
+                        android:layout_height="56dp"
+                        android:text="Add"
+                        style="@style/Widget.Material3.Button.TonalButton"/>
+                </LinearLayout>
+
+                <!-- Selected Expertise Chips -->
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chipGroupSelectedExpertise"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    app:chipSpacing="8dp"
+                    app:singleLine="false"/>
 
                 <!-- Address -->
                 <com.google.android.material.textfield.TextInputLayout
@@ -180,23 +255,6 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:inputType="phone"/>
-                </com.google.android.material.textfield.TextInputLayout>
-
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:hint="Field of Expertise"
-                    app:boxBackgroundMode="outline"
-                    app:endIconMode="dropdown_menu">
-
-                    <AutoCompleteTextView
-                        android:id="@+id/edtExpertise"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="none"
-                        android:padding="12dp" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <!-- Socials -->

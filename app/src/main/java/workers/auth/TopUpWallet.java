@@ -14,17 +14,14 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.ConstructionApp.R;
 import com.google.android.material.textfield.TextInputEditText;
-import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.SetOptions;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import clients.workers.workers;
 import workers.app.MainActivity;
 
 public class TopUpWallet extends AppCompatActivity {
@@ -54,10 +51,10 @@ public class TopUpWallet extends AppCompatActivity {
         btnSubmit = findViewById(R.id.btnSubmit);
 
         btnBack.setOnClickListener(v -> finish());
-        btnSubmit.setOnClickListener(v -> saveTopUpToWallet());
+        btnSubmit.setOnClickListener(v -> saveAllDataToFirestore());
     }
 
-    private void saveTopUpToWallet() {
+    private void saveAllDataToFirestore() {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser == null) {
             Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show();
@@ -87,35 +84,76 @@ public class TopUpWallet extends AppCompatActivity {
         }
 
         String uid = currentUser.getUid();
-        DocumentReference walletRef =
-                db.collection("users").document(uid);
 
-        db.runTransaction(transaction -> {
+        // Get all data passed from WorkerDetails
+        String email = getIntent().getStringExtra("email");
+        String location = getIntent().getStringExtra("location");
+        double lat = getIntent().getDoubleExtra("lat", 0.0);
+        double lng = getIntent().getDoubleExtra("lng", 0.0);
 
-            Double currentBalance = transaction
-                    .get(walletRef)
-                    .getDouble("balance");
+        String firstName = getIntent().getStringExtra("firstName");
+        String lastName = getIntent().getStringExtra("lastName");
+        String middleInitial = getIntent().getStringExtra("middleInitial");
+        String fullName = getIntent().getStringExtra("fullName");
 
-            if (currentBalance == null) currentBalance = 0.0;
+        // Get expertise list
+        ArrayList<String> expertiseList = getIntent().getStringArrayListExtra("expertiseList");
+        String address = getIntent().getStringExtra("address");
 
-            double newBalance = currentBalance + topUpAmount;
+        String birthday = getIntent().getStringExtra("birthday");
+        String gender = getIntent().getStringExtra("gender");
+        String mobileNumber = getIntent().getStringExtra("mobileNumber");
+        String social = getIntent().getStringExtra("social");
 
-            Map<String, Object> updates = new HashMap<>();
-            updates.put("balance", newBalance);
-            updates.put("lastUpdated", Timestamp.now());
+        // Create complete user data map with wallet balance
+        Map<String, Object> user = new HashMap<>();
 
-            transaction.set(walletRef, updates, SetOptions.merge());
+        // Data from WorkerSignUp
+        user.put("email", email != null ? email : "");
+        user.put("Role", "worker");
+        user.put("createdAt", System.currentTimeMillis());
 
-            return null;
+        // Location data (if available)
+        if (location != null && !location.isEmpty()) {
+            user.put("location", location);
+            user.put("lat", lat);
+            user.put("lng", lng);
+            user.put("locationUpdatedAt", System.currentTimeMillis());
+        }
 
-        }).addOnSuccessListener(unused -> {
+        // Name fields
+        user.put("FirstName", firstName != null ? firstName : "");
+        user.put("LastName", lastName != null ? lastName : "");
+        user.put("MiddleInitial", middleInitial != null ? middleInitial : "");
+        user.put("username", fullName != null ? fullName : "");
+        user.put("username_lower", fullName != null ? fullName.toLowerCase() : "");
 
-            Intent in = new Intent(this, MainActivity.class);
-            startActivity(in);
-            Toast.makeText(this, "Top-up successful!", Toast.LENGTH_SHORT).show();
+        // Worker-specific fields - store expertise as array
+        user.put("Expertise", expertiseList != null ? expertiseList : new ArrayList<String>());
+        user.put("Address", address != null ? address : "");
 
-        }).addOnFailureListener(e ->
-                Toast.makeText(this, "Top-up failed: " + e.getMessage(), Toast.LENGTH_SHORT).show()
-        );
+        // Personal details
+        user.put("Birthday", birthday != null ? birthday : "");
+        user.put("Gender", gender != null ? gender : "");
+        user.put("Mobile Number", mobileNumber != null ? mobileNumber : "");
+        user.put("Social", social != null ? social : "");
+
+        // Wallet balance
+        user.put("balance", topUpAmount);
+        user.put("lastUpdated", com.google.firebase.Timestamp.now());
+
+        // Save all data at once
+        db.collection("users")
+                .document(uid)
+                .set(user)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(this, "Worker profile and wallet setup successful!", Toast.LENGTH_SHORT).show();
+                    Intent in = new Intent(this, MainActivity.class);
+                    startActivity(in);
+                    finish();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Setup failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 }

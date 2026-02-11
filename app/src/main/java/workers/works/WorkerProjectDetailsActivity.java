@@ -2,8 +2,11 @@ package workers.works;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -11,6 +14,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import com.bumptech.glide.Glide;
 import com.example.ConstructionApp.R;
 import com.google.android.material.card.MaterialCardView;
 import com.google.firebase.auth.FirebaseAuth;
@@ -28,12 +32,12 @@ import workers.works.invoice.ProjectCostQuote;
 
 public class WorkerProjectDetailsActivity extends AppCompatActivity {
 
-    private TextView tvClientName, tvClientPhone, tvClientEmail;
+    private TextView tvClientName, tvClientPhone, tvClientEmail, tvClientAddress;
     private TextView tvWorkDescription, tvLocation, tvStatus, tvCreatedDate;
-    private TextView tvStartDate, tvCompletionDate, tvTotalCost, tvNotes;
+    private TextView  tvTotalCost, tvNotes;
 
-    private MaterialCardView cardClientInfo, cardProjectInfo, cardDates, cardCost, cardActions;
-
+    private MaterialCardView cardClientInfo, cardProjectInfo, cardDates, cardCost, cardActions, cardPhotos;
+    private LinearLayout layoutPhotos;
     private Button btnCreateProposal, btnMarkComplete, btnContactClient;
     private Button btnCancelProject;
 
@@ -61,6 +65,7 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
         initializeViews();
         setupToolbar();
         loadProjectDetails();
+
     }
 
     private void initializeViews() {
@@ -68,6 +73,7 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
         tvClientName = findViewById(R.id.tvClientName);
         tvClientPhone = findViewById(R.id.tvClientPhone);
         tvClientEmail = findViewById(R.id.tvClientEmail);
+        tvClientAddress = findViewById(R.id.tvClientAddress);
 
         tvWorkDescription = findViewById(R.id.tvWorkDescription);
         tvLocation = findViewById(R.id.tvLocation);
@@ -76,11 +82,8 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
         tvNotes = findViewById(R.id.tvNotes);
 
 
-        tvStartDate = findViewById(R.id.tvStartDate);
-        tvCompletionDate = findViewById(R.id.tvCompletionDate);
-
-
         tvTotalCost = findViewById(R.id.tvTotalCost);
+        layoutPhotos = findViewById(R.id.layoutPhotos);
 
 
         cardClientInfo = findViewById(R.id.cardClientInfo);
@@ -88,7 +91,7 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
         cardDates = findViewById(R.id.cardDates);
         cardCost = findViewById(R.id.cardCost);
         cardActions = findViewById(R.id.cardActions);
-
+        cardPhotos = findViewById(R.id.cardPhotos);
 
         btnCreateProposal = findViewById(R.id.btnCreateProposal);
         btnMarkComplete = findViewById(R.id.btnMarkComplete);
@@ -128,10 +131,22 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
                         project.setClientPhone(documentSnapshot.getString("Mobile Number"));
                         project.setClientEmail(documentSnapshot.getString("Email"));
                         project.setWorkDescription(documentSnapshot.getString("Description"));
+                        project.setClientAddress(documentSnapshot.getString("Home_Address"));
                         project.setLocation(documentSnapshot.getString("Site_Address"));
                         project.setStatus(documentSnapshot.getString("status"));
+                        project.setServiceType(documentSnapshot.getString("Service_Type"));
+                        project.setCreatedAt(documentSnapshot.getString("Date & Time"));
                         project.setWorkerId(documentSnapshot.getString("workerId"));
                         project.setClientId(documentSnapshot.getString("userId"));
+
+                        Object photosObj = documentSnapshot.get("photos");
+                        if (photosObj != null) {
+                            if (photosObj instanceof List) {
+                                // Convert to List<String>
+                                List<String> photosList = (List<String>) documentSnapshot.get("photos");
+                                project.setPhotos(photosList);
+                            }
+                        }
 
                         String budgetStr = documentSnapshot.getString("Budget");
                         if (budgetStr != null) {
@@ -143,6 +158,7 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
                         }
 
                         displayProjectDetails();
+                        displayPhotos();
 
                     } else {
                         Toast.makeText(this, "Project not found", Toast.LENGTH_SHORT).show();
@@ -154,6 +170,39 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
                     finish();
                 });
     }
+    private void displayPhotos() {
+        // Check if photos exist
+        if (project.getPhotos() != null && !project.getPhotos().isEmpty()) {
+            cardPhotos.setVisibility(View.VISIBLE);
+            layoutPhotos.removeAllViews(); // Clear old photos
+
+            // 🔥 LOOP through each photo URL
+            for (int i = 0; i < project.getPhotos().size(); i++) {
+                String photoUrl = project.getPhotos().get(i);
+
+                // Create ImageView
+                ImageView imageView = new ImageView(this);
+
+                // Set size (200dp x 200dp)
+                int size = (int) (200 * getResources().getDisplayMetrics().density);
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(size, size);
+                imageView.setLayoutParams(params);
+
+                // Load image with Glide
+                Glide.with(this)
+                        .load(photoUrl)
+                        .placeholder(R.drawable.ic_image_placeholder)
+                        .error(R.drawable.ic_image_error)
+                        .into(imageView);
+
+                // Add to horizontal scroll layout
+                layoutPhotos.addView(imageView);
+            }
+        } else {
+            // No photos - hide card
+            cardPhotos.setVisibility(View.GONE);
+        }
+    }
 
 
 
@@ -164,6 +213,9 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
                 project.getClientPhone() : "Not provided");
         tvClientEmail.setText(project.getClientEmail() != null ?
                 project.getClientEmail() : "Not provided");
+        tvClientAddress.setText(project.getClientAddress() != null ?
+                project.getClientAddress() : "Not provided");
+
 
 
         tvWorkDescription.setText(project.getWorkDescription());
@@ -184,24 +236,6 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
             tvNotes.setVisibility(View.GONE);
         }
 
-
-        if (project.getStartDate() != null || project.getCompletionDate() != null) {
-            cardDates.setVisibility(View.VISIBLE);
-
-            if (project.getStartDate() != null) {
-                tvStartDate.setText(dateFormat.format(project.getStartDate().toDate()));
-            } else {
-                tvStartDate.setText("Not set");
-            }
-
-            if (project.getCompletionDate() != null) {
-                tvCompletionDate.setText(dateFormat.format(project.getCompletionDate().toDate()));
-            } else {
-                tvCompletionDate.setText("Not set");
-            }
-        } else {
-            cardDates.setVisibility(View.GONE);
-        }
 
 
         if (project.getTotalCost() > 0) {

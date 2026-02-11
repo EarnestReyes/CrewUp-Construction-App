@@ -98,4 +98,7 @@ dependencies {
     implementation("org.apache.poi:poi-ooxml:5.2.5")
     implementation("androidx.multidex:multidex:2.0.1")
     implementation("androidx.core:core:1.12.0")
+
+    //ADDED 2/11/26
+    implementation("com.github.bumptech.glide:glide:4.16.0")
 }

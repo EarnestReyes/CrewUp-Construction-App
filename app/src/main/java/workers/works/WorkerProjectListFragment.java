@@ -17,11 +17,12 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.ConstructionApp.R;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.Query;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -96,50 +97,91 @@ public class WorkerProjectListFragment extends Fragment {
         rvProjects.setLayoutManager(new LinearLayoutManager(getContext()));
         rvProjects.setAdapter(adapter);
     }
-    private void loadWorkerProjects() {
-        FirebaseFirestore.getInstance()
-                .collection("BookingOrder")
-                .whereEqualTo("workerId", FirebaseAuth.getInstance().getUid())
-                .get()
-                .addOnSuccessListener(query -> {
-                    List<WorkerProjectModel> list = new ArrayList<>();
 
-                    for (DocumentSnapshot doc : query) {
+    private void loadWorkerProjects() {
+        if (workerId == null) {
+            Log.e(TAG, "Worker ID is null");
+            Toast.makeText(getContext(), "Please log in to view projects", Toast.LENGTH_SHORT).show();
+            showLoading(false);
+            updateUI();
+            return;
+        }
+
+        showLoading(true);
+        Log.d(TAG, "Loading projects for worker: " + workerId + ", filter: " + statusFilter);
+
+        // Build query based on status filter
+        Query query = db.collection("BookingOrder")
+                .whereEqualTo("workerId", workerId);
+
+        // IMPORTANT: Apply status filter if not "all"
+        if (!"all".equals(statusFilter)) {
+            query = query.whereEqualTo("status", statusFilter);
+            Log.d(TAG, "Filtering by status: " + statusFilter);
+        } else {
+            Log.d(TAG, "Showing all statuses");
+        }
+
+        query.get()
+                .addOnSuccessListener(querySnapshot -> {
+                    showLoading(false);
+                    projectList.clear();
+
+                    Log.d(TAG, "Found " + querySnapshot.size() + " documents for status: " + statusFilter);
+
+                    for (DocumentSnapshot doc : querySnapshot) {
+                        Log.d(TAG, "Document: " + doc.getId() + ", status: " + doc.getString("status"));
+
                         WorkerProjectModel model = new WorkerProjectModel();
 
                         model.setProjectId(doc.getId());
+                        model.setClientId(doc.getString("userId"));
                         model.setClientName(doc.getString("Name"));
+                        model.setClientPhone(doc.getString("Mobile Number"));
+                        model.setClientEmail(doc.getString("Email"));
                         model.setWorkDescription(doc.getString("Description"));
                         model.setLocation(doc.getString("Site_Address"));
                         model.setStatus(doc.getString("status"));
                         model.setWorkerId(doc.getString("workerId"));
+                        model.setServiceType(doc.getString("Service_Type"));
 
+                        // Parse budget
                         String budgetStr = doc.getString("Budget");
-                        if (budgetStr != null) {
+                        if (budgetStr != null && !budgetStr.isEmpty()) {
                             try {
                                 model.setTotalCost(Double.parseDouble(budgetStr));
-                            } catch (Exception e) {
+                            } catch (NumberFormatException e) {
+                                Log.e(TAG, "Error parsing budget: " + budgetStr, e);
                                 model.setTotalCost(0);
                             }
                         }
 
-                        list.add(model);
+                        // Get timestamp
+                        String dateTime = doc.getString("Date & Time");
+                        if (dateTime != null) {
+                            model.setCreatedAt(dateTime);
+                        }
+
+                        projectList.add(model);
                     }
 
-                    adapter.updateList(list);
+                    adapter.updateList(projectList);
+                    updateUI();
                 })
-                .addOnFailureListener(e ->{}
-                       // Toast.makeText(this, "Failed to load projects: " + e.getMessage(), Toast.LENGTH_SHORT).show()
-                );
+                .addOnFailureListener(e -> {
+                    showLoading(false);
+                    Log.e(TAG, "Error loading projects", e);
+                    Toast.makeText(getContext(), "Failed to load projects: " + e.getMessage(),
+                            Toast.LENGTH_SHORT).show();
+                    updateUI();
+                });
     }
-
 
     private void updateUI() {
         if (projectList.isEmpty()) {
             rvProjects.setVisibility(View.GONE);
             layoutEmptyState.setVisibility(View.VISIBLE);
 
-            // Set appropriate empty message based on filter
             String message = getEmptyMessage();
             tvEmptyMessage.setText(message);
             Log.d(TAG, "No projects found. Showing empty state: " + message);
