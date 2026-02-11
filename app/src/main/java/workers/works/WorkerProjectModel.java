@@ -5,12 +5,12 @@ import java.util.List;
 
 /**
  * Model class for worker projects/booking orders
- * Updated to match Firebase field structure
+ * Updated to handle both BookingOrder projects and WorkerInput proposals
  */
 public class WorkerProjectModel {
 
     private String projectId;
-    private String clientId; // Maps to userId in Firebase
+    private String userId; // Maps to userId in Firebase
     private String clientName; // Maps to Name
     private String clientPhone; // Maps to Mobile Number
     private String clientEmail; // Maps to Email
@@ -26,6 +26,7 @@ public class WorkerProjectModel {
 
     private double totalCost; // Maps to Budget
     private String createdAt; // Maps to Date & Time
+    private Timestamp createdAtTimestamp; // For WorkerInput proposals
     private Timestamp startDate;
     private Timestamp completionDate;
 
@@ -33,16 +34,25 @@ public class WorkerProjectModel {
     private String notes;
     private boolean hasAcceptedProposal;
 
+    // NEW: To distinguish between BookingOrder projects and WorkerInput proposals
+    private boolean isProposal; // true if from WorkerInput, false if from BookingOrder
+
+    // Cost breakdown for proposals
+    private Double materialsCost;
+    private Double laborCost;
+    private Double miscCost;
+
     public WorkerProjectModel() {
         // Required empty constructor for Firestore
+        this.isProposal = false; // Default to project
     }
 
-    public WorkerProjectModel(String projectId, String clientId, String clientName,
+    public WorkerProjectModel(String projectId, String userId, String clientName,
                               String clientPhone, String clientEmail, String workerId,
                               String workerName, String workDescription, String location,
                               String status, double totalCost, String createdAt) {
         this.projectId = projectId;
-        this.clientId = clientId;
+        this.userId = userId;
         this.clientName = clientName;
         this.clientPhone = clientPhone;
         this.clientEmail = clientEmail;
@@ -53,6 +63,7 @@ public class WorkerProjectModel {
         this.status = status;
         this.totalCost = totalCost;
         this.createdAt = createdAt;
+        this.isProposal = false;
     }
 
     // Getters and Setters
@@ -64,12 +75,12 @@ public class WorkerProjectModel {
         this.projectId = projectId;
     }
 
-    public String getClientId() {
-        return clientId;
+    public String getUserId() {
+        return userId;
     }
 
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
     public String getClientName() {
@@ -168,6 +179,14 @@ public class WorkerProjectModel {
         this.createdAt = createdAt;
     }
 
+    public Timestamp getCreatedAtTimestamp() {
+        return createdAtTimestamp;
+    }
+
+    public void setCreatedAtTimestamp(Timestamp createdAtTimestamp) {
+        this.createdAtTimestamp = createdAtTimestamp;
+    }
+
     public Timestamp getStartDate() {
         return startDate;
     }
@@ -206,5 +225,44 @@ public class WorkerProjectModel {
 
     public void setHasAcceptedProposal(boolean hasAcceptedProposal) {
         this.hasAcceptedProposal = hasAcceptedProposal;
+    }
+
+    // NEW: Methods to distinguish between proposals and projects
+    public boolean isProposal() {
+        return isProposal;
+    }
+
+    public void setProposal(boolean proposal) {
+        isProposal = proposal;
+    }
+
+    // For adapter view type determination
+    public boolean isForWorker() {
+        return isProposal; // Proposals use worker layout (shows cost breakdown)
+    }
+
+    // Cost breakdown getters/setters
+    public Double getMaterialsCost() {
+        return materialsCost != null ? materialsCost : 0.0;
+    }
+
+    public void setMaterialsCost(Double materialsCost) {
+        this.materialsCost = materialsCost;
+    }
+
+    public Double getLaborCost() {
+        return laborCost != null ? laborCost : 0.0;
+    }
+
+    public void setLaborCost(Double laborCost) {
+        this.laborCost = laborCost;
+    }
+
+    public Double getMiscCost() {
+        return miscCost != null ? miscCost : 0.0;
+    }
+
+    public void setMiscCost(Double miscCost) {
+        this.miscCost = miscCost;
     }
 }

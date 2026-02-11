@@ -17,6 +17,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Fragments_Reyes">
         <activity
+            android:name="workers.works.WorkerProposalReceiptActivity"
+            android:exported="false" />
+        <activity
             android:name="workers.auth.TopUpWallet"
             android:exported="false" />
         <activity
@@ -27,7 +30,7 @@
             android:exported="false" />
         <activity
             android:name="clients.chat.RealTimeLocation"
-            android:exported="false"/>
+            android:exported="false" />
         <activity
             android:name="workers.profile.EditExpertiseActivity"
             android:exported="false" />
@@ -51,9 +54,6 @@
             android:exported="false" />
         <activity
             android:name="clients.chat.Permission"
-            android:exported="false" />
-        <activity
-            android:name="clients.chat.ReviewDetails"
             android:exported="false" />
         <activity
             android:name="workers.app.UserAroundLocation"

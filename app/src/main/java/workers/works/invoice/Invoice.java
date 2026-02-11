@@ -4,10 +4,10 @@ import java.util.List;
 
 public class Invoice {
     // Company Information
-    private String companyName;
-    private String companyAddress;
-    private String companyPhone;
-    private String companyEmail;
+    private String workerName;
+    private String workerAddress;
+    private String workerPhone;
+    private String workerEmail;
 
     
     // Client Information
@@ -30,37 +30,39 @@ public class Invoice {
     }
     
     // Getters and Setters
-    public String getCompanyName() {
-        return companyName;
+    public String getWorkerName() {
+        return workerName;
     }
     
-    public void setCompanyName(String companyName) {
-        this.companyName = companyName;
+    public void setWorkerName(String workerName) {
+        this.workerName = workerName;
     }
     
-    public String getCompanyAddress() {
-        return companyAddress;
+    public String getWorkerAddress() {
+        return workerAddress;
     }
     
-    public void setCompanyAddress(String companyAddress) {
-        this.companyAddress = companyAddress;
+    public void setWorkerAddress(String workerAddress) {
+        this.workerAddress = workerAddress;
     }
-    
-    public String getCompanyPhone() {
-        return companyPhone;
+
+    public String getWorkerPhone() {
+        return workerPhone;
     }
-    
-    public void setCompanyPhone(String companyPhone) {
-        this.companyPhone = companyPhone;
+
+    public void setWorkerPhone(String workerPhone) {
+        this.workerPhone = workerPhone;
     }
-    
-    public String getCompanyEmail() {
-        return companyEmail;
+
+    public String getWorkerEmail() {
+        return workerEmail;
     }
-    
-    public void setCompanyEmail(String companyEmail) {
-        this.companyEmail = companyEmail;
+
+    public void setWorkerEmail(String workerEmail) {
+        this.workerEmail = workerEmail;
     }
+
+
 
     public String getClientName() {
         return clientName;
@@ -165,4 +167,6 @@ public class Invoice {
     public double getGrandTotal() {
         return getSubtotal();
     }
+
+
 }

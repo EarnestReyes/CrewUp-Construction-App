@@ -137,7 +137,7 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
                         project.setServiceType(documentSnapshot.getString("Service_Type"));
                         project.setCreatedAt(documentSnapshot.getString("Date & Time"));
                         project.setWorkerId(documentSnapshot.getString("workerId"));
-                        project.setClientId(documentSnapshot.getString("userId"));
+                        project.setUserId(documentSnapshot.getString("userId"));
 
                         Object photosObj = documentSnapshot.get("photos");
                         if (photosObj != null) {
@@ -267,7 +267,7 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
 
         Intent intent = new Intent(this, ProjectCostQuote.class);
         intent.putExtra("projectId", projectId);
-        intent.putExtra("userId", project.getClientId());
+        intent.putExtra("userId", project.getUserId());
         intent.putExtra("clientName", project.getClientName());
         intent.putExtra("workDescription", project.getWorkDescription());
         startActivity(intent);

@@ -74,7 +74,7 @@ public class ClientProjectAdapter extends RecyclerView.Adapter<ClientProjectAdap
         // Date
         if (project.getCreatedAt() != null) {
             try {
-                String dateStr = dateFormat.format(project.getCreatedAt().toDate());
+                String dateStr =project.getCreatedAt().toString();
                 holder.tvDate.setText("Created: " + dateStr);
             } catch (Exception e) {
                 Log.e(TAG, "Error formatting date", e);

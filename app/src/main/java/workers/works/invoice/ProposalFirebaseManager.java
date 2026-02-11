@@ -1,6 +1,8 @@
 package workers.works.invoice;
 
 import android.util.Log;
+
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
@@ -23,11 +25,20 @@ public class ProposalFirebaseManager {
     public ProposalFirebaseManager() {
         db = FirebaseFirestore.getInstance();
     }
-
-
     public void submitProposal(InvoiceProposalModel proposal, OnProposalSubmitListener listener) {
+
+        String userId = FirebaseAuth.getInstance().getUid();
+
+        if (userId == null) {
+            if (listener != null) {
+                listener.onFailure("User not logged in");
+            }
+            return;
+        }
+
         DocumentReference docRef = db.collection("WorkerInput").document();
         proposal.setProposalId(docRef.getId());
+        proposal.setUserId(userId);   // ✅ SAVE USER ID TO FIREBASE
 
         docRef.set(proposal)
                 .addOnSuccessListener(aVoid -> {

@@ -7,90 +7,110 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.WindowDecorActionBar;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.ConstructionApp.R;
 
 import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
 import java.util.List;
-import java.util.Locale;
 
-public class WorkerProjectAdapter extends RecyclerView.Adapter<WorkerProjectAdapter.ProjectViewHolder> {
+/**
+ * Adapter for displaying worker's projects and proposals
+ * Handles two types:
+ * - TYPE_CLIENT: BookingOrder projects (from clients)
+ * - TYPE_WORKER: WorkerInput proposals (created by worker)
+ */
+public class WorkerProjectAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+
+    private static final int TYPE_WORKER = 0;
+    private static final int TYPE_CLIENT = 1;
 
     private List<WorkerProjectModel> projects;
-    private DecimalFormat currencyFormat = new DecimalFormat("#,##0.00");
-    private SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
 
     public WorkerProjectAdapter(List<WorkerProjectModel> projects) {
         this.projects = projects;
     }
 
+    @Override
+    public int getItemViewType(int position) {
+        return projects.get(position).isForWorker() ? TYPE_WORKER : TYPE_CLIENT;
+    }
+
     @NonNull
     @Override
-    public ProjectViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_proposal_worker, parent, false);
-        return new ProjectViewHolder(view);
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+
+        if (viewType == TYPE_WORKER) {
+            View view = inflater.inflate(R.layout.item_proposal_worker, parent, false);
+            return new WorkerViewHolder(view);
+        } else {
+            View view = inflater.inflate(R.layout.item_proposal_client, parent, false);
+            return new ClientViewHolder(view);
+        }
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ProjectViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         WorkerProjectModel project = projects.get(position);
 
-        holder.tvClientName.setText(project.getClientName() != null ?
-                project.getClientName() : "Client");
+        String status = project.getStatus() == null ? "pending" : project.getStatus();
 
-        holder.tvWorkDescription.setText(project.getWorkDescription() != null ?
-                project.getWorkDescription() : "No description");
+        if (holder instanceof ClientViewHolder) {
+            ClientViewHolder h = (ClientViewHolder) holder;
 
-        holder.tvLocation.setText("📍 " + project.getLocation());
+            h.tvWorkerName.setText(project.getWorkerName());
+            h.tvProjectDescription.setText(project.getWorkDescription());
+            h.tvStatus.setText(status.toUpperCase());
+            h.tvTotalCost.setText("₱" + project.getTotalCost());
 
-        if (project.getCreatedAt() != null) {
-            String dateStr = project.getCreatedAt();
-            holder.tvDate.setText("Created: " + dateStr);
-        } else {
-            holder.tvDate.setText("Created: Recently");
+            h.itemView.setOnClickListener(v -> {
+                Intent intent = new Intent(v.getContext(), WorkerProjectDetailsActivity.class);
+                intent.putExtra("projectId", project.getProjectId());
+                v.getContext().startActivity(intent);
+            });
+
+
+
+        } else if (holder instanceof WorkerViewHolder) {
+            WorkerViewHolder h = (WorkerViewHolder) holder;
+
+            h.tvProposalDate.setText("Sent: " + project.getCreatedAt());
+            h.tvClientName.setText(project.getClientName());
+            h.tvWorkDescription.setText(project.getWorkDescription());
+            h.tvLocation.setText("📍 " + project.getLocation());
+            status = project.getStatus() != null ? project.getStatus() : "pending";
+            h.tvStatus.setText(getStatusText(status));
+            h.tvStatus.setBackgroundResource(getStatusBackground(status));
+            h.tvProposalAmount.setText("₱" + project.getTotalCost());
+
+
+
+            if ("active".equals(status)) {
+                h.tvActiveIndicator.setVisibility(View.VISIBLE);
+                h.tvActiveIndicator.setText("🔨 In Progress");
+            } else if ("pending".equals(status)) {
+                h.tvActiveIndicator.setVisibility(View.VISIBLE);
+                h.tvActiveIndicator.setText("⏳ Awaiting Response");
+            } else {
+                h.tvActiveIndicator.setVisibility(View.GONE);
+            }
+
+            if ("active".equals(status)) {
+                h.cardView.setCardElevation(8f);
+            } else {
+                h.cardView.setCardElevation(4f);
+            }
+
+            h.itemView.setOnClickListener(v -> {
+                Intent intent = new Intent(v.getContext(), WorkerProposalReceiptActivity.class);
+                intent.putExtra("projectId", project.getProjectId());
+                v.getContext().startActivity(intent);
+            });
         }
 
-        String status = project.getStatus() != null
-                ? project.getStatus().trim().toLowerCase()
-                : "pending";
-
-        holder.tvStatus.setText(getStatusText(status));
-        holder.tvStatus.setBackgroundResource(getStatusBackground(status));
-
-        // Total cost (if available)
-        if (project.getTotalCost() > 0) {
-            holder.tvTotalCost.setVisibility(View.VISIBLE);
-            holder.tvTotalCost.setText("₱" + currencyFormat.format(project.getTotalCost()));
-        } else {
-            holder.tvTotalCost.setVisibility(View.GONE);
-        }
-
-        if ("active".equals(status)) {
-            holder.tvActiveIndicator.setVisibility(View.VISIBLE);
-            holder.tvActiveIndicator.setText("🔨 In Progress");
-        } else if ("pending".equals(status)) {
-            holder.tvActiveIndicator.setVisibility(View.VISIBLE);
-            holder.tvActiveIndicator.setText("⏳ Awaiting Response");
-        } else {
-            holder.tvActiveIndicator.setVisibility(View.GONE);
-        }
-
-        // Click listener
-        holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(v.getContext(), WorkerProjectDetailsActivity.class);
-            intent.putExtra("projectId", project.getProjectId());
-            v.getContext().startActivity(intent);
-        });
-
-        if ("active".equals(status)) {
-            holder.cardView.setCardElevation(8f);
-        } else {
-            holder.cardView.setCardElevation(4f);
-        }
     }
 
     @Override
@@ -98,10 +118,47 @@ public class WorkerProjectAdapter extends RecyclerView.Adapter<WorkerProjectAdap
         return projects.size();
     }
 
-    private String getStatusText(String status) {
-        if (status == null) return "pending";
+    public void updateList(List<WorkerProjectModel> projectList) {
+        this.projects = projectList;
+        notifyDataSetChanged();
+    }
 
-        switch (status.trim().toLowerCase()) {
+    // ========================= VIEW HOLDERS =========================
+
+    static class ClientViewHolder extends RecyclerView.ViewHolder {
+        TextView tvWorkerName, tvProjectDescription, tvStatus, tvTotalCost;
+
+        CardView cardView;
+        ClientViewHolder(@NonNull View itemView) {
+            super(itemView);
+            cardView = (CardView) itemView;
+            tvWorkerName = itemView.findViewById(R.id.tvWorkerName);
+            tvProjectDescription = itemView.findViewById(R.id.tvProjectDescription);
+            tvStatus = itemView.findViewById(R.id.tvStatus);
+            tvTotalCost = itemView.findViewById(R.id.tvTotalCost);
+        }
+    }
+
+    static class WorkerViewHolder extends RecyclerView.ViewHolder {
+        TextView tvClientName, tvActiveIndicator,tvProposalDate, tvWorkDescription, tvLocation, tvStatus, tvProposalAmount;
+
+        CardView cardView;
+        WorkerViewHolder(@NonNull View itemView) {
+            super(itemView);
+            cardView = (CardView) itemView;
+            tvClientName = itemView.findViewById(R.id.tvClientName);
+            tvProposalDate = itemView.findViewById(R.id.tvProposalDate);
+            tvWorkDescription = itemView.findViewById(R.id.tvWorkDescription);
+            tvLocation = itemView.findViewById(R.id.tvLocation);
+            tvStatus = itemView.findViewById(R.id.tvStatus);
+            tvProposalAmount = itemView.findViewById(R.id.tvProposalAmount);
+            tvActiveIndicator = itemView.findViewById(R.id.tvActiveIndicator);
+        }
+    }
+
+
+    private String getStatusText(String status) {
+        switch (status.toLowerCase()) {
             case "pending":
                 return "Pending";
             case "active":
@@ -127,30 +184,6 @@ public class WorkerProjectAdapter extends RecyclerView.Adapter<WorkerProjectAdap
                 return R.drawable.bg_status_declined;
             default:
                 return R.drawable.bg_status_pending;
-        }
-    }
-    public void updateList(List<WorkerProjectModel> newList) {
-        this.projects = newList;
-        notifyDataSetChanged();
-    }
-
-
-    static class ProjectViewHolder extends RecyclerView.ViewHolder {
-        CardView cardView;
-        TextView tvClientName, tvStatus, tvWorkDescription, tvLocation;
-        TextView tvDate, tvTotalCost, tvActiveIndicator;
-
-        ProjectViewHolder(View itemView) {
-            super(itemView);
-            cardView = (CardView) itemView;
-            tvClientName = itemView.findViewById(R.id.tvClientName);
-            tvStatus = itemView.findViewById(R.id.tvStatus);
-            tvWorkDescription = itemView.findViewById(R.id.tvWorkDescription);
-            tvLocation = itemView.findViewById(R.id.tvLocation);
-            tvDate = itemView.findViewById(R.id.tvProposalDate);
-            tvTotalCost = itemView.findViewById(R.id.tvProposalAmount);
-
-            tvActiveIndicator = itemView.findViewById(R.id.tvActiveIndicator);
         }
     }
 }

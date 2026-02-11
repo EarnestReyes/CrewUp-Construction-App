@@ -166,7 +166,6 @@ public class ClientProjectDetailsActivity extends AppCompatActivity {
                 nonNull(project.getWorkDescription(), "No description")
         );
 
-        //material, labor, misc
         tvTotalMaterials.setText(nonNull(String.valueOf(project.getMaterialsCost()), "0.00"));
         tvTotalLabor.setText(nonNull(String.valueOf(project.getLaborCost()), "0.00"));
         tvTotalMisc.setText(nonNull(String.valueOf(project.getMiscCost()), "0.00"));

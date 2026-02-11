@@ -24,11 +24,16 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 /**
- * Fragment to display filtered list of projects for workers
+ * Fragment to display filtered list of both projects and proposals for workers
+ * Loads from both BookingOrder (projects) and WorkerInput (proposals) collections
  */
 public class WorkerProjectListFragment extends Fragment {
 
@@ -46,6 +51,8 @@ public class WorkerProjectListFragment extends Fragment {
     private FirebaseFirestore db;
     private String workerId;
     private String statusFilter;
+
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
 
     public static WorkerProjectListFragment newInstance(String status) {
         WorkerProjectListFragment fragment = new WorkerProjectListFragment();
@@ -80,7 +87,7 @@ public class WorkerProjectListFragment extends Fragment {
 
         initializeViews(view);
         setupRecyclerView();
-        loadWorkerProjects();
+        loadAllWorkerData();
 
         return view;
     }
@@ -98,7 +105,7 @@ public class WorkerProjectListFragment extends Fragment {
         rvProjects.setAdapter(adapter);
     }
 
-    private void loadWorkerProjects() {
+    private void loadAllWorkerData() {
         if (workerId == null) {
             Log.e(TAG, "Worker ID is null");
             Toast.makeText(getContext(), "Please log in to view projects", Toast.LENGTH_SHORT).show();
@@ -108,34 +115,33 @@ public class WorkerProjectListFragment extends Fragment {
         }
 
         showLoading(true);
-        Log.d(TAG, "Loading projects for worker: " + workerId + ", filter: " + statusFilter);
+        Log.d(TAG, "Loading all data for worker: " + workerId + ", filter: " + statusFilter);
 
-        // Build query based on status filter
+        projectList.clear();
+
+        // Load both BookingOrder projects and WorkerInput proposals
+        loadBookingOrders();
+    }
+
+    private void loadBookingOrders() {
+        // Build query for BookingOrder (projects where worker is assigned)
         Query query = db.collection("BookingOrder")
                 .whereEqualTo("workerId", workerId);
 
-        // IMPORTANT: Apply status filter if not "all"
         if (!"all".equals(statusFilter)) {
             query = query.whereEqualTo("status", statusFilter);
-            Log.d(TAG, "Filtering by status: " + statusFilter);
-        } else {
-            Log.d(TAG, "Showing all statuses");
         }
 
         query.get()
                 .addOnSuccessListener(querySnapshot -> {
-                    showLoading(false);
-                    projectList.clear();
-
-                    Log.d(TAG, "Found " + querySnapshot.size() + " documents for status: " + statusFilter);
+                    Log.d(TAG, "Found " + querySnapshot.size() + " BookingOrder documents");
 
                     for (DocumentSnapshot doc : querySnapshot) {
-                        Log.d(TAG, "Document: " + doc.getId() + ", status: " + doc.getString("status"));
-
                         WorkerProjectModel model = new WorkerProjectModel();
+                        model.setProposal(false); // This is a BookingOrder project
 
                         model.setProjectId(doc.getId());
-                        model.setClientId(doc.getString("userId"));
+                        model.setUserId(doc.getString("userId"));
                         model.setClientName(doc.getString("Name"));
                         model.setClientPhone(doc.getString("Mobile Number"));
                         model.setClientEmail(doc.getString("Email"));
@@ -145,18 +151,15 @@ public class WorkerProjectListFragment extends Fragment {
                         model.setWorkerId(doc.getString("workerId"));
                         model.setServiceType(doc.getString("Service_Type"));
 
-                        // Parse budget
                         String budgetStr = doc.getString("Budget");
                         if (budgetStr != null && !budgetStr.isEmpty()) {
                             try {
                                 model.setTotalCost(Double.parseDouble(budgetStr));
                             } catch (NumberFormatException e) {
-                                Log.e(TAG, "Error parsing budget: " + budgetStr, e);
                                 model.setTotalCost(0);
                             }
                         }
 
-                        // Get timestamp
                         String dateTime = doc.getString("Date & Time");
                         if (dateTime != null) {
                             model.setCreatedAt(dateTime);
@@ -165,17 +168,75 @@ public class WorkerProjectListFragment extends Fragment {
                         projectList.add(model);
                     }
 
+                    // After loading BookingOrders, load WorkerInput proposals
+                    loadWorkerInputProposals();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error loading BookingOrder projects", e);
+                    loadWorkerInputProposals(); // Continue to load proposals even if projects fail
+                });
+    }
+
+    private void loadWorkerInputProposals() {
+        // Build query for WorkerInput (proposals created by worker)
+        Query query = db.collection("WorkerInput")
+                .whereEqualTo("workerId", workerId);
+
+        if (!"all".equals(statusFilter)) {
+            query = query.whereEqualTo("status", statusFilter);
+        }
+
+        query.get()
+                .addOnSuccessListener(querySnapshot -> {
+                    Log.d(TAG, "Found " + querySnapshot.size() + " WorkerInput proposals");
+
+                    for (DocumentSnapshot doc : querySnapshot) {
+                        WorkerProjectModel model = new WorkerProjectModel();
+                        model.setProposal(true); // This is a WorkerInput proposal
+
+                        model.setProjectId(doc.getId());
+                        model.setUserId(doc.getString("userId"));
+                        model.setWorkDescription(doc.getString("workDescription"));
+                        model.setLocation(doc.getString("location"));
+                        model.setStatus(doc.getString("status"));
+                        model.setWorkerId(doc.getString("workerId"));
+                        model.setWorkerName(doc.getString("workerName"));
+
+                        // Cost breakdown
+                        Double materials = doc.getDouble("materialsCost");
+                        Double labor = doc.getDouble("laborCost");
+                        Double misc = doc.getDouble("miscCost");
+                        Double total = doc.getDouble("totalCost");
+
+                        model.setMaterialsCost(materials);
+                        model.setLaborCost(labor);
+                        model.setMiscCost(misc);
+                        model.setTotalCost(total != null ? total : 0);
+
+
+                        String createdAtTs = doc.getString("createdAt").toString().trim();;
+
+                        projectList.add(model);
+                    }
+
+
+                    showLoading(false);
                     adapter.updateList(projectList);
                     updateUI();
                 })
                 .addOnFailureListener(e -> {
                     showLoading(false);
-                    Log.e(TAG, "Error loading projects", e);
-                    Toast.makeText(getContext(), "Failed to load projects: " + e.getMessage(),
+                    Log.e(TAG, "Error loading WorkerInput proposals", e);
+                    Toast.makeText(getContext(), "Failed to load some data: " + e.getMessage(),
                             Toast.LENGTH_SHORT).show();
+
+                    // Still show BookingOrder projects even if proposals fail
+                    adapter.updateList(projectList);
                     updateUI();
                 });
     }
+
+
 
     private void updateUI() {
         if (projectList.isEmpty()) {
@@ -184,26 +245,26 @@ public class WorkerProjectListFragment extends Fragment {
 
             String message = getEmptyMessage();
             tvEmptyMessage.setText(message);
-            Log.d(TAG, "No projects found. Showing empty state: " + message);
+            Log.d(TAG, "No items found. Showing empty state: " + message);
         } else {
             rvProjects.setVisibility(View.VISIBLE);
             layoutEmptyState.setVisibility(View.GONE);
-            Log.d(TAG, "Displaying " + projectList.size() + " projects");
+            Log.d(TAG, "Displaying " + projectList.size() + " items (projects + proposals)");
         }
     }
 
     private String getEmptyMessage() {
         switch (statusFilter) {
             case "pending":
-                return "No pending projects";
+                return "No pending items";
             case "active":
-                return "No active projects";
+                return "No active projects or proposals";
             case "completed":
-                return "No completed projects";
+                return "No completed items";
             case "cancelled":
-                return "No cancelled projects";
+                return "No cancelled items";
             default:
-                return "No projects yet.\nStart accepting projects to see them here!";
+                return "No projects or proposals yet.\nStart accepting projects or creating proposals!";
         }
     }
 
@@ -222,7 +283,7 @@ public class WorkerProjectListFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        Log.d(TAG, "Fragment resumed, reloading projects");
-        loadWorkerProjects(); // Refresh when returning to fragment
+        Log.d(TAG, "Fragment resumed, reloading all data");
+        loadAllWorkerData(); // Refresh when returning to fragment
     }
 }

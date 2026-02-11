@@ -8,6 +8,9 @@ import java.util.List;
  */
 public class InvoiceProposalModel {
 
+    private static double VAT = 0;
+    private static double GRAND = 0;
+
     private String proposalId;
     private String workerId;
     private String userId;
@@ -37,15 +40,17 @@ public class InvoiceProposalModel {
     private double totalMisc;
     private double grandTotal;
 
+
+
     // Status tracking
     private String status; // "pending", "accepted", "declined"
-    private Timestamp createdAt;
+    private String createdAt;
     private Timestamp respondedAt;
     private String responseMessage;
 
     public InvoiceProposalModel() {
         this.status = "pending";
-        this.createdAt = Timestamp.now();
+        this.createdAt = Timestamp.now().toString();
     }
 
     public InvoiceProposalModel(Invoice invoice, String workerId, String userId) {
@@ -54,10 +59,10 @@ public class InvoiceProposalModel {
         this.userId = userId;
 
         // Copy invoice data
-        this.workerName = invoice.getCompanyName();
-        this.workerAddress = invoice.getCompanyAddress();
-        this.workerPhone = invoice.getCompanyPhone();
-        this.workerEmail = invoice.getCompanyEmail();
+        this.workerName = invoice.getWorkerName();
+        this.workerAddress = invoice.getWorkerAddress();
+        this.workerPhone = invoice.getWorkerPhone();
+        this.workerEmail = invoice.getWorkerEmail();
 
         this.clientName = invoice.getClientName();
         this.clientAddress = invoice.getClientAddress();
@@ -75,6 +80,8 @@ public class InvoiceProposalModel {
         this.totalLabor = calculateLaborTotal();
         this.totalMisc = calculateMiscTotal();
         this.grandTotal = totalMaterials + totalLabor + totalMisc;
+        this.VAT = calculateVatAmount(grandTotal);
+        this.GRAND = grandTotal2(grandTotal, calculateVatAmount(grandTotal));
     }
 
     private double calculateMaterialsTotal() {
@@ -107,7 +114,22 @@ public class InvoiceProposalModel {
         return total;
     }
 
-    // Getters and Setters
+    private double calculateVatAmount(double grandTotal) {
+        Double VAT = grandTotal * 1.2;
+
+        return VAT;
+    }
+    private double grandTotal2(double grandTotal, double VAT) {
+
+        Double Grand = grandTotal + VAT;
+
+        return Grand;
+    }
+
+
+
+
+
     public String getProposalId() {
         return proposalId;
     }
@@ -124,13 +146,7 @@ public class InvoiceProposalModel {
         this.workerId = workerId;
     }
 
-    public String getClientId() {
-        return userId;
-    }
 
-    public void setClientId(String clientId) {
-        this.userId= clientId;
-    }
 
     public String getProjectId() {
         return projectId;
@@ -276,11 +292,11 @@ public class InvoiceProposalModel {
         this.status = status;
     }
 
-    public Timestamp getCreatedAt() {
+    public String getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(Timestamp createdAt) {
+    public void setCreatedAt(String createdAt) {
         this.createdAt = createdAt;
     }
 
@@ -298,5 +314,14 @@ public class InvoiceProposalModel {
 
     public void setResponseMessage(String responseMessage) {
         this.responseMessage = responseMessage;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public String getUserId() {
+        return userId;
+
     }
 }

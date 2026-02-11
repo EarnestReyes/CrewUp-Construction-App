@@ -216,15 +216,15 @@ public class InvoiceGenerator {
         // Company Section
         html.append("<div class='company-section'>\n");
         html.append("<h1>INVOICE</h1>\n");
-        html.append("<div class='company-name'>").append(escapeHtml(invoice.getCompanyName())).append("</div>\n");
-        if (invoice.getCompanyAddress() != null) {
-            html.append("<div class='info-line'>📍 ").append(escapeHtml(invoice.getCompanyAddress())).append("</div>\n");
+        html.append("<div class='company-name'>").append(escapeHtml(invoice.getWorkerName())).append("</div>\n");
+        if (invoice.getWorkerAddress() != null) {
+            html.append("<div class='info-line'>📍 ").append(escapeHtml(invoice.getWorkerAddress())).append("</div>\n");
         }
-        if (invoice.getCompanyPhone() != null) {
-            html.append("<div class='info-line'>📞 ").append(escapeHtml(invoice.getCompanyPhone())).append("</div>\n");
+        if (invoice.getWorkerPhone() != null) {
+            html.append("<div class='info-line'>📞 ").append(escapeHtml(invoice.getWorkerPhone())).append("</div>\n");
         }
-        if (invoice.getCompanyEmail() != null) {
-            html.append("<div class='info-line'>📧 ").append(escapeHtml(invoice.getCompanyEmail())).append("</div>\n");
+        if (invoice.getWorkerEmail() != null) {
+            html.append("<div class='info-line'>📧 ").append(escapeHtml(invoice.getWorkerEmail())).append("</div>\n");
         }
         html.append("</div>\n");
 

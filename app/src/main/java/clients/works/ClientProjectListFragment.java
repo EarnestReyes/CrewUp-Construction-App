@@ -17,16 +17,19 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.ConstructionApp.R;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.Query;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Fragment to display filtered list of projects for clients
+ * Loads from BookingOrder collection
  */
 public class ClientProjectListFragment extends Fragment {
 
@@ -77,7 +80,6 @@ public class ClientProjectListFragment extends Fragment {
         projectList = new ArrayList<>();
     }
 
-
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -104,6 +106,9 @@ public class ClientProjectListFragment extends Fragment {
         rvProjects.setAdapter(adapter);
     }
 
+    /**
+     * 🔥 LOAD FROM BOOKINGORDER COLLECTION (NOT WorkerInput!)
+     */
     private void loadProjects() {
         if (clientId == null) {
             Log.e(TAG, "Client ID is null");
@@ -116,28 +121,52 @@ public class ClientProjectListFragment extends Fragment {
         showLoading(true);
         Log.d(TAG, "Loading projects for client: " + clientId + ", filter: " + statusFilter);
 
-        // FIXED: Query using 'userId' instead of 'clientId' to match Firebase structure
-        var query = db.collection("WorkerInput")
+        // 🔥 Query BookingOrder where userId = client's UID
+        Query query = db.collection("BookingOrder")
                 .whereEqualTo("userId", clientId);
 
         // Apply status filter if not "all"
         if (!"all".equals(statusFilter)) {
             query = query.whereEqualTo("status", statusFilter);
+            Log.d(TAG, "Filtering by status: " + statusFilter);
         }
 
         query.get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
+                .addOnSuccessListener(querySnapshot -> {
                     showLoading(false);
                     projectList.clear();
 
-                    Log.d(TAG, "Found " + queryDocumentSnapshots.size() + " documents");
+                    Log.d(TAG, "Found " + querySnapshot.size() + " documents for status: " + statusFilter);
 
-                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
-                        Log.d(TAG, "Document ID: " + document.getId());
-                        Log.d(TAG, "Document data: " + document.getData());
+                    for (DocumentSnapshot doc : querySnapshot) {
+                        Log.d(TAG, "Document ID: " + doc.getId() + ", status: " + doc.getString("status"));
 
-                        ClientProjectModel project = document.toObject(ClientProjectModel.class);
-                        project.setProjectId(document.getId());
+                        ClientProjectModel project = new ClientProjectModel();
+
+                        // Set IDs
+                        project.setProjectId(doc.getId());
+                        project.setUserId(doc.getString("userId"));
+                        project.setWorkerId(doc.getString("workerId"));
+
+                        // Set project info from BookingOrder
+                        project.setWorkDescription(doc.getString("Description"));
+                        project.setLocation(doc.getString("Site_Address"));
+                        project.setServiceType(doc.getString("Service_Type"));
+                        project.setStatus(doc.getString("status"));
+                        project.setBudget(doc.getString("Budget"));
+
+                        // Get timestamp
+                        Timestamp dateTime = doc.getTimestamp("Date & Time");
+                        if (dateTime != null) {
+                            project.setCreatedAt(dateTime);
+                        }
+
+                        // Load worker info if workerId exists
+                        String workerId = project.getWorkerId();
+                        if (workerId != null && !workerId.isEmpty()) {
+                            loadWorkerInfo(project, workerId);
+                        }
+
                         projectList.add(project);
                     }
 
@@ -153,12 +182,44 @@ public class ClientProjectListFragment extends Fragment {
                 });
     }
 
+
+    private void loadWorkerInfo(ClientProjectModel project, String workerId) {
+        db.collection("users")
+                .document(workerId)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    if (doc.exists()) {
+                        // Build full name
+                        String firstName = doc.getString("FirstName");
+                        String middleInitial = doc.getString("MiddleInitial");
+                        String lastName = doc.getString("LastName");
+
+                        StringBuilder fullName = new StringBuilder();
+                        if (firstName != null) fullName.append(firstName);
+                        if (middleInitial != null) {
+                            if (fullName.length() > 0) fullName.append(" ");
+                            fullName.append(middleInitial);
+                            if (!middleInitial.endsWith(".")) fullName.append(".");
+                        }
+                        if (lastName != null) {
+                            if (fullName.length() > 0) fullName.append(" ");
+                            fullName.append(lastName);
+                        }
+
+                        project.setWorkerName(fullName.toString());
+                        adapter.notifyDataSetChanged();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error loading worker info", e);
+                });
+    }
+
     private void updateUI() {
         if (projectList.isEmpty()) {
             rvProjects.setVisibility(View.GONE);
             layoutEmptyState.setVisibility(View.VISIBLE);
 
-            // Set appropriate empty message based on filter
             String message = getEmptyMessage();
             tvEmptyMessage.setText(message);
             Log.d(TAG, "No projects found. Showing empty state: " + message);
@@ -170,9 +231,7 @@ public class ClientProjectListFragment extends Fragment {
     }
 
     private String getEmptyMessage() {
-
         if (statusFilter == null) {
-            Log.w(TAG, "statusFilter is null, using default empty message");
             return "No projects yet.\nCreate a booking request to get started!";
         }
 
@@ -206,6 +265,6 @@ public class ClientProjectListFragment extends Fragment {
     public void onResume() {
         super.onResume();
         Log.d(TAG, "Fragment resumed, reloading projects");
-        loadProjects(); // Refresh when returning to fragment
+        loadProjects();
     }
 }
