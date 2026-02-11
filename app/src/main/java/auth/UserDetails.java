@@ -32,7 +32,7 @@ import app.MainActivity;
 import workers.auth.TopUpWallet;
 
 public class UserDetails extends AppCompatActivity {
-    TextInputEditText edtBirthday, mobilenum, socials,edtFirstName,edtLastName, edtMiddleInitial;
+    TextInputEditText edtBirthday, mobilenum, socials,edtFirstName,edtLastName, edtMiddleInitial, edtAddress;
     AutoCompleteTextView edtGender;
     Button btnSubmit;
     ImageButton btnBack;
@@ -58,6 +58,7 @@ public class UserDetails extends AppCompatActivity {
         edtGender = findViewById(R.id.edtGender);
         mobilenum = findViewById(R.id.edtMobile);
         socials = findViewById(R.id.edtSocials);
+        edtAddress = findViewById(R.id.edtAddress);
 
         btnBack = findViewById(R.id.btnBack);
         btnSubmit = findViewById(R.id.btnSubmit);
@@ -189,7 +190,7 @@ public class UserDetails extends AppCompatActivity {
         user.put("lastName",edtLastName.getText().toString().trim());
         user.put("username",FullName.toString().trim() );
         user.put("username_lower", FullName.toString().trim().toLowerCase());
-        user.put("email", email != null ? email : "");
+        user.put("email", email);
         user.put("Role", role);
         user.put("createdAt", System.currentTimeMillis());
         // Location data (if available)
@@ -205,6 +206,7 @@ public class UserDetails extends AppCompatActivity {
         user.put("Gender", edtGender.getText().toString().trim());
         user.put("Mobile Number", mobilenum.getText().toString().trim());
         user.put("Social", socials.getText().toString().trim());
+        user.put("Home_Address", edtAddress.getText().toString().trim());
 
         // Save all data at once
         db.collection("users")

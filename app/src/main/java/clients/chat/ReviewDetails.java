@@ -34,8 +34,8 @@ public class ReviewDetails extends AppCompatActivity {
     // UI Elements
     TextView Username, UserMobile, UserAddress;
     TextView SiteAddress, DateTime, Budget, Description, ServiceType;
-    ImageView photoLeftTop, photoRight, photoLeftBottom;
-    Button btnSubmit, btnPrevious, btnBack;
+    ImageView photoLeftTop, photoRight, photoLeftBottom, btnBack;
+    Button btnSubmit, btnPrevious;
 
     // Data from previous activities
     private String fullName, email, mobileNumber, homeAddress, otherId;

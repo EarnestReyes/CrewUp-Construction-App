@@ -1,9 +1,10 @@
 package clients.chat;
 
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
@@ -11,14 +12,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
-
-import android.app.DatePickerDialog;
-import android.app.TimePickerDialog;
-
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Locale;
+import android.view.View;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
@@ -32,6 +26,13 @@ import androidx.core.view.WindowInsetsCompat;
 import com.bumptech.glide.Glide;
 import com.example.ConstructionApp.R;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Locale;
+
 import data.FirebaseUtil;
 
 public class ServiceInfo extends AppCompatActivity {
@@ -41,7 +42,7 @@ public class ServiceInfo extends AppCompatActivity {
 
     ImageView p1, p2, p3;
     LinearLayout Photos;
-    View map;
+
 
     private String photo1 = null;
     private String photo2 = null;
@@ -66,10 +67,21 @@ public class ServiceInfo extends AppCompatActivity {
                             return;
                         }
 
+                        // 🔥 FIX: Copy URI to internal file first
+                        String filePath = copyUriToFile(uri);
+
+                        if (filePath == null) {
+                            Toast.makeText(this,
+                                    "Failed to process image",
+                                    Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
                         FirebaseUtil.UploadServiceType(
                                 this,
-                                uri,
+                                filePath,
                                 imageUrl -> {
+
                                     if (photoCount == 0) {
                                         photo1 = imageUrl;
                                         Glide.with(this).load(imageUrl).into(p1);
@@ -96,7 +108,8 @@ public class ServiceInfo extends AppCompatActivity {
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            v.setPadding(systemBars.left, systemBars.top,
+                    systemBars.right, systemBars.bottom);
             return insets;
         });
 
@@ -117,51 +130,40 @@ public class ServiceInfo extends AppCompatActivity {
         p1 = findViewById(R.id.photo1);
         p2 = findViewById(R.id.photo2);
         p3 = findViewById(R.id.photo3);
-        map = findViewById(R.id.map);
 
         p1.setOnClickListener(v -> permission(UploadedImage));
         p2.setOnClickListener(v -> permission(UploadedImage));
         p3.setOnClickListener(v -> permission(UploadedImage));
-
-        map.setOnClickListener(v -> {
-            Toast.makeText(this, "Opening location..", Toast.LENGTH_SHORT).show();
-            // TODO: Handle location selection
-            // You can implement RealTimeLocation activity here
-        });
-
         Photos.setOnClickListener(v -> permission(UploadedImage));
 
-        // Date and Time Picker
         setupDateTimePicker();
-
-        // Service Type Dropdown
         setupServiceTypeDropdown();
 
-        // Next button - collect service data and pass everything to ReviewDetails
         btnSubmit.setOnClickListener(v -> {
+
             String serviceType = type.getText().toString().trim();
             String siteAddress = etAddress.getText().toString().trim();
             String dateTime = etDateTime.getText().toString().trim();
             String description = etDescription.getText().toString().trim();
             String budget = etBudget.getText().toString().trim();
 
-            // Validation
             if (serviceType.isEmpty() || siteAddress.isEmpty()) {
-                Toast.makeText(this, "Please fill in required fields", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this,
+                        "Please fill in required fields",
+                        Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            // Pass all data to ReviewDetails
             Intent intent = new Intent(this, ReviewDetails.class);
 
-            // Personal info
+            // Personal Info
             intent.putExtra("fullName", fullName);
             intent.putExtra("email", email);
             intent.putExtra("mobileNumber", mobileNumber);
             intent.putExtra("homeAddress", homeAddress);
             intent.putExtra("otherId", otherId);
 
-            // Service info
+            // Service Info
             intent.putExtra("serviceType", serviceType);
             intent.putExtra("siteAddress", siteAddress);
             intent.putExtra("dateTime", dateTime);
@@ -179,34 +181,72 @@ public class ServiceInfo extends AppCompatActivity {
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
     }
 
+    /* ================= COPY URI TO FILE (FIX) ================= */
+
+    private String copyUriToFile(Uri uri) {
+        try {
+            InputStream inputStream = getContentResolver().openInputStream(uri);
+
+            File file = new File(getCacheDir(),
+                    "upload_" + System.currentTimeMillis() + ".jpg");
+
+            FileOutputStream outputStream = new FileOutputStream(file);
+
+            byte[] buffer = new byte[1024];
+            int length;
+
+            while ((length = inputStream.read(buffer)) > 0) {
+                outputStream.write(buffer, 0, length);
+            }
+
+            outputStream.close();
+            inputStream.close();
+
+            return file.getAbsolutePath();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /* ================= DATE & TIME ================= */
+
     private void setupDateTimePicker() {
+
         Calendar selectedDateTime = Calendar.getInstance();
 
         etDateTime.setOnClickListener(v -> {
+
             Calendar now = Calendar.getInstance();
 
             new DatePickerDialog(
                     this,
                     (view, year, month, dayOfMonth) -> {
+
                         selectedDateTime.set(year, month, dayOfMonth);
 
                         new TimePickerDialog(
                                 this,
                                 (timeView, hourOfDay, minute) -> {
+
                                     selectedDateTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
                                     selectedDateTime.set(Calendar.MINUTE, minute);
 
-                                    SimpleDateFormat sdf = new SimpleDateFormat(
-                                            "MMMM dd, yyyy • h:mm a",
-                                            Locale.getDefault()
-                                    );
+                                    SimpleDateFormat sdf =
+                                            new SimpleDateFormat(
+                                                    "MMMM dd, yyyy • h:mm a",
+                                                    Locale.getDefault());
 
-                                    etDateTime.setText(sdf.format(selectedDateTime.getTime()));
+                                    etDateTime.setText(
+                                            sdf.format(selectedDateTime.getTime()));
+
                                 },
                                 now.get(Calendar.HOUR_OF_DAY),
                                 now.get(Calendar.MINUTE),
                                 false
                         ).show();
+
                     },
                     now.get(Calendar.YEAR),
                     now.get(Calendar.MONTH),
@@ -215,7 +255,10 @@ public class ServiceInfo extends AppCompatActivity {
         });
     }
 
+    /* ================= SERVICE TYPE ================= */
+
     private void setupServiceTypeDropdown() {
+
         String[] options = {
                 "Construction",
                 "Plumbing",
@@ -226,27 +269,28 @@ public class ServiceInfo extends AppCompatActivity {
                 "Custom"
         };
 
-        type.setAdapter(
-                new ArrayAdapter<>(
-                        this,
-                        android.R.layout.simple_dropdown_item_1line,
-                        options
-                )
-        );
+        type.setAdapter(new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_dropdown_item_1line,
+                options
+        ));
+
         type.setKeyListener(null);
         type.setOnClickListener(v -> type.showDropDown());
     }
 
-    /* ================= PERMISSION ================= */
+    /* ================= PERMISSION DIALOG ================= */
 
     private void permission(ActivityResultLauncher<String> act) {
+
         new AlertDialog.Builder(this)
                 .setTitle("Media Permission")
                 .setMessage("Allow app to access your gallery?")
                 .setCancelable(false)
-                .setPositiveButton("Yes", (d, w) -> act.launch("image/*"))
-                .setNegativeButton("No", (d, w) ->
-                        Toast.makeText(this,
+                .setPositiveButton("Yes",
+                        (d, w) -> act.launch("image/*"))
+                .setNegativeButton("No",
+                        (d, w) -> Toast.makeText(this,
                                 "Permission required to upload photos",
                                 Toast.LENGTH_SHORT).show())
                 .show();

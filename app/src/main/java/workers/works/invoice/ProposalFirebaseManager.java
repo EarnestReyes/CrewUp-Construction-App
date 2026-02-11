@@ -46,7 +46,7 @@ public class ProposalFirebaseManager {
 
     public void getPendingProposalsForClient(String clientId, OnProposalsLoadListener listener) {
         db.collection(COLLECTION_PROPOSALS)
-                .whereEqualTo("clientId", clientId)
+                .whereEqualTo("userId", clientId)
                 .whereEqualTo("status", "pending")
                 .orderBy("createdAt", Query.Direction.DESCENDING)
                 .get()

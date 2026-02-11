@@ -23,17 +23,17 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="My Works"
+                android:textColor="@color/text_primary"
                 android:textSize="24sp"
-                android:textStyle="bold"
-                android:textColor="#212121"/>
+                android:textStyle="bold" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:text="View and manage all your construction works"
-                android:textSize="14sp"
-                android:textColor="#757575"/>
+                android:textColor="@color/divider_color"
+                android:textSize="14sp" />
 
         </LinearLayout>
 

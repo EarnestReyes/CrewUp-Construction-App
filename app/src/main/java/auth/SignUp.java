@@ -44,6 +44,8 @@ public class SignUp extends AppCompatActivity {
     private static final int LOCATION_REQUEST_CODE = 100;
     private static final String CHANNEL_ID = "crew_up_channel";
 
+    String emil;
+
     private TextInputEditText email, password, confirmPassword;
 
     @Override
@@ -91,7 +93,7 @@ public class SignUp extends AppCompatActivity {
     // ================= REGISTER =================
 
     private void registerUser() {
-
+        emil = email.getText().toString().trim();
         String emailTxt = getSafeText(email);
         String passTxt = getSafeText(password);
         String confirmTxt = getSafeText(confirmPassword);
@@ -236,6 +238,7 @@ public class SignUp extends AppCompatActivity {
 
         Intent intent = new Intent(this, UserDetails.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        intent.putExtra("email", emil);
         startActivity(intent);
         finish();
     }

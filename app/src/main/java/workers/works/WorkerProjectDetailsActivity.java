@@ -216,8 +216,6 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
         tvClientAddress.setText(project.getClientAddress() != null ?
                 project.getClientAddress() : "Not provided");
 
-
-
         tvWorkDescription.setText(project.getWorkDescription());
         tvLocation.setText(project.getLocation());
 
@@ -269,7 +267,7 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
 
         Intent intent = new Intent(this, ProjectCostQuote.class);
         intent.putExtra("projectId", projectId);
-        intent.putExtra("clientId", project.getClientId());
+        intent.putExtra("userId", project.getClientId());
         intent.putExtra("clientName", project.getClientName());
         intent.putExtra("workDescription", project.getWorkDescription());
         startActivity(intent);
