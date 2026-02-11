@@ -46,12 +46,8 @@ public class MainActivity extends AppCompatActivity {
     TextView txtNewsFeed;
     ImageView btnSearch, notification, Profile ;
     private FirebaseFirestore db;
-
     private String userLocation = "";
-
     private TextView txtLocation;
-
-
 
     @SuppressLint("MissingInflatedId")
     @Override
