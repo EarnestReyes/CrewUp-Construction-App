@@ -142,7 +142,7 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
                         Object photosObj = documentSnapshot.get("photos");
                         if (photosObj != null) {
                             if (photosObj instanceof List) {
-                                // Convert to List<String>
+
                                 List<String> photosList = (List<String>) documentSnapshot.get("photos");
                                 project.setPhotos(photosList);
                             }
