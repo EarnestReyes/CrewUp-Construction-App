@@ -59,10 +59,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="⭐ 4.8"
-            android:textSize="13sp"
+            android:gravity="center"
             android:textColor="@color/text_primary"
-            android:gravity="center"/>
+            android:textSize="13sp" />
 
         <!-- Distance / Location -->
         <TextView

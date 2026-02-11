@@ -12,7 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.ConstructionApp.R;
 
-import workers.app.MainActivity;
+import app.MainActivity;
 
 public class SignupSuccessActivity extends AppCompatActivity {
 
