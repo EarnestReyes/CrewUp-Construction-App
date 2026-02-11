@@ -26,6 +26,9 @@
             android:name="clients.chat.RealTimeLocation"
             android:exported="false"/>
         <activity
+            android:name="workers.profile.EditExpertiseActivity"
+            android:exported="false" />
+        <activity
             android:name="clients.works.ClientProjectDetailsActivity"
             android:exported="false" />
         <activity
@@ -45,6 +48,12 @@
             android:exported="false" />
         <activity
             android:name="clients.chat.Permission"
+            android:exported="false" />
+        <activity
+            android:name="clients.chat.ReviewDetails"
+            android:exported="false" />
+        <activity
+            android:name="workers.app.UserAroundLocation"
             android:exported="false" />
         <activity
             android:name="clients.chat.WelcomeBookingPage"

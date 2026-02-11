@@ -25,12 +25,18 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
+
+
+
 
 import adapters.PostAdapter;
 import clients.posts.Posts;
@@ -65,10 +71,15 @@ public class WorkerProfile extends Fragment {
 
     private Button logout;
     private FloatingActionButton btnAddPost;
+    private ImageButton btnEditExpertise;
     private ImageView imgProfile, imgCoverPhoto;
-    private TextView username, birthday, Gender, Location, Mobile, Social;
+    private TextView username, birthday, Gender, Location, Mobile, Social, txtNoExpertise;
     private RecyclerView recyclerView;
     private SwitchCompat switchLocation;
+
+    private ChipGroup chipGroupExpertise;
+
+
 
     private ArrayList<Post> posts;
     private PostAdapter adapter;
@@ -143,6 +154,10 @@ public class WorkerProfile extends Fragment {
         Social = view.findViewById(R.id.social);
         switchLocation = view.findViewById(R.id.switchLocation);
         btnAddPost = view.findViewById(R.id.btnAddPost);
+        chipGroupExpertise = view.findViewById(R.id.chipGroupExpertise);
+        txtNoExpertise = view.findViewById(R.id.txtNoExpertise);
+        btnEditExpertise = view.findViewById(R.id.btnEditExpertise);
+
 
         progressLoading = view.findViewById(R.id.progressLoading);
         swipeRefresh = view.findViewById(R.id.swipeRefresh);
@@ -173,6 +188,11 @@ public class WorkerProfile extends Fragment {
             FirebaseUtil.coverListenToProfilePic(requireContext(), imgCoverPhoto, uid);
         }
 
+        btnEditExpertise.setOnClickListener(v ->{
+
+            Intent intent = new Intent(requireContext(), EditExpertiseActivity.class);
+            startActivity(intent);
+        });
         imgProfile.setOnClickListener(v -> permission(imagePickerLauncher));
         imgCoverPhoto.setOnClickListener(v -> permission(coverImagePickerLauncher));
         logout.setOnClickListener(v -> logout());
@@ -207,8 +227,36 @@ public class WorkerProfile extends Fragment {
                     Location.setText(doc.getString("location"));
                     Mobile.setText(doc.getString("Mobile Number"));
                     Social.setText(doc.getString("Social"));
+
+                    List<String> expertiseList = (List<String>) doc.get("Expertise");
+                    displayExpertise(expertiseList);
                 });
     }
+
+    private void displayExpertise(List<String> expertiseList) {
+
+        chipGroupExpertise.removeAllViews();
+
+        if (expertiseList == null || expertiseList.isEmpty()) {
+            txtNoExpertise.setVisibility(View.VISIBLE);
+            chipGroupExpertise.setVisibility(View.GONE);
+            return;
+        }
+
+        txtNoExpertise.setVisibility(View.GONE);
+        chipGroupExpertise.setVisibility(View.VISIBLE);
+
+        for (String skill : expertiseList) {
+            Chip chip = new Chip(requireContext());
+            chip.setText(skill);
+            chip.setCheckable(false);
+            chip.setClickable(false);
+            //chip.setChipBackgroundColorResource(R.color.chip_bg);   // optional
+            chip.setTextColor(getResources().getColor(R.color.text_primary));
+            chipGroupExpertise.addView(chip);
+        }
+    }
+
 
     private void loadCurrentUserProfilePic() {
         FirebaseUser user = mAuth.getCurrentUser();

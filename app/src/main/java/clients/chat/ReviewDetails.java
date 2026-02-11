@@ -3,6 +3,7 @@ package clients.chat;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -34,8 +35,10 @@ public class ReviewDetails extends AppCompatActivity {
     // UI Elements
     TextView Username, UserMobile, UserAddress;
     TextView SiteAddress, DateTime, Budget, Description, ServiceType;
-    ImageView photoLeftTop, photoRight, photoLeftBottom;
-    Button btnSubmit, btnPrevious, btnBack;
+    ImageView photoLeftTop, photoRight, photoLeftBottom, btnBack;
+    Button btnSubmit, btnPrevious;
+
+
 
     // Data from previous activities
     private String fullName, email, mobileNumber, homeAddress, otherId;
@@ -111,6 +114,8 @@ public class ReviewDetails extends AppCompatActivity {
         photo1 = intent.getStringExtra("photo1");
         photo2 = intent.getStringExtra("photo2");
         photo3 = intent.getStringExtra("photo3");
+
+
     }
 
     /**

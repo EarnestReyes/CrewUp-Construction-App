@@ -181,7 +181,7 @@ public class ChatActivity extends AppCompatActivity {
                     if ("worker".equalsIgnoreCase(otherUserRole)) {
                         checkIfAlreadyHired();
                     } else {
-
+                        hire_btn.setVisibility(GONE);
                     }
 
                     String url = snapshot.getString("profilePicUrl");

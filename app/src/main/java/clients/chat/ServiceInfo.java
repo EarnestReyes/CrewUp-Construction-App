@@ -3,6 +3,7 @@ package clients.chat;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
@@ -172,6 +173,8 @@ public class ServiceInfo extends AppCompatActivity {
             intent.putExtra("photo1", photo1);
             intent.putExtra("photo2", photo2);
             intent.putExtra("photo3", photo3);
+            Log.e("ServiceInfo", "Photos: " + photo1 + ", " + photo2 + ", " + photo3);
+
 
             startActivity(intent);
         });

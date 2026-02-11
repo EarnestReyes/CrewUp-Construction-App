@@ -51,6 +51,7 @@ public class WorkersRecyclerAdapter
                 .getString("location");
 
         holder.txtDistance.setText("📍 " + rawLocation);
+
         Log.e("MODEL_DEBUG", "Model class = " + model.getClass().getName());
         Log.e("LOCATION_DEBUG", "rawLocation = " + rawLocation);
 
@@ -62,15 +63,23 @@ public class WorkersRecyclerAdapter
         }
 
         holder.worker_field.setOnClickListener(v -> {
-            Toast.makeText(context, "User " + model.getUsername() + "Is clicked!" , Toast.LENGTH_SHORT).show();
-            String userId = getSnapshots().getSnapshot(position).getId();
-            Intent intent = new Intent(context, UserProfile.class);
 
+            int pos = holder.getBindingAdapterPosition();
+            if (pos == RecyclerView.NO_POSITION) return; // safety check
+
+            Toast.makeText(context, "User " + model.getUsername() + " is clicked!", Toast.LENGTH_SHORT).show();
+
+            String userId = getSnapshots()
+                    .getSnapshot(pos)
+                    .getId();
+
+            Intent intent = new Intent(context, UserProfile.class);
             AndroidUtil.passUserModelAsIntent(intent, new UserModel(), userId);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(intent);
         });
     }
+
 
     @NonNull
     @Override
