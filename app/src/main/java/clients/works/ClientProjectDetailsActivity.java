@@ -20,7 +20,9 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 public class ClientProjectDetailsActivity extends AppCompatActivity {
 
@@ -34,14 +36,14 @@ public class ClientProjectDetailsActivity extends AppCompatActivity {
 
     // Dates
     private TextView tvStartDate, tvCompletionDate;
-
     // Actions
     private MaterialCardView cardActions;
     private Button btnAcceptProposal, btnDeclineProposal;
-
     private FirebaseFirestore db;
     private ClientProjectModel project;
     private String projectId;
+    private Boolean accept = false;
+    private Boolean statusAccepted;
 
     private final DecimalFormat currencyFormat =
             new DecimalFormat("#,##0.00");
@@ -56,6 +58,8 @@ public class ClientProjectDetailsActivity extends AppCompatActivity {
 
         db = FirebaseFirestore.getInstance();
         projectId = getIntent().getStringExtra("projectId");
+
+        reader();
 
         View root = findViewById(R.id.main);
         ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
@@ -214,7 +218,10 @@ public class ClientProjectDetailsActivity extends AppCompatActivity {
         new AlertDialog.Builder(this)
                 .setTitle("Decline Proposal")
                 .setMessage("Are you sure you want to decline this proposal?")
-                .setPositiveButton("Yes", (d, w) -> updateStatus("cancelled"))
+                .setPositiveButton("Yes", (d, w) -> {
+                    updateStatus("cancelled");
+                    loadpartydetails();
+                })
                 .setNegativeButton("No", null)
                 .show();
     }
@@ -223,7 +230,10 @@ public class ClientProjectDetailsActivity extends AppCompatActivity {
         new AlertDialog.Builder(this)
                 .setTitle("Accept Proposal")
                 .setMessage("Do you want to accept this proposal?")
-                .setPositiveButton("Yes", (d, w) -> updateStatus("active"))
+                .setPositiveButton("Yes", (d, w) -> {
+                    updateStatus("active");
+                    updateacceptbutton(true);
+                })
                 .setNegativeButton("No", null)
                 .show();
     }
@@ -243,7 +253,88 @@ public class ClientProjectDetailsActivity extends AppCompatActivity {
                 );
     }
 
+    private void updateacceptbutton(boolean accept){
+
+        Map<String, Object> status = new HashMap<>();
+        status.put("isAccepted", accept);
+
+        db.collection("WorkerInput")
+                .document(projectId)
+                .update(status)
+                .addOnSuccessListener(unused ->
+                        Log.d("UPDATE", "Acceptance updated"))
+                .addOnFailureListener(e ->
+                        Log.e("UPDATE", "Update failed", e));
+    }
+
     private String nonNull(String v, String fallback) {
         return v != null ? v : fallback;
     }
+
+    private void loadpartydetails() {
+        db.collection("WorkerInput")
+                .document(projectId)
+                .get()
+                .addOnSuccessListener(doc -> {
+
+                    if (!doc.exists()) {
+                        Toast.makeText(this, "Project not found", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    String workerId = doc.getString("workerId");
+                    String userId = doc.getString("userId");
+
+                    if (workerId == null || userId == null) {
+                        Log.e(TAG, "workerId or userId is null");
+                        return;
+                    }
+
+                    sendNotification("Project proposal has been declined", workerId, userId);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Load failed", e);
+                    Toast.makeText(this, "Failed to load UserId's", Toast.LENGTH_SHORT).show();
+                    finish();
+                });
+    }
+    public void sendNotification(String message, String clientid, String workerid) {
+
+        Map<String, Object> notif = new HashMap<>();
+        notif.put("fromUserId", workerid);
+        notif.put("toUserId", clientid);
+        notif.put("message", message);
+        notif.put("timestamp", com.google.firebase.Timestamp.now());
+        notif.put("type", "message"); // optional but useful later
+        notif.put("read", false);     // optional for unread badges
+
+        FirebaseFirestore.getInstance()
+                .collection("notifications")
+                .add(notif);
+    }
+
+    public void reader() {
+        db.collection("WorkerInput")
+                .document(projectId)
+                .get()
+                .addOnSuccessListener(doc -> {
+
+                    if (!doc.exists()) {
+                        return;
+                    }
+
+                    Boolean statusAccepted = doc.getBoolean("isAccepted");
+
+                    // Default to false if null
+                    if (statusAccepted != null && statusAccepted) {
+                        btnAcceptProposal.setVisibility(View.GONE);
+                    } else {
+                        btnAcceptProposal.setVisibility(View.VISIBLE);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("READER", "Failed to read document", e);
+                });
+    }
+
 }

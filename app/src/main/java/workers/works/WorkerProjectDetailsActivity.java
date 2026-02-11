@@ -1,5 +1,7 @@
 package workers.works;
 
+import static android.content.ContentValues.TAG;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -24,8 +26,10 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import workers.works.invoice.ProjectCostQuote;
 
@@ -191,6 +195,7 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
                 // Load image with Glide
                 Glide.with(this)
                         .load(photoUrl)
+                        .centerCrop()
                         .placeholder(R.drawable.ic_image_placeholder)
                         .error(R.drawable.ic_image_error)
                         .into(imageView);
@@ -233,7 +238,6 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
         } else {
             tvNotes.setVisibility(View.GONE);
         }
-
 
 
         if (project.getTotalCost() > 0) {
@@ -286,7 +290,10 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
         new AlertDialog.Builder(this)
                 .setTitle("Cancel Project")
                 .setMessage("Are you sure you want to cancel this project? This action cannot be undone.")
-                .setPositiveButton("Cancel Project", (dialog, which) -> cancelProject())
+                .setPositiveButton("Cancel Project", (dialog, which) -> {
+                    loadpartydetails();
+                    cancelProject();
+                })
                 .setNegativeButton("Keep Project", null)
                 .show();
     }
@@ -349,5 +356,46 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
             default:
                 return R.drawable.bg_status_pending;
         }
+    }
+    private void loadpartydetails() {
+        db.collection("WorkerInput")
+                .document(projectId)
+                .get()
+                .addOnSuccessListener(doc -> {
+
+                    if (!doc.exists()) {
+                        Toast.makeText(this, "Project not found", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    String workerId = doc.getString("workerId");
+                    String userId = doc.getString("userId");
+
+                    if (workerId == null || userId == null) {
+                        Log.e(TAG, "workerId or userId is null");
+                        return;
+                    }
+
+                    sendNotification("Project proposal has been declined", userId, workerId);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Load failed", e);
+                    Toast.makeText(this, "Failed to load UserId's", Toast.LENGTH_SHORT).show();
+                    finish();
+                });
+    }
+    public void sendNotification(String message, String clientid, String workerid) {
+
+        Map<String, Object> notif = new HashMap<>();
+        notif.put("fromUserId", workerid);
+        notif.put("toUserId", clientid);
+        notif.put("message", message);
+        notif.put("timestamp", com.google.firebase.Timestamp.now());
+        notif.put("type", "message"); // optional but useful later
+        notif.put("read", false);     // optional for unread badges
+
+        FirebaseFirestore.getInstance()
+                .collection("notifications")
+                .add(notif);
     }
 }

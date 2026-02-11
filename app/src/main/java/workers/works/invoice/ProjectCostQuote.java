@@ -16,13 +16,17 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.ConstructionApp.R;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.io.File;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import adapters.LaborAdapter;
 import adapters.MaterialAdapter;
@@ -403,6 +407,7 @@ public class ProjectCostQuote extends AppCompatActivity {
         String projectId = getIntent().getStringExtra("projectId");
 
         InvoiceProposalModel proposal = new InvoiceProposalModel(invoice, workerId, clientId);
+        sendNotification("Your project cost quote has been sent", clientId, workerId);
 
         // Link proposal to the project
         proposal.setProjectId(projectId);  // ← ADD THIS LINE
@@ -423,6 +428,21 @@ public class ProjectCostQuote extends AppCompatActivity {
                         Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    public void sendNotification(String message, String clientid, String workerid) {
+
+        Map<String, Object> notif = new HashMap<>();
+        notif.put("fromUserId", workerid);
+        notif.put("toUserId", clientid);
+        notif.put("message", message);
+        notif.put("timestamp", com.google.firebase.Timestamp.now());
+        notif.put("type", "message"); // optional but useful later
+        notif.put("read", false);     // optional for unread badges
+
+        FirebaseFirestore.getInstance()
+                .collection("notifications")
+                .add(notif);
     }
 
     private void sendNotificationToClient(String proposalId) {
