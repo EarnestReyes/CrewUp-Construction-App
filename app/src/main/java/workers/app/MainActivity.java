@@ -33,17 +33,14 @@ import com.onesignal.OneSignal;
 import java.util.HashMap;
 import java.util.Map;
 
-import clients.chat.ChatActivity;
 import clients.home.Home;
 import clients.home.SearchUserActivity;
 import clients.posts.Posts;
-import clients.works.ClientHistoryFragment;
 import workers.chat.WorkersChat;
 import workers.home.NotificationsWorker;
 import workers.profile.WorkerProfile;
 import workers.wallet.WalletProfile;
 import workers.works.WorkerHistoryFragment;
-import workers.works.works;
 
 public class MainActivity extends AppCompatActivity {
 

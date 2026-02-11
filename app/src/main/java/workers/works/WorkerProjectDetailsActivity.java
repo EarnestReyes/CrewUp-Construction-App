@@ -1,9 +1,14 @@
 package workers.works;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -11,10 +16,10 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import com.bumptech.glide.Glide;
 import com.example.ConstructionApp.R;
 import com.google.android.material.card.MaterialCardView;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.DecimalFormat;
@@ -25,17 +30,19 @@ import java.util.Locale;
 
 import workers.works.invoice.ProjectCostQuote;
 
-
 public class WorkerProjectDetailsActivity extends AppCompatActivity {
 
-    private TextView tvClientName, tvClientPhone, tvClientEmail;
+    private static final String TAG = "WorkerProjectDetails";
+
+    private TextView tvClientName, tvClientPhone, tvClientEmail, tvClientAddress;
     private TextView tvWorkDescription, tvLocation, tvStatus, tvCreatedDate;
-    private TextView tvStartDate, tvCompletionDate, tvTotalCost, tvNotes;
+    private TextView tvStartDate, tvCompletionDate, tvTotalCost;
+    private TextView tvServiceType;
 
-    private MaterialCardView cardClientInfo, cardProjectInfo, cardDates, cardCost, cardActions;
+    private MaterialCardView cardClientInfo, cardProjectInfo, cardCost, cardActions, cardPhotos;
+    private LinearLayout layoutPhotos;
 
-    private Button btnCreateProposal, btnMarkComplete, btnContactClient;
-    private Button btnCancelProject;
+    private Button btnCreateProposal, btnMarkComplete, btnCancelProject;
 
     private FirebaseFirestore db;
     private WorkerProjectModel project;
@@ -43,6 +50,7 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
 
     private DecimalFormat currencyFormat = new DecimalFormat("#,##0.00");
     private SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
+    //private SimpleDateFormat timeFormat = new SimpleDateFormat("MMM dd, yyyy • hh:mm a", Locale.getDefault());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +66,8 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
             return;
         }
 
+        Log.d(TAG, "Opening project details for: " + projectId);
+
         initializeViews();
         setupToolbar();
         loadProjectDetails();
@@ -68,13 +78,14 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
         tvClientName = findViewById(R.id.tvClientName);
         tvClientPhone = findViewById(R.id.tvClientPhone);
         tvClientEmail = findViewById(R.id.tvClientEmail);
+        tvClientAddress = findViewById(R.id.tvClientAddress);
 
         // Project info
+        tvServiceType = findViewById(R.id.tvServiceType);
         tvWorkDescription = findViewById(R.id.tvWorkDescription);
         tvLocation = findViewById(R.id.tvLocation);
         tvStatus = findViewById(R.id.tvStatus);
         tvCreatedDate = findViewById(R.id.tvCreatedDate);
-        tvNotes = findViewById(R.id.tvNotes);
 
         // Dates
         tvStartDate = findViewById(R.id.tvStartDate);
@@ -86,14 +97,15 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
         // Cards
         cardClientInfo = findViewById(R.id.cardClientInfo);
         cardProjectInfo = findViewById(R.id.cardProjectInfo);
-        cardDates = findViewById(R.id.cardDates);
+
         cardCost = findViewById(R.id.cardCost);
         cardActions = findViewById(R.id.cardActions);
+        cardPhotos = findViewById(R.id.cardPhotos);
+        layoutPhotos = findViewById(R.id.layoutPhotos);
 
         // Buttons
         btnCreateProposal = findViewById(R.id.btnCreateProposal);
         btnMarkComplete = findViewById(R.id.btnMarkComplete);
-
         btnCancelProject = findViewById(R.id.btnCancelProject);
 
         setupButtonListeners();
@@ -112,99 +124,106 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
     private void setupButtonListeners() {
         btnCreateProposal.setOnClickListener(v -> createProposal());
         btnMarkComplete.setOnClickListener(v -> showCompleteDialog());
-
         btnCancelProject.setOnClickListener(v -> showCancelDialog());
     }
+
     private void loadProjectDetails() {
+        Log.d(TAG, "Loading project from BookingOrder: " + projectId);
+
         db.collection("BookingOrder")
                 .document(projectId)
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
+                        Log.d(TAG, "Document found: " + documentSnapshot.getData());
 
                         project = new WorkerProjectModel();
 
+                        // Set IDs
                         project.setProjectId(documentSnapshot.getId());
+                        project.setClientId(documentSnapshot.getString("userId"));
+                        project.setWorkerId(documentSnapshot.getString("workerId"));
+
+                        // Client Information
                         project.setClientName(documentSnapshot.getString("Name"));
                         project.setClientPhone(documentSnapshot.getString("Mobile Number"));
                         project.setClientEmail(documentSnapshot.getString("Email"));
+                        project.setClientAddress(documentSnapshot.getString("Home_Address"));
+
+                        // Project Information
+                        project.setServiceType(documentSnapshot.getString("Service_Type"));
                         project.setWorkDescription(documentSnapshot.getString("Description"));
                         project.setLocation(documentSnapshot.getString("Site_Address"));
                         project.setStatus(documentSnapshot.getString("status"));
-                        project.setWorkerId(documentSnapshot.getString("workerId"));
-                        project.setClientId(documentSnapshot.getString("userId"));
 
+                        // Budget
                         String budgetStr = documentSnapshot.getString("Budget");
-                        if (budgetStr != null) {
+                        if (budgetStr != null && !budgetStr.isEmpty()) {
                             try {
                                 project.setTotalCost(Double.parseDouble(budgetStr));
-                            } catch (Exception e) {
+                            } catch (NumberFormatException e) {
+                                Log.e(TAG, "Error parsing budget: " + budgetStr, e);
                                 project.setTotalCost(0);
                             }
+                        }
+
+                        // Timestamps
+                        String dateTime = documentSnapshot.getString("Date & Time");
+                        if (dateTime != null) {
+                            project.setCreatedAt(dateTime);
+                        }
+
+                        // Photos
+                        Object photosObj = documentSnapshot.get("photos");
+                        if (photosObj instanceof List) {
+                            List<String> photosList = (List<String>) photosObj;
+                            project.setPhotos(photosList);
+                            Log.d(TAG, "Found " + photosList.size() + " photos");
                         }
 
                         displayProjectDetails();
 
                     } else {
+                        Log.e(TAG, "Document not found");
                         Toast.makeText(this, "Project not found", Toast.LENGTH_SHORT).show();
                         finish();
                     }
                 })
                 .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Error loading project: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, "Error loading project", e);
+                    Toast.makeText(this, "Error loading project: " + e.getMessage(),
+                            Toast.LENGTH_SHORT).show();
                     finish();
                 });
     }
 
-
-
     private void displayProjectDetails() {
         // Client info
-        tvClientName.setText(project.getClientName());
-        tvClientPhone.setText(project.getClientPhone() != null ?
-                project.getClientPhone() : "Not provided");
-        tvClientEmail.setText(project.getClientEmail() != null ?
-                project.getClientEmail() : "Not provided");
+        tvClientName.setText(project.getClientName() != null ? project.getClientName() : "N/A");
+        tvClientPhone.setText(project.getClientPhone() != null ? project.getClientPhone() : "Not provided");
+        tvClientEmail.setText(project.getClientEmail() != null ? project.getClientEmail() : "Not provided");
+        tvClientAddress.setText(project.getClientAddress() != null ? project.getClientAddress() : "Not provided");
 
         // Project info
-        tvWorkDescription.setText(project.getWorkDescription());
-        tvLocation.setText(project.getLocation());
+        tvServiceType.setText(project.getServiceType() != null ? project.getServiceType() : "Construction");
+        tvWorkDescription.setText(project.getWorkDescription() != null ? project.getWorkDescription() : "No description");
+        tvLocation.setText(project.getLocation() != null ? project.getLocation() : "Location not specified");
 
+        // Status
         String status = project.getStatus() != null ? project.getStatus() : "pending";
         tvStatus.setText(getStatusText(status));
         tvStatus.setBackgroundResource(getStatusBackground(status));
 
+        // Created date
         if (project.getCreatedAt() != null) {
-            tvCreatedDate.setText(dateFormat.format(project.getCreatedAt().toDate()));
-        }
-
-        if (project.getNotes() != null && !project.getNotes().isEmpty()) {
-            tvNotes.setVisibility(View.VISIBLE);
-            tvNotes.setText(project.getNotes());
+            tvCreatedDate.setText(project.getCreatedAt());
         } else {
-            tvNotes.setVisibility(View.GONE);
+            tvCreatedDate.setText("Recently");
         }
 
-        // Dates
-        if (project.getStartDate() != null || project.getCompletionDate() != null) {
-            cardDates.setVisibility(View.VISIBLE);
 
-            if (project.getStartDate() != null) {
-                tvStartDate.setText(dateFormat.format(project.getStartDate().toDate()));
-            } else {
-                tvStartDate.setText("Not set");
-            }
 
-            if (project.getCompletionDate() != null) {
-                tvCompletionDate.setText(dateFormat.format(project.getCompletionDate().toDate()));
-            } else {
-                tvCompletionDate.setText("Not set");
-            }
-        } else {
-            cardDates.setVisibility(View.GONE);
-        }
-
-        // Cost
+        // Budget/Cost
         if (project.getTotalCost() > 0) {
             cardCost.setVisibility(View.VISIBLE);
             tvTotalCost.setText("₱" + currencyFormat.format(project.getTotalCost()));
@@ -212,8 +231,53 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
             cardCost.setVisibility(View.GONE);
         }
 
+        // Display photos
+        displayPhotos();
+
         // Update action buttons based on status
         updateActionButtons(status);
+    }
+
+    private void displayPhotos() {
+        if (project.getPhotos() != null && !project.getPhotos().isEmpty()) {
+            cardPhotos.setVisibility(View.VISIBLE);
+            layoutPhotos.removeAllViews();
+
+            for (String photoUrl : project.getPhotos()) {
+                ImageView imageView = new ImageView(this);
+
+                // Set layout params: 200dp x 200dp with 8dp margin
+                int size = (int) (200 * getResources().getDisplayMetrics().density);
+                int margin = (int) (8 * getResources().getDisplayMetrics().density);
+
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(size, size);
+                params.setMargins(margin, 0, margin, 0);
+                imageView.setLayoutParams(params);
+
+                imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                imageView.setBackgroundColor(Color.parseColor("#E0E0E0"));
+
+                // Load image with Glide
+                Glide.with(this)
+                        .load(photoUrl)
+                        .placeholder(R.drawable.ic_image_placeholder)
+                        .error(R.drawable.ic_image_error)
+                        .into(imageView);
+
+                // Click to view full size
+                imageView.setOnClickListener(v -> {
+                    // TODO: Open full screen image viewer
+                    Toast.makeText(this, "Photo viewer coming soon", Toast.LENGTH_SHORT).show();
+                });
+
+                layoutPhotos.addView(imageView);
+            }
+
+            Log.d(TAG, "Displayed " + project.getPhotos().size() + " photos");
+        } else {
+            cardPhotos.setVisibility(View.GONE);
+            Log.d(TAG, "No photos to display");
+        }
     }
 
     private void updateActionButtons(String status) {
@@ -228,12 +292,12 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
             btnMarkComplete.setVisibility(View.VISIBLE);
             btnCancelProject.setVisibility(View.GONE);
         } else {
+            // Completed or cancelled - hide all actions
             cardActions.setVisibility(View.GONE);
         }
     }
 
     private void createProposal() {
-        // Navigate to create proposal/invoice activity
         Intent intent = new Intent(this, ProjectCostQuote.class);
         intent.putExtra("projectId", projectId);
         intent.putExtra("clientId", project.getClientId());
@@ -261,6 +325,8 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
     }
 
     private void completeProject() {
+        Log.d(TAG, "Marking project as completed: " + projectId);
+
         db.collection("BookingOrder")
                 .document(projectId)
                 .update("status", "completed")
@@ -269,12 +335,15 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
                     loadProjectDetails(); // Refresh
                 })
                 .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error completing project", e);
                     Toast.makeText(this, "Error completing project: " + e.getMessage(),
                             Toast.LENGTH_SHORT).show();
                 });
     }
 
     private void cancelProject() {
+        Log.d(TAG, "Cancelling project: " + projectId);
+
         db.collection("BookingOrder")
                 .document(projectId)
                 .update("status", "cancelled")
@@ -283,14 +352,15 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
                     loadProjectDetails(); // Refresh
                 })
                 .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error cancelling project", e);
                     Toast.makeText(this, "Error cancelling project: " + e.getMessage(),
                             Toast.LENGTH_SHORT).show();
                 });
     }
 
-
-
     private String getStatusText(String status) {
+        if (status == null) return "Unknown";
+
         switch (status.toLowerCase()) {
             case "pending":
                 return "Pending";
@@ -306,6 +376,8 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
     }
 
     private int getStatusBackground(String status) {
+        if (status == null) return R.drawable.bg_status_pending;
+
         switch (status.toLowerCase()) {
             case "pending":
                 return R.drawable.bg_status_pending;

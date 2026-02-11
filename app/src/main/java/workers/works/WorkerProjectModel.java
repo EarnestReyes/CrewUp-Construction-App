@@ -1,26 +1,35 @@
 package workers.works;
 
 import com.google.firebase.Timestamp;
+import java.util.List;
 
 /**
  * Model class for worker projects/booking orders
+ * Updated to match Firebase field structure
  */
 public class WorkerProjectModel {
 
     private String projectId;
-    private String clientId;
-    private String clientName;
-    private String clientPhone;
-    private String clientEmail;
+    private String clientId; // Maps to userId in Firebase
+    private String clientName; // Maps to Name
+    private String clientPhone; // Maps to Mobile Number
+    private String clientEmail; // Maps to Email
+    private String clientAddress; // Maps to Home_Address
+
     private String workerId;
     private String workerName;
-    private String workDescription;
-    private String location;
+
+    private String serviceType; // Maps to Service_Type
+    private String workDescription; // Maps to Description
+    private String location; // Maps to Site_Address
     private String status; // pending, active, completed, cancelled
-    private double totalCost;
-    private Timestamp createdAt;
+
+    private double totalCost; // Maps to Budget
+    private String createdAt; // Maps to Date & Time
     private Timestamp startDate;
     private Timestamp completionDate;
+
+    private List<String> photos; // Photo URLs from Firebase
     private String notes;
     private boolean hasAcceptedProposal;
 
@@ -31,7 +40,7 @@ public class WorkerProjectModel {
     public WorkerProjectModel(String projectId, String clientId, String clientName,
                               String clientPhone, String clientEmail, String workerId,
                               String workerName, String workDescription, String location,
-                              String status, double totalCost, Timestamp createdAt) {
+                              String status, double totalCost, String createdAt) {
         this.projectId = projectId;
         this.clientId = clientId;
         this.clientName = clientName;
@@ -87,6 +96,14 @@ public class WorkerProjectModel {
         this.clientEmail = clientEmail;
     }
 
+    public String getClientAddress() {
+        return clientAddress;
+    }
+
+    public void setClientAddress(String clientAddress) {
+        this.clientAddress = clientAddress;
+    }
+
     public String getWorkerId() {
         return workerId;
     }
@@ -101,6 +118,14 @@ public class WorkerProjectModel {
 
     public void setWorkerName(String workerName) {
         this.workerName = workerName;
+    }
+
+    public String getServiceType() {
+        return serviceType;
+    }
+
+    public void setServiceType(String serviceType) {
+        this.serviceType = serviceType;
     }
 
     public String getWorkDescription() {
@@ -135,11 +160,11 @@ public class WorkerProjectModel {
         this.totalCost = totalCost;
     }
 
-    public Timestamp getCreatedAt() {
+    public String getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(Timestamp createdAt) {
+    public void setCreatedAt(String createdAt) {
         this.createdAt = createdAt;
     }
 
@@ -157,6 +182,14 @@ public class WorkerProjectModel {
 
     public void setCompletionDate(Timestamp completionDate) {
         this.completionDate = completionDate;
+    }
+
+    public List<String> getPhotos() {
+        return photos;
+    }
+
+    public void setPhotos(List<String> photos) {
+        this.photos = photos;
     }
 
     public String getNotes() {

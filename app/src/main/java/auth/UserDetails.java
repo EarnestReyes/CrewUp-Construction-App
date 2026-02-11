@@ -49,7 +49,7 @@ public class UserDetails extends AppCompatActivity {
             return insets;
         });
 
-        edtBirthday = findViewById(R.id.Birthday);
+        edtBirthday = findViewById(R.id.edtBirthday);
         edtGender = findViewById(R.id.edtGender);
         mobilenum = findViewById(R.id.edtMobile);
         socials = findViewById(R.id.edtSocials);

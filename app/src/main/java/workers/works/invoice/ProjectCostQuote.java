@@ -425,9 +425,6 @@ public class ProjectCostQuote extends AppCompatActivity {
         });
     }
 
-    /**
-     * Send push notification to client about new proposal
-     */
     private void sendNotificationToClient(String proposalId) {
         // TODO: Implement FCM notification to client
         // You'll need to have the client's FCM token stored in their user document

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Background rectangle -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#FFEBEE"/>
+            <corners android:radius="8dp"/>
+            <stroke
+                android:width="2dp"
+                android:color="#EF5350"/>
+        </shape>
+    </item>
+
+    <!-- Red X icon -->
+    <item
+        android:width="48dp"
+        android:height="48dp"
+        android:gravity="center">
+        <rotate
+            android:fromDegrees="45"
+            android:pivotX="50%"
+            android:pivotY="50%">
+            <shape android:shape="rectangle">
+                <size
+                    android:width="4dp"
+                    android:height="40dp"/>
+                <solid android:color="#EF5350"/>
+                <corners android:radius="2dp"/>
+            </shape>
+        </rotate>
+    </item>
+
+    <item
+        android:width="48dp"
+        android:height="48dp"
+        android:gravity="center">
+        <rotate
+            android:fromDegrees="-45"
+            android:pivotX="50%"
+            android:pivotY="50%">
+            <shape android:shape="rectangle">
+                <size
+                    android:width="4dp"
+                    android:height="40dp"/>
+                <solid android:color="#EF5350"/>
+                <corners android:radius="2dp"/>
+            </shape>
+        </rotate>
+    </item>
+
+</layer-list>

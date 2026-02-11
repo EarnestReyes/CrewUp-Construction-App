@@ -56,7 +56,7 @@ public class WorkerProjectAdapter extends RecyclerView.Adapter<WorkerProjectAdap
 
         // Date
         if (project.getCreatedAt() != null) {
-            String dateStr = dateFormat.format(project.getCreatedAt().toDate());
+            String dateStr = project.getCreatedAt();
             holder.tvDate.setText("Created: " + dateStr);
         } else {
             holder.tvDate.setText("Created: Recently");

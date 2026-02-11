@@ -28,7 +28,7 @@ public class ProposalFirebaseManager {
      * Submit a new proposal (Worker sends to Client)
      */
     public void submitProposal(InvoiceProposalModel proposal, OnProposalSubmitListener listener) {
-        DocumentReference docRef = db.collection(COLLECTION_PROPOSALS).document();
+        DocumentReference docRef = db.collection("WorkerInput").document();
         proposal.setProposalId(docRef.getId());
 
         docRef.set(proposal)
