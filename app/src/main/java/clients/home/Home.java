@@ -111,85 +111,64 @@ public class Home extends Fragment {
 
                     for (DocumentSnapshot doc : snapshot.getDocuments()) {
 
-                        final String postId = doc.getId();
-                        final String userId = doc.getString("userId");
-                        if (userId == null) continue;
+                        Post post = new Post();
+                        post.setPostId(doc.getId());
 
-                        final String content = doc.getString("content");
-                        final String title = doc.getString("title");
-                        final String imageUrl = doc.getString("imageUrl");
-
-                        // ---------- TIMESTAMP ----------
-                        long timestamp;
-                        Object rawTime = doc.get("timestamp");
-
-                        if (rawTime instanceof com.google.firebase.Timestamp) {
-                            timestamp = ((com.google.firebase.Timestamp) rawTime)
-                                    .toDate()
-                                    .getTime();
-                        } else if (rawTime instanceof Long) {
-                            timestamp = (Long) rawTime;
-                        } else {
-                            timestamp = System.currentTimeMillis();
-                        }
+                        // ===== BASIC FIELDS =====
+                        post.setUserId(doc.getString("userId"));
+                        post.setUserName(doc.getString("userName"));
+                        post.setProfilePicUrl(doc.getString("profilePicUrl"));
+                        post.setContent(doc.getString("content"));
+                        post.setTitle(doc.getString("title"));
+                        post.setImageUrl(doc.getString("imageUrl"));
 
                         Long likes = doc.getLong("likeCount");
-                        final int likeCount = likes != null ? likes.intValue() : 0;
+                        post.setLikeCount(likes != null ? likes.intValue() : 0);
 
-                        // ---------- CACHE HIT ----------
-                        if (profileCache.containsKey(userId)) {
-
-                            Post post = new Post(
-                                    userId,
-                                    profileCache.get(userId + "_name"),
-                                    title != null ? title : "",
-                                    content != null ? content : "",
-                                    timestamp,                         // ✅ long timestamp
-                                    profileCache.get(userId),     // ✅ profilePicUrl (String)
-                                    imageUrl                      // ✅ imageUrl
-                            );
-
-                            post.setPostId(postId);
-                            post.setImageUrl(imageUrl);
-                            post.setLikeCount(likeCount);
-
-                            posts.add(post);
-                            adapter.notifyItemInserted(posts.size() - 1);
-                            checkIfLiked(post, currentUserId);
-                            continue;
+                        // ===== TIMESTAMP =====
+                        Object rawTime = doc.get("timestamp");
+                        if (rawTime instanceof Timestamp) {
+                            post.setTimestamp(((Timestamp) rawTime)
+                                    .toDate()
+                                    .getTime());
+                        } else if (rawTime instanceof Long) {
+                            post.setTimestamp((Long) rawTime);
+                        } else {
+                            post.setTimestamp(System.currentTimeMillis());
                         }
 
-                        // ---------- LOAD USER ----------
-                        FirebaseUtil.getUserReference(userId)
-                                .get()
-                                .addOnSuccessListener(userSnap -> {
+                        // ===== SHARED POST HANDLING =====
+                        Boolean shared = doc.getBoolean("isShared");
+                        post.setShared(shared != null && shared);
 
-                                    if (!userSnap.exists()) return;
+                        if (post.isShared()) {
 
-                                    String username = userSnap.getString("username");
-                                    String profilePicUrl = userSnap.getString("profilePicUrl");
+                            post.setOriginalPostId(doc.getString("originalPostId"));
+                            post.setOriginalUserId(doc.getString("originalUserId"));
+                            post.setOriginalUserName(doc.getString("originalUserName"));
+                            post.setOriginalContent(doc.getString("originalContent"));
+                            post.setOriginalImageUrl(doc.getString("originalImageUrl"));
 
-                                    profileCache.put(userId, profilePicUrl);
-                                    profileCache.put(userId + "_name", username);
+                            // 🔥 FETCH ORIGINAL USER PROFILE FROM USERS COLLECTION
+                            String originalUserId = post.getOriginalUserId();
 
-                                    Post post = new Post(
-                                            userId,
-                                            profileCache.get(userId + "_name"),
-                                            title != null ? title : "",
-                                            content != null ? content : "",
-                                            timestamp,                         // ✅ long timestamp
-                                            profileCache.get(userId),     // ✅ profilePicUrl (String)
-                                            imageUrl                      // ✅ imageUrl
-                                    );
+                            if (originalUserId != null) {
+                                FirebaseUtil.getUserReference(originalUserId)
+                                        .get()
+                                        .addOnSuccessListener(userSnap -> {
+                                            if (userSnap.exists()) {
+                                                post.setOriginalProfilePicUrl(
+                                                        userSnap.getString("profilePicUrl")
+                                                );
+                                                adapter.notifyDataSetChanged();
+                                            }
+                                        });
+                            }
+                        }
 
-                                    post.setPostId(postId);
-                                    post.setImageUrl(imageUrl);
-                                    post.setLikeCount(likeCount);
-
-                                    posts.add(post);
-                                    adapter.notifyItemInserted(posts.size() - 1);
-                                    checkIfLiked(post, currentUserId);
-                                });
+                        posts.add(post);
+                        adapter.notifyItemInserted(posts.size() - 1);
+                        checkIfLiked(post, currentUserId);
                     }
                 })
                 .addOnFailureListener(e -> {
@@ -198,6 +177,7 @@ public class Home extends Fragment {
                     txtEmpty.setVisibility(View.VISIBLE);
                 });
     }
+
 
     private void checkIfLiked(Post post, String currentUserId) {
         if (currentUserId == null) return;

@@ -169,14 +169,17 @@ public class Posts extends Fragment {
                 .get()
                 .addOnSuccessListener(userDoc -> {
 
+                    if (!userDoc.exists()) return;
+
                     Map<String, Object> post = new HashMap<>();
+
                     post.put("userId", uid);
-                    post.put("userName",
-                            userDoc.getString("username"));
+                    post.put("userName", userDoc.getString("username"));
+                    post.put("profilePicUrl", userDoc.getString("profilePicUrl"));
                     post.put("content", content);
                     post.put("imageUrl", imageUrl);
-                    post.put("timestamp",
-                            System.currentTimeMillis());
+                    post.put("likeCount", 0);
+                    post.put("timestamp", System.currentTimeMillis());
 
                     db.collection("posts")
                             .add(post)
@@ -192,6 +195,7 @@ public class Posts extends Fragment {
                             });
                 });
     }
+
 
 
 

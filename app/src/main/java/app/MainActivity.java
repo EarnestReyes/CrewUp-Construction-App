@@ -50,8 +50,6 @@ public class MainActivity extends AppCompatActivity {
 
     private TextView txtLocation;
 
-
-
     @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,6 +108,11 @@ public class MainActivity extends AppCompatActivity {
         notification = findViewById(R.id.btnBell);
         Profile = findViewById((R.id.Profile));
 
+        txtNewsFeed.setOnClickListener(v -> {
+            Intent in = new Intent(this, WorkersLocationMap.class);
+            Toast.makeText(this, "Opening workers map..", Toast.LENGTH_SHORT).show();
+            startActivity(in);
+        });
 
         btnSearch.setOnClickListener(v -> {
             Intent in = new Intent(MainActivity.this, SearchUserActivity.class);

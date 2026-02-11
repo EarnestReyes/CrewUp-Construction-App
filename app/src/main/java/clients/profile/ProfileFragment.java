@@ -43,6 +43,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -284,9 +285,10 @@ public class ProfileFragment extends Fragment {
     // ================= POSTS =================
 
     private void loadPosts() {
+
         FirebaseUser user = mAuth.getCurrentUser();
         if (user == null) {
-            stopLoading();
+
             return;
         }
 
@@ -296,14 +298,14 @@ public class ProfileFragment extends Fragment {
                 .addSnapshotListener((value, error) -> {
 
                     if (error != null || value == null) {
-                        stopLoading();
+
                         return;
                     }
 
                     int newCount = value.size();
 
                     if (!isRefreshing && !isFirstLoad && newCount == lastItemCount) {
-                        stopLoading();
+
                         return;
                     }
 
@@ -311,32 +313,54 @@ public class ProfileFragment extends Fragment {
 
                     for (QueryDocumentSnapshot doc : value) {
 
-                        Post post = new Post(
-                                user.getUid(),
-                                doc.getString("userName"),
-                                "",
-                                doc.getString("content"),
-                                System.currentTimeMillis(),
-                                currentUserProfilePicUrl,
-                                doc.getString("imageUrl")
-                        );
-
+                        Post post = new Post();
                         post.setPostId(doc.getId());
+
+                        // ===== BASIC FIELDS =====
+                        post.setUserId(doc.getString("userId"));
+                        post.setUserName(doc.getString("userName"));
+                        post.setProfilePicUrl(doc.getString("profilePicUrl"));
+                        post.setContent(doc.getString("content"));
+                        post.setImageUrl(doc.getString("imageUrl"));
+
+                        Long likes = doc.getLong("likeCount");
+                        post.setLikeCount(likes != null ? likes.intValue() : 0);
+
+                        // ===== TIMESTAMP =====
+                        Object rawTime = doc.get("timestamp");
+                        if (rawTime instanceof Timestamp) {
+                            post.setTimestamp(((Timestamp) rawTime)
+                                    .toDate()
+                                    .getTime());
+                        } else if (rawTime instanceof Long) {
+                            post.setTimestamp((Long) rawTime);
+                        } else {
+                            post.setTimestamp(System.currentTimeMillis());
+                        }
+
+                        // ===== SHARED HANDLING =====
+                        Boolean shared = doc.getBoolean("isShared");
+                        post.setShared(shared != null && shared);
+
+                        if (post.isShared()) {
+                            post.setOriginalPostId(doc.getString("originalPostId"));
+                            post.setOriginalUserId(doc.getString("originalUserId"));
+                            post.setOriginalUserName(doc.getString("originalUserName"));
+                            post.setOriginalProfilePicUrl(doc.getString("originalProfilePicUrl"));
+                            post.setOriginalContent(doc.getString("originalContent"));
+                            post.setOriginalImageUrl(doc.getString("originalImageUrl"));
+                        }
+
                         posts.add(post);
                     }
 
                     lastItemCount = newCount;
                     adapter.notifyDataSetChanged();
-                    stopLoading();
+
                 });
     }
 
-    private void stopLoading() {
-        progressLoading.setVisibility(View.GONE);
-        swipeRefresh.setRefreshing(false);
-        isFirstLoad = false;
-        isRefreshing = false;
-    }
+
 
     // ================= LOCATION SWITCH =================
 

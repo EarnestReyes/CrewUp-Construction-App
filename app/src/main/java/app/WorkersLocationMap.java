@@ -9,15 +9,13 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
+import android.view.MotionEvent;
 import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
@@ -40,20 +38,20 @@ import clients.profile.UserProfile;
 public class WorkersLocationMap extends AppCompatActivity {
 
     private MapView map;
-    // CLIENT
     private Marker myMarker;
     private GeoPoint myCurrentPoint;
-    // WORKERS
+
     private final Map<String, Marker> workerMarkers = new HashMap<>();
-    // LOCATION
+
     private FusedLocationProviderClient locationClient;
     private LocationCallback locationCallback;
-    // FIREBASE
+
     private FirebaseFirestore db;
     private FirebaseAuth auth;
-    // 🔐 LISTENERS
+
     private ListenerRegistration workersListener;
-    private ListenerRegistration selfListener;
+
+    private boolean isPinned = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,13 +70,6 @@ public class WorkersLocationMap extends AppCompatActivity {
         auth = FirebaseAuth.getInstance();
         locationClient = LocationServices.getFusedLocationProviderClient(this);
 
-        View root = findViewById(R.id.main);
-        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
-            Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(bars.left, bars.top, bars.right, bars.bottom);
-            return insets;
-        });
-
         ActivityCompat.requestPermissions(
                 this,
                 new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
@@ -88,28 +79,33 @@ public class WorkersLocationMap extends AppCompatActivity {
         setupLocationCallback();
         startLocationUpdates();
         listenToWorkers();
+        enableLongPressPin();
     }
 
     // ================= LOCATION =================
 
     private void setupLocationCallback() {
+
         locationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(@NonNull LocationResult result) {
+
                 Location loc = result.getLastLocation();
                 if (loc == null) return;
 
-                myCurrentPoint = new GeoPoint(
+                GeoPoint gpsPoint = new GeoPoint(
                         loc.getLatitude(),
                         loc.getLongitude()
                 );
 
-                updateMyMarker(myCurrentPoint);
+                myCurrentPoint = gpsPoint;
+                checkIfPinnedThenUpdate(gpsPoint);
             }
         };
     }
 
     private void startLocationUpdates() {
+
         if (ActivityCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -128,65 +124,144 @@ public class WorkersLocationMap extends AppCompatActivity {
         );
     }
 
-    // ================= CLIENT MARKER =================
+    // ================= PIN LOGIC =================
 
-    private void updateMyMarker(GeoPoint point) {
-        if (myMarker == null) {
-            myMarker = new Marker(map);
-            myMarker.setPosition(point);
-            myMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-            myMarker.setTitle("You");
+    private void enableLongPressPin() {
 
-            map.getOverlays().add(myMarker);
-            map.getController().setZoom(16.5);
-            map.getController().setCenter(point);
-        } else {
-            myMarker.setPosition(point);
-        }
-        map.invalidate();
+        map.setOnTouchListener(new View.OnTouchListener() {
+
+            private long pressStartTime;
+
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+
+                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    pressStartTime = System.currentTimeMillis();
+                }
+
+                if (event.getAction() == MotionEvent.ACTION_UP) {
+
+                    long duration = System.currentTimeMillis() - pressStartTime;
+
+                    if (duration > 600) {
+
+                        GeoPoint point = (GeoPoint) map.getProjection()
+                                .fromPixels((int) event.getX(), (int) event.getY());
+
+                        pinLocation(point);
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        });
     }
 
-    // ================= WORKERS (PRIVACY ENFORCED) =================
-
-    private void listenToWorkers() {
+    private void pinLocation(GeoPoint point) {
 
         if (auth.getCurrentUser() == null) return;
-        String uid = auth.getCurrentUser().getUid();
 
-        // 🔥 LISTEN TO CURRENT USER shareLocation
-        selfListener = db.collection("users")
-                .document(uid)
-                .addSnapshotListener((userDoc, error) -> {
+        isPinned = true;
 
-                    if (error != null || userDoc == null || !userDoc.exists()) return;
+        Map<String, Object> update = new HashMap<>();
+        update.put("lat", point.getLatitude());
+        update.put("lng", point.getLongitude());
+        update.put("isPinned", true);
 
-                    Boolean shareLocation = userDoc.getBoolean("shareLocation");
+        db.collection("users")
+                .document(auth.getCurrentUser().getUid())
+                .update(update);
 
-                    if (shareLocation == null || !shareLocation) {
-                        // 🚫 USER DISABLED SHARING
-                        removeAllWorkerMarkers();
-                        stopWorkersListener();
+        updateMyMarker(point);
+    }
+
+    private void checkIfPinnedThenUpdate(GeoPoint gpsPoint) {
+
+        if (auth.getCurrentUser() == null) return;
+
+        db.collection("users")
+                .document(auth.getCurrentUser().getUid())
+                .get()
+                .addOnSuccessListener(doc -> {
+
+                    Boolean pinned = doc.getBoolean("isPinned");
+
+                    if (pinned != null && pinned) {
+
+                        isPinned = true;
+
+                        Double lat = doc.getDouble("lat");
+                        Double lng = doc.getDouble("lng");
+
+                        if (lat != null && lng != null) {
+                            updateMyMarker(new GeoPoint(lat, lng));
+                        }
+
                     } else {
-                        // ✅ USER ENABLED SHARING
-                        startWorkersListener();
+
+                        isPinned = false;
+
+                        updateMyMarker(gpsPoint);
+
+                        Map<String, Object> update = new HashMap<>();
+                        update.put("lat", gpsPoint.getLatitude());
+                        update.put("lng", gpsPoint.getLongitude());
+                        update.put("isPinned", false);
+
+                        db.collection("users")
+                                .document(auth.getCurrentUser().getUid())
+                                .update(update);
                     }
                 });
     }
 
-    private void startWorkersListener() {
+    public void unpinLocation() {
 
-        if (workersListener != null) return;
+        if (auth.getCurrentUser() == null) return;
+
+        db.collection("users")
+                .document(auth.getCurrentUser().getUid())
+                .update("isPinned", false);
+
+        isPinned = false;
+    }
+
+    // ================= CLIENT MARKER =================
+
+    private void updateMyMarker(GeoPoint point) {
+
+        if (myMarker == null) {
+            myMarker = new Marker(map);
+            myMarker.setPosition(point);
+            myMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+            myMarker.setTitle(isPinned ? "Pinned Location" : "You");
+
+            map.getOverlays().add(myMarker);
+            map.getController().setZoom(16.5);
+            map.getController().setCenter(point);
+
+        } else {
+            myMarker.setPosition(point);
+            myMarker.setTitle(isPinned ? "Pinned Location" : "You");
+        }
+
+        map.invalidate();
+    }
+
+    // ================= WORKERS =================
+
+    private void listenToWorkers() {
 
         workersListener = db.collection("users")
                 .whereEqualTo("Role", "worker")
-                .whereEqualTo("shareLocation", true) // 🔐 ONLY SHARING WORKERS
+                .whereEqualTo("shareLocation", true)
                 .addSnapshotListener((snapshots, error) -> {
 
                     if (error != null || snapshots == null) return;
 
                     for (DocumentSnapshot doc : snapshots) {
 
-                        // ❌ Skip self
                         if (auth.getCurrentUser() != null &&
                                 doc.getId().equals(auth.getCurrentUser().getUid()))
                             continue;
@@ -203,21 +278,6 @@ public class WorkersLocationMap extends AppCompatActivity {
                 });
     }
 
-    private void stopWorkersListener() {
-        if (workersListener != null) {
-            workersListener.remove();
-            workersListener = null;
-        }
-    }
-
-    private void removeAllWorkerMarkers() {
-        for (Marker marker : workerMarkers.values()) {
-            map.getOverlays().remove(marker);
-        }
-        workerMarkers.clear();
-        map.invalidate();
-    }
-
     private void updateWorkerMarker(
             String workerId,
             GeoPoint point,
@@ -231,8 +291,6 @@ public class WorkersLocationMap extends AppCompatActivity {
             marker = new Marker(map);
             marker.setPosition(point);
             marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-            marker.setTitle("Worker");
-
             marker.setRelatedObject(workerId);
 
             marker.setOnMarkerClickListener((m, mapView) -> {
@@ -253,26 +311,22 @@ public class WorkersLocationMap extends AppCompatActivity {
         map.invalidate();
     }
 
-    // ================= PROFILE PIC MARKER =================
-
     private void loadMarkerImage(
             Context context,
             Marker marker,
             String imageUrl
     ) {
-        Object imageSource;
 
-        if (imageUrl == null || imageUrl.isEmpty()) {
-            imageSource = R.drawable.ic_profile_marker;
-        } else {
-            imageSource = imageUrl;
-        }
+        Object imageSource = (imageUrl == null || imageUrl.isEmpty())
+                ? R.drawable.ic_profile_marker
+                : imageUrl;
 
         Glide.with(context)
                 .asBitmap()
                 .load(imageSource)
                 .circleCrop()
                 .into(new CustomTarget<Bitmap>(96, 96) {
+
                     @Override
                     public void onResourceReady(
                             @NonNull Bitmap bitmap,
@@ -281,10 +335,6 @@ public class WorkersLocationMap extends AppCompatActivity {
                         marker.setIcon(
                                 new BitmapDrawable(context.getResources(), bitmap)
                         );
-                        marker.setAnchor(
-                                Marker.ANCHOR_CENTER,
-                                Marker.ANCHOR_BOTTOM
-                        );
                         map.invalidate();
                     }
 
@@ -292,7 +342,6 @@ public class WorkersLocationMap extends AppCompatActivity {
                     public void onLoadCleared(@Nullable Drawable placeholder) {}
                 });
     }
-
 
     private void openWorkerProfile(String workerId) {
         Intent intent = new Intent(this, UserProfile.class);
@@ -312,12 +361,6 @@ public class WorkersLocationMap extends AppCompatActivity {
 
         if (workersListener != null) {
             workersListener.remove();
-            workersListener = null;
-        }
-
-        if (selfListener != null) {
-            selfListener.remove();
-            selfListener = null;
         }
 
         map.onDetach();
