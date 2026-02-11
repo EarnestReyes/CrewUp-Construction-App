@@ -24,9 +24,7 @@ public class ProposalFirebaseManager {
         db = FirebaseFirestore.getInstance();
     }
 
-    /**
-     * Submit a new proposal (Worker sends to Client)
-     */
+
     public void submitProposal(InvoiceProposalModel proposal, OnProposalSubmitListener listener) {
         DocumentReference docRef = db.collection("WorkerInput").document();
         proposal.setProposalId(docRef.getId());

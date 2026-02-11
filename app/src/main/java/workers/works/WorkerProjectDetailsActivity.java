@@ -64,33 +64,32 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
     }
 
     private void initializeViews() {
-        // Client info
+
         tvClientName = findViewById(R.id.tvClientName);
         tvClientPhone = findViewById(R.id.tvClientPhone);
         tvClientEmail = findViewById(R.id.tvClientEmail);
 
-        // Project info
         tvWorkDescription = findViewById(R.id.tvWorkDescription);
         tvLocation = findViewById(R.id.tvLocation);
         tvStatus = findViewById(R.id.tvStatus);
         tvCreatedDate = findViewById(R.id.tvCreatedDate);
         tvNotes = findViewById(R.id.tvNotes);
 
-        // Dates
+
         tvStartDate = findViewById(R.id.tvStartDate);
         tvCompletionDate = findViewById(R.id.tvCompletionDate);
 
-        // Cost
+
         tvTotalCost = findViewById(R.id.tvTotalCost);
 
-        // Cards
+
         cardClientInfo = findViewById(R.id.cardClientInfo);
         cardProjectInfo = findViewById(R.id.cardProjectInfo);
         cardDates = findViewById(R.id.cardDates);
         cardCost = findViewById(R.id.cardCost);
         cardActions = findViewById(R.id.cardActions);
 
-        // Buttons
+
         btnCreateProposal = findViewById(R.id.btnCreateProposal);
         btnMarkComplete = findViewById(R.id.btnMarkComplete);
 
@@ -159,14 +158,14 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
 
 
     private void displayProjectDetails() {
-        // Client info
+
         tvClientName.setText(project.getClientName());
         tvClientPhone.setText(project.getClientPhone() != null ?
                 project.getClientPhone() : "Not provided");
         tvClientEmail.setText(project.getClientEmail() != null ?
                 project.getClientEmail() : "Not provided");
 
-        // Project info
+
         tvWorkDescription.setText(project.getWorkDescription());
         tvLocation.setText(project.getLocation());
 
@@ -175,7 +174,7 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
         tvStatus.setBackgroundResource(getStatusBackground(status));
 
         if (project.getCreatedAt() != null) {
-            tvCreatedDate.setText(dateFormat.format(project.getCreatedAt().toDate()));
+            tvCreatedDate.setText(project.getCreatedAt());
         }
 
         if (project.getNotes() != null && !project.getNotes().isEmpty()) {
@@ -185,7 +184,7 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
             tvNotes.setVisibility(View.GONE);
         }
 
-        // Dates
+
         if (project.getStartDate() != null || project.getCompletionDate() != null) {
             cardDates.setVisibility(View.VISIBLE);
 
@@ -204,7 +203,7 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
             cardDates.setVisibility(View.GONE);
         }
 
-        // Cost
+
         if (project.getTotalCost() > 0) {
             cardCost.setVisibility(View.VISIBLE);
             tvTotalCost.setText("₱" + currencyFormat.format(project.getTotalCost()));
@@ -212,7 +211,7 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
             cardCost.setVisibility(View.GONE);
         }
 
-        // Update action buttons based on status
+
         updateActionButtons(status);
     }
 
@@ -233,7 +232,7 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
     }
 
     private void createProposal() {
-        // Navigate to create proposal/invoice activity
+
         Intent intent = new Intent(this, ProjectCostQuote.class);
         intent.putExtra("projectId", projectId);
         intent.putExtra("clientId", project.getClientId());
@@ -266,7 +265,7 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
                 .update("status", "completed")
                 .addOnSuccessListener(aVoid -> {
                     Toast.makeText(this, "Project marked as completed!", Toast.LENGTH_SHORT).show();
-                    loadProjectDetails(); // Refresh
+                    loadProjectDetails();
                 })
                 .addOnFailureListener(e -> {
                     Toast.makeText(this, "Error completing project: " + e.getMessage(),
@@ -280,7 +279,7 @@ public class WorkerProjectDetailsActivity extends AppCompatActivity {
                 .update("status", "cancelled")
                 .addOnSuccessListener(aVoid -> {
                     Toast.makeText(this, "Project cancelled", Toast.LENGTH_SHORT).show();
-                    loadProjectDetails(); // Refresh
+                    loadProjectDetails();
                 })
                 .addOnFailureListener(e -> {
                     Toast.makeText(this, "Error cancelling project: " + e.getMessage(),

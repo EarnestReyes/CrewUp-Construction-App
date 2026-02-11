@@ -17,9 +17,6 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * Adapter for displaying worker's projects in RecyclerView
- */
 public class WorkerProjectAdapter extends RecyclerView.Adapter<WorkerProjectAdapter.ProjectViewHolder> {
 
     private List<WorkerProjectModel> projects;
@@ -42,19 +39,15 @@ public class WorkerProjectAdapter extends RecyclerView.Adapter<WorkerProjectAdap
     public void onBindViewHolder(@NonNull ProjectViewHolder holder, int position) {
         WorkerProjectModel project = projects.get(position);
 
-        // Client name
         holder.tvClientName.setText(project.getClientName() != null ?
                 project.getClientName() : "Client");
 
-        // Work description
         holder.tvWorkDescription.setText(project.getWorkDescription() != null ?
                 project.getWorkDescription() : "No description");
 
-        // Location
         holder.tvLocation.setText(project.getLocation() != null ?
                 "📍 " + project.getLocation() : "Location not specified");
 
-        // Date
         if (project.getCreatedAt() != null) {
             String dateStr = project.getCreatedAt();
             holder.tvDate.setText("Created: " + dateStr);
@@ -62,7 +55,6 @@ public class WorkerProjectAdapter extends RecyclerView.Adapter<WorkerProjectAdap
             holder.tvDate.setText("Created: Recently");
         }
 
-        // Status
         String status = project.getStatus() != null ? project.getStatus() : "pending";
         holder.tvStatus.setText(getStatusText(status));
         holder.tvStatus.setBackgroundResource(getStatusBackground(status));
@@ -75,7 +67,6 @@ public class WorkerProjectAdapter extends RecyclerView.Adapter<WorkerProjectAdap
             holder.tvTotalCost.setVisibility(View.GONE);
         }
 
-        // Status indicator for active projects
         if ("active".equals(status)) {
             holder.tvActiveIndicator.setVisibility(View.VISIBLE);
             holder.tvActiveIndicator.setText("🔨 In Progress");
@@ -93,7 +84,6 @@ public class WorkerProjectAdapter extends RecyclerView.Adapter<WorkerProjectAdap
             v.getContext().startActivity(intent);
         });
 
-        // Set card elevation based on status
         if ("active".equals(status)) {
             holder.cardView.setCardElevation(8f);
         } else {
