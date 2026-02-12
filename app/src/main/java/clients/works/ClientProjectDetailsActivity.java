@@ -170,8 +170,7 @@ public class ClientProjectDetailsActivity extends AppCompatActivity {
         tvTotalMaterials.setText(nonNull(String.valueOf(project.getMaterialsCost()), "0.00"));
         tvTotalLabor.setText(nonNull(String.valueOf(project.getLaborCost()), "0.00"));
         tvTotalMisc.setText(nonNull(String.valueOf(project.getMiscCost()), "0.00"));
-        tvGrandTotal.setText(nonNull(String.valueOf(project.getMiscCost()), "0.00"));
-
+        tvGrandTotal.setText(currencyFormat.format(project.getGrandTotalWithVat()));
 
         // Notes (NULL-SAFE FIX 🔥)
         if (tvNotes != null) {
@@ -182,8 +181,6 @@ public class ClientProjectDetailsActivity extends AppCompatActivity {
                 tvNotes.setVisibility(View.GONE);
             }
         }
-
-
         updateActions(project.getStatus());
     }
 

@@ -26,12 +26,9 @@ import models.NotificationModel;
 public class NotificationsWorker extends AppCompatActivity {
 
     private ImageButton backBtn;
-
     private RecyclerView rvRecent, rvEarlier, rvFewDays;
     private View emptyState, scrollContent;
-
     private NotificationAdapter recentAdapter, earlierAdapter, fewDaysAdapter;
-
     private final ArrayList<NotificationModel> recentList = new ArrayList<>();
     private final ArrayList<NotificationModel> earlierList = new ArrayList<>();
     private final ArrayList<NotificationModel> fewDaysList = new ArrayList<>();

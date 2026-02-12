@@ -51,11 +51,10 @@ public class Posts extends Fragment {
     private EditText txtContent;
     private Button btnSend;
     private ImageView imgProfile, imgPreview;
-    private ImageButton photo, gallery;
+    private ImageButton gallery;
     private FirebaseFirestore db;
     private TextView txtName;
     private Uri selectedImageUri;
-
     private String currentUserProfilePicUrl;
 
     private final ActivityResultLauncher<String> imagePickerLauncher =
@@ -109,11 +108,6 @@ public class Posts extends Fragment {
             //open camera
             imagePickerLauncher.launch("image/*");
         });
-
-        photo.setOnClickListener(v -> {
-
-        });
-
 
         btnSend.setOnClickListener(v -> createPost());
 
