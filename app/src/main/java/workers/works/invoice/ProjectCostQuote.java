@@ -3,7 +3,6 @@ package workers.works.invoice;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
@@ -19,8 +18,6 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.io.File;
 import java.text.DecimalFormat;
@@ -33,20 +30,13 @@ import adapters.MiscAdapter;
 import dialogs.AddLaborDialog;
 import dialogs.AddMaterialDialog;
 import dialogs.AddMiscDialog;
-import workers.works.WorkerProjectModel;
 
 public class ProjectCostQuote extends AppCompatActivity {
 
-    private static final String TAG = "ProjectCostQuote";
-
-    // Worker Info
+    // Company Info
     private TextInputEditText WorkerName, WorkerAddress, WorkerPhone, WorkerEmail;
-
-    // Client Info
     private TextInputEditText etClientName, etClientAddress, etClientPhone, etClientEmail;
     private TextInputEditText etWorkDescription;
-
-    private WorkerProjectModel project;
 
     // Buttons
     private Button btnAddMaterials, btnAddLabor, btnAddMisc, btnGenerateInvoice, btnSendProposal;
@@ -66,23 +56,19 @@ public class ProjectCostQuote extends AppCompatActivity {
     private List<MiscItem> miscList = new ArrayList<>();
 
     // Summary TextViews
-    private TextView tvTotalMaterials, tvTotalLabor, tvTotalMisc, tvGrandTotal, tvVAT, tvGrandTotal2;
+    private TextView tvTotalMaterials, tvTotalLabor, tvTotalMisc, tvGrandTotal;
 
     private DecimalFormat currencyFormat = new DecimalFormat("#,##0.00");
 
     // Firebase
-    private FirebaseFirestore db;
     private ProposalFirebaseManager proposalManager;
     private String workerId;
-    private String userId;
-    private String projectId;
+    private String clientId; // You'll need to pass this when opening the activity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_project_cost_quote);
-
-        db = FirebaseFirestore.getInstance();
 
         // Get current worker ID from Firebase Auth
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
@@ -90,26 +76,18 @@ public class ProjectCostQuote extends AppCompatActivity {
             workerId = currentUser.getUid();
         }
 
-
-        projectId = getIntent().getStringExtra("projectId");
-        userId = getIntent().getStringExtra("userId");
-
-
+        // Get client ID from intent
+        clientId = getIntent().getStringExtra("clientId");
 
         proposalManager = new ProposalFirebaseManager();
 
         initializeViews();
         setupRecyclerViews();
         setupListeners();
-
-        loadProjectDetails();
-
-        // 🔥 Load worker data from users collection
-        loadWorkerDetails();
     }
 
     private void initializeViews() {
-        // Worker Info
+        // Company Info
         WorkerName = findViewById(R.id.worker_name);
         WorkerAddress = findViewById(R.id.worker_address);
         WorkerPhone = findViewById(R.id.worker_mobile);
@@ -129,7 +107,7 @@ public class ProjectCostQuote extends AppCompatActivity {
         btnAddLabor = findViewById(R.id.btn_add_labor);
         btnAddMisc = findViewById(R.id.btn_add_misc);
         btnGenerateInvoice = findViewById(R.id.btn_generate_invoice);
-        btnSendProposal = findViewById(R.id.btn_send_proposal);
+        btnSendProposal = findViewById(R.id.btn_send_proposal); // Add this button to your layout
         fabBack = findViewById(R.id.fab_back);
 
         // RecyclerViews
@@ -142,110 +120,6 @@ public class ProjectCostQuote extends AppCompatActivity {
         tvTotalLabor = findViewById(R.id.tv_total_labor);
         tvTotalMisc = findViewById(R.id.tv_total_misc);
         tvGrandTotal = findViewById(R.id.tv_grand_total);
-        tvVAT = findViewById(R.id.tv_VAT);
-        tvGrandTotal2 = findViewById(R.id.tv_grand_total2);
-    }
-
-
-    private void loadProjectDetails() {
-        if (projectId == null) {
-            Log.e(TAG, "ProjectId is null");
-            Toast.makeText(this, "Error: No project ID", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        Log.d(TAG, "Loading project details from BookingOrder");
-
-        db.collection("BookingOrder")
-                .document(projectId)
-                .get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot.exists()) {
-                        Log.d(TAG, "Project document found");
-
-                        // 🔥 CLIENT INFO FROM BOOKINGORDER (exact field names from screenshot)
-                        String clientName = documentSnapshot.getString("Name");
-                        String clientEmail = documentSnapshot.getString("Email");
-                        String clientPhone = documentSnapshot.getString("Mobile Number");
-
-                        String siteAddress = documentSnapshot.getString("Site_Address");
-                        String workDescription = documentSnapshot.getString("Description");
-
-                        // Set client info
-                        etClientName.setText(clientName != null ? clientName : "");
-                        etClientEmail.setText(clientEmail != null ? clientEmail : "");
-                        etClientPhone.setText(clientPhone != null ? clientPhone : "");
-                        etClientAddress.setText(siteAddress != null ? siteAddress : "");
-                        etWorkDescription.setText(workDescription != null ? workDescription : "");
-
-                        Log.d(TAG, "Client info loaded: " + clientName);
-                        Log.d(TAG, "Client Email: " + clientEmail);
-                        Log.d(TAG, "Client Phone: " + clientPhone);
-                        Log.d(TAG, "Site Address: " + siteAddress);
-                        Log.d(TAG, "Description: " + workDescription);
-
-                    } else {
-                        Log.e(TAG, "Project document not found");
-                        Toast.makeText(this, "Project not found", Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error loading project", e);
-                    Toast.makeText(this, "Error loading project: " + e.getMessage(),
-                            Toast.LENGTH_SHORT).show();
-                });
-    }
-
-
-    private void loadWorkerDetails() {
-        if (workerId == null) {
-            Log.e(TAG, "WorkerId is null");
-            Toast.makeText(this, "Error: Not logged in", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        Log.d(TAG, "Loading worker details from users collection");
-
-        db.collection("users")
-                .document(workerId)
-                .get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot.exists()) {
-                        Log.d(TAG, "Worker document found");
-
-                        // 🔥 BUILD FULL NAME FROM SEPARATE FIELDS (exact field names from screenshot)
-                        String firstName = documentSnapshot.getString("FirstName");
-                        String middleInitial = documentSnapshot.getString("MiddleInitial");
-                        String lastName = documentSnapshot.getString("LastName");
-
-                        String fullName = firstName + " " + middleInitial + " " + lastName;
-
-
-                        String workerFullName = fullName.toString();
-                        String workerEmail = documentSnapshot.getString("email");
-                        String workerPhone = documentSnapshot.getString("Mobile Number");
-                        String workerAddress = documentSnapshot.getString("Address");
-                        WorkerName.setText(workerFullName);
-                        WorkerEmail.setText(workerEmail != null ? workerEmail : "");
-                        WorkerPhone.setText(workerPhone != null ? workerPhone : "");
-                        WorkerAddress.setText(workerAddress != null ? workerAddress : "");
-
-                        Log.d(TAG, "Worker info loaded");
-                        Log.d(TAG, "Full Name: " + workerFullName);
-                        Log.d(TAG, "Email: " + workerEmail);
-                        Log.d(TAG, "Phone: " + workerPhone);
-                        Log.d(TAG, "Address: " + workerAddress);
-
-                    } else {
-                        Log.e(TAG, "Worker document not found");
-                        Toast.makeText(this, "Worker profile not found", Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error loading worker details", e);
-                    Toast.makeText(this, "Error loading worker details: " + e.getMessage(),
-                            Toast.LENGTH_SHORT).show();
-                });
     }
 
     private void setupRecyclerViews() {
@@ -448,15 +322,11 @@ public class ProjectCostQuote extends AppCompatActivity {
         double totalLabor = calculateTotalLabor();
         double totalMisc = calculateTotalMisc();
         double grandTotal = totalMaterials + totalLabor + totalMisc;
-        double VAT = grandTotal * 0.12;
-        double grandTotal2 = grandTotal + VAT;
 
         tvTotalMaterials.setText("₱" + currencyFormat.format(totalMaterials));
         tvTotalLabor.setText("₱" + currencyFormat.format(totalLabor));
         tvTotalMisc.setText("₱" + currencyFormat.format(totalMisc));
         tvGrandTotal.setText("₱" + currencyFormat.format(grandTotal));
-        tvVAT.setText("₱" + currencyFormat.format(VAT));
-        tvGrandTotal2.setText("₱" + currencyFormat.format(grandTotal2));
     }
 
     private double calculateTotalMaterials() {
@@ -483,6 +353,9 @@ public class ProjectCostQuote extends AppCompatActivity {
         return total;
     }
 
+    /**
+     * Generate invoice HTML for preview/download
+     */
     private void generateInvoice() {
         if (!validateInputs()) {
             return;
@@ -502,6 +375,9 @@ public class ProjectCostQuote extends AppCompatActivity {
         }
     }
 
+    /**
+     * Show dialog to confirm sending proposal to client
+     */
     private void showSendProposalDialog() {
         if (!validateInputs()) {
             return;
@@ -515,15 +391,21 @@ public class ProjectCostQuote extends AppCompatActivity {
                 .show();
     }
 
+    /**
+     * Send proposal to Firebase (client will receive notification)
+     */
     private void sendProposalToClient() {
         Toast.makeText(this, "Sending proposal...", Toast.LENGTH_SHORT).show();
 
         Invoice invoice = createInvoiceObject();
-        InvoiceProposalModel proposal = new InvoiceProposalModel(invoice, workerId, userId);
-        proposal.setProjectId(projectId);
-        proposal.setUserId(userId);
 
+        // IMPORTANT: Get the projectId from intent
+        String projectId = getIntent().getStringExtra("projectId");
 
+        InvoiceProposalModel proposal = new InvoiceProposalModel(invoice, workerId, clientId);
+
+        // Link proposal to the project
+        proposal.setProjectId(projectId);  // ← ADD THIS LINE
 
         proposalManager.submitProposal(proposal, new ProposalFirebaseManager.OnProposalSubmitListener() {
             @Override
@@ -541,6 +423,11 @@ public class ProjectCostQuote extends AppCompatActivity {
                         Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    private void sendNotificationToClient(String proposalId) {
+        // TODO: Implement FCM notification to client
+        // You'll need to have the client's FCM token stored in their user document
     }
 
     private boolean validateInputs() {
@@ -567,10 +454,10 @@ public class ProjectCostQuote extends AppCompatActivity {
     private Invoice createInvoiceObject() {
         Invoice invoice = new Invoice();
 
-        invoice.setWorkerName(WorkerName.getText().toString());
-        invoice.setWorkerAddress(WorkerAddress.getText().toString());
-        invoice.setWorkerPhone(WorkerPhone.getText().toString());
-        invoice.setWorkerEmail(WorkerEmail.getText().toString());
+        invoice.setCompanyName(WorkerName.getText().toString());
+        invoice.setCompanyAddress(WorkerAddress.getText().toString());
+        invoice.setCompanyPhone(WorkerPhone.getText().toString());
+        invoice.setCompanyEmail(WorkerEmail.getText().toString());
 
         invoice.setClientName(etClientName.getText().toString());
         invoice.setClientAddress(etClientAddress.getText().toString());
@@ -582,8 +469,6 @@ public class ProjectCostQuote extends AppCompatActivity {
         invoice.setMaterials(new ArrayList<>(materialsList));
         invoice.setLabor(new ArrayList<>(laborList));
         invoice.setMiscellaneous(new ArrayList<>(miscList));
-        invoice.setVat(Double.parseDouble(tvVAT.getText().toString()));
-        invoice.setGrandTotalWithVat(Double.parseDouble(tvGrandTotal2.getText().toString()));
 
         return invoice;
     }

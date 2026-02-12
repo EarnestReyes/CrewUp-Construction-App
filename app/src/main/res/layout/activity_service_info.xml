@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F6F7F9">
+    android:background="@color/bg_color">
 
     <!-- Back button -->
     <ImageView
@@ -36,14 +35,15 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:fillViewport="true"
-        app:layout_constraintTop_toBottomOf="@id/btnBack"
         app:layout_constraintBottom_toTopOf="@id/btnSubmit"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toBottomOf="@id/btnBack">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@color/bg_color"
             android:orientation="vertical"
             android:padding="16dp">
 
@@ -78,8 +78,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                app:boxBackgroundMode="outline"
-                android:hint="Site Address">
+                android:hint="Site Address"
+                app:boxBackgroundMode="outline">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etAddress"
@@ -95,8 +95,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                app:boxBackgroundMode="outline"
-                android:hint="Date and Time">
+                android:hint="Date and Time"
+                app:boxBackgroundMode="outline">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etDateTime"
@@ -110,8 +110,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                app:boxBackgroundMode="outline"
-                android:hint="Description">
+                android:hint="Description"
+                app:boxBackgroundMode="outline">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etDescription"
@@ -126,8 +126,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                app:boxBackgroundMode="outline"
-                android:hint="Budget (₱)">
+                android:hint="Budget (₱)"
+                app:boxBackgroundMode="outline">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etBudget"
@@ -159,7 +159,7 @@
                     android:layout_width="96dp"
                     android:layout_height="96dp"
                     android:background="@drawable/bg_image"
-                    android:scaleType="centerCrop"/>
+                    android:scaleType="centerCrop" />
 
                 <ImageView
                     android:id="@+id/photo2"
@@ -167,7 +167,7 @@
                     android:layout_height="96dp"
                     android:layout_marginStart="12dp"
                     android:background="@drawable/bg_image"
-                    android:scaleType="centerCrop"/>
+                    android:scaleType="centerCrop" />
 
                 <ImageView
                     android:id="@+id/photo3"
@@ -175,7 +175,7 @@
                     android:layout_height="96dp"
                     android:layout_marginStart="12dp"
                     android:background="@drawable/bg_image"
-                    android:scaleType="centerCrop"/>
+                    android:scaleType="centerCrop" />
             </LinearLayout>
 
         </LinearLayout>
@@ -189,7 +189,7 @@
         android:layout_margin="16dp"
         android:text="Continue"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
