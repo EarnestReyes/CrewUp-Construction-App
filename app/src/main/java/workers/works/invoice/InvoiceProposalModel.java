@@ -5,11 +5,9 @@ import java.util.List;
 
 /**
  * Model representing an invoice proposal sent from Worker to Client
+ * FIXED: Added vat and grandTotalWithVat getters/setters
  */
 public class InvoiceProposalModel {
-
-    private static double VAT = 0;
-    private static double GRAND = 0;
 
     private String proposalId;
     private String workerId;
@@ -28,6 +26,7 @@ public class InvoiceProposalModel {
     private String clientEmail;
 
     private String workDescription;
+    private String workerDescription; // Add this for compatibility
 
     // Cost breakdown
     private List<MaterialItem> materials;
@@ -38,11 +37,11 @@ public class InvoiceProposalModel {
     private double totalMaterials;
     private double totalLabor;
     private double totalMisc;
-    private double grandTotal;
+    private double totalCost;  // Subtotal (same as grandTotal for compatibility)
 
+    // 🔥 VAT FIELDS - THESE WERE MISSING GETTERS/SETTERS!
     private double vat;
-    private double grandTotalWithVat;
-
+    private double grandTotalWithVat;  // This is actually grandTotalWithVat
 
     // Status tracking
     private String status; // "pending", "accepted", "declined"
@@ -72,6 +71,7 @@ public class InvoiceProposalModel {
         this.clientEmail = invoice.getClientEmail();
 
         this.workDescription = invoice.getWorkDescription();
+        this.workerDescription = invoice.getWorkDescription(); // Duplicate for compatibility
 
         this.materials = invoice.getMaterials();
         this.labor = invoice.getLabor();
@@ -81,7 +81,11 @@ public class InvoiceProposalModel {
         this.totalMaterials = calculateMaterialsTotal();
         this.totalLabor = calculateLaborTotal();
         this.totalMisc = calculateMiscTotal();
-        this.grandTotal = totalMaterials + totalLabor + totalMisc;
+
+        // Subtotal
+        this.totalCost = totalMaterials + totalLabor + totalMisc;
+
+        // VAT and Grand Total
         this.vat = invoice.getVat();
         this.grandTotalWithVat = invoice.getGrandTotalWithVat();
     }
@@ -116,7 +120,7 @@ public class InvoiceProposalModel {
         return total;
     }
 
-
+    // Getters and Setters
     public String getProposalId() {
         return proposalId;
     }
@@ -133,7 +137,13 @@ public class InvoiceProposalModel {
         this.workerId = workerId;
     }
 
+    public String getUserId() {
+        return userId;
+    }
 
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
 
     public String getProjectId() {
         return projectId;
@@ -215,6 +225,14 @@ public class InvoiceProposalModel {
         this.workDescription = workDescription;
     }
 
+    public String getWorkerDescription() {
+        return workerDescription;
+    }
+
+    public void setWorkerDescription(String workerDescription) {
+        this.workerDescription = workerDescription;
+    }
+
     public List<MaterialItem> getMaterials() {
         return materials;
     }
@@ -263,12 +281,33 @@ public class InvoiceProposalModel {
         this.totalMisc = totalMisc;
     }
 
-    public double getGrandTotal() {
-        return grandTotal;
+    public double getTotalCost() {
+        return totalCost;
     }
 
-    public void setGrandTotal(double grandTotal) {
-        this.grandTotal = grandTotal;
+    public void setTotalCost(double totalCost) {
+        this.totalCost = totalCost;
+    }
+
+    // 🔥 VAT GETTERS/SETTERS - THESE WERE MISSING!
+    public double getVat() {
+        return vat;
+    }
+
+    public void setVat(double vat) {
+        this.vat = vat;
+    }
+
+
+
+
+    // Compatibility getter/setter for grandTotalWithVat
+    public double getGrandTotalWithVat() {
+        return grandTotalWithVat;
+    }
+
+    public void setGrandTotalWithVat(double grandTotalWithVat) {
+        this.grandTotalWithVat = grandTotalWithVat;
     }
 
     public String getStatus() {
@@ -301,14 +340,5 @@ public class InvoiceProposalModel {
 
     public void setResponseMessage(String responseMessage) {
         this.responseMessage = responseMessage;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
-
-    public String getUserId() {
-        return userId;
-
     }
 }

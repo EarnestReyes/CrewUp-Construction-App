@@ -3,6 +3,7 @@ package workers.works.invoice;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
@@ -18,6 +19,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.io.File;
 import java.text.DecimalFormat;
@@ -33,8 +35,12 @@ import dialogs.AddMiscDialog;
 
 public class ProjectCostQuote extends AppCompatActivity {
 
-    // Company Info
+    private static final String TAG = "ProjectCostQuote";
+
+    // Worker Info
     private TextInputEditText WorkerName, WorkerAddress, WorkerPhone, WorkerEmail;
+
+    // Client Info
     private TextInputEditText etClientName, etClientAddress, etClientPhone, etClientEmail;
     private TextInputEditText etWorkDescription;
 
@@ -56,19 +62,31 @@ public class ProjectCostQuote extends AppCompatActivity {
     private List<MiscItem> miscList = new ArrayList<>();
 
     // Summary TextViews
-    private TextView tvTotalMaterials, tvTotalLabor, tvTotalMisc, tvGrandTotal;
+    private TextView tvTotalMaterials, tvTotalLabor, tvTotalMisc;
+    private TextView tvSubtotal;      // tv_grand_total = Subtotal before VAT
+    private TextView tvVAT;           // tv_VAT = 12% VAT amount
+    private TextView tvGrandTotal2;   // tv_grand_total2 = Final total with VAT
 
     private DecimalFormat currencyFormat = new DecimalFormat("#,##0.00");
 
+    // 🔥 STORE RAW VALUES - Add these fields
+    private double rawSubtotal = 0.0;
+    private double rawVAT = 0.0;
+    private double rawGrandTotal = 0.0;
+
     // Firebase
+    private FirebaseFirestore db;
     private ProposalFirebaseManager proposalManager;
     private String workerId;
-    private String clientId; // You'll need to pass this when opening the activity
+    private String clientId;
+    private String projectId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_project_cost_quote);
+
+        db = FirebaseFirestore.getInstance();
 
         // Get current worker ID from Firebase Auth
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
@@ -76,18 +94,22 @@ public class ProjectCostQuote extends AppCompatActivity {
             workerId = currentUser.getUid();
         }
 
-        // Get client ID from intent
+        // Get data from intent
+        projectId = getIntent().getStringExtra("projectId");
         clientId = getIntent().getStringExtra("clientId");
+
+        Log.d(TAG, "ProjectId: " + projectId + ", ClientId: " + clientId);
 
         proposalManager = new ProposalFirebaseManager();
 
         initializeViews();
         setupRecyclerViews();
         setupListeners();
+        loadProjectData();
     }
 
     private void initializeViews() {
-        // Company Info
+        // Worker Info
         WorkerName = findViewById(R.id.worker_name);
         WorkerAddress = findViewById(R.id.worker_address);
         WorkerPhone = findViewById(R.id.worker_mobile);
@@ -107,7 +129,7 @@ public class ProjectCostQuote extends AppCompatActivity {
         btnAddLabor = findViewById(R.id.btn_add_labor);
         btnAddMisc = findViewById(R.id.btn_add_misc);
         btnGenerateInvoice = findViewById(R.id.btn_generate_invoice);
-        btnSendProposal = findViewById(R.id.btn_send_proposal); // Add this button to your layout
+        btnSendProposal = findViewById(R.id.btn_send_proposal);
         fabBack = findViewById(R.id.fab_back);
 
         // RecyclerViews
@@ -115,15 +137,80 @@ public class ProjectCostQuote extends AppCompatActivity {
         rvLabor = findViewById(R.id.rv_labor);
         rvMisc = findViewById(R.id.rv_misc);
 
-        // Summary TextViews
+        // Summary TextViews - Match XML IDs exactly
         tvTotalMaterials = findViewById(R.id.tv_total_materials);
         tvTotalLabor = findViewById(R.id.tv_total_labor);
         tvTotalMisc = findViewById(R.id.tv_total_misc);
-        tvGrandTotal = findViewById(R.id.tv_grand_total);
+        tvSubtotal = findViewById(R.id.tv_grand_total);    // Subtotal (before VAT)
+        tvVAT = findViewById(R.id.tv_VAT);                  // VAT (12%)
+        tvGrandTotal2 = findViewById(R.id.tv_grand_total2); // Grand Total (with VAT)
+    }
+
+    private void loadProjectData() {
+        if (projectId == null) {
+            Log.w(TAG, "No projectId provided");
+            return;
+        }
+
+        Log.d(TAG, "Loading project data for: " + projectId);
+
+        // Load from BookingOrder
+        db.collection("BookingOrder")
+                .document(projectId)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    if (doc.exists()) {
+                        etClientName.setText(doc.getString("Name"));
+                        etClientEmail.setText(doc.getString("Email"));
+                        etClientPhone.setText(doc.getString("Mobile Number"));
+                        etClientAddress.setText(doc.getString("Site_Address"));
+                        etWorkDescription.setText(doc.getString("Description"));
+
+                        Log.d(TAG, "Client data loaded");
+                    }
+                })
+                .addOnFailureListener(e -> Log.e(TAG, "Error loading project data", e));
+
+        // Load worker info
+        if (workerId != null) {
+            db.collection("users")
+                    .document(workerId)
+                    .get()
+                    .addOnSuccessListener(doc -> {
+                        if (doc.exists()) {
+                            String firstName = doc.getString("FirstName");
+                            String middleInitial = doc.getString("MiddleInitial");
+                            String lastName = doc.getString("LastName");
+
+                            StringBuilder fullName = new StringBuilder();
+                            if (firstName != null) fullName.append(firstName);
+                            if (middleInitial != null) {
+                                if (fullName.length() > 0) fullName.append(" ");
+                                fullName.append(middleInitial);
+                                if (!middleInitial.endsWith(".")) fullName.append(".");
+                            }
+                            if (lastName != null) {
+                                if (fullName.length() > 0) fullName.append(" ");
+                                fullName.append(lastName);
+                            }
+
+                            WorkerName.setText(fullName.toString());
+                            WorkerEmail.setText(doc.getString("email"));
+                            WorkerPhone.setText(doc.getString("Mobile Number"));
+
+                            String address = doc.getString("address");
+                            if (address == null) address = doc.getString("Address");
+                            if (address == null) address = doc.getString("Home_Address");
+                            WorkerAddress.setText(address != null ? address : "");
+
+                            Log.d(TAG, "Worker data loaded");
+                        }
+                    })
+                    .addOnFailureListener(e -> Log.e(TAG, "Error loading worker data", e));
+        }
     }
 
     private void setupRecyclerViews() {
-        // Materials RecyclerView
         materialAdapter = new MaterialAdapter(materialsList, new MaterialAdapter.OnItemActionListener() {
             @Override
             public void onEdit(int position) {
@@ -138,7 +225,6 @@ public class ProjectCostQuote extends AppCompatActivity {
         rvMaterials.setLayoutManager(new LinearLayoutManager(this));
         rvMaterials.setAdapter(materialAdapter);
 
-        // Labor RecyclerView
         laborAdapter = new LaborAdapter(laborList, new LaborAdapter.OnItemActionListener() {
             @Override
             public void onEdit(int position) {
@@ -153,7 +239,6 @@ public class ProjectCostQuote extends AppCompatActivity {
         rvLabor.setLayoutManager(new LinearLayoutManager(this));
         rvLabor.setAdapter(laborAdapter);
 
-        // Misc RecyclerView
         miscAdapter = new MiscAdapter(miscList, new MiscAdapter.OnItemActionListener() {
             @Override
             public void onEdit(int position) {
@@ -170,55 +255,37 @@ public class ProjectCostQuote extends AppCompatActivity {
     }
 
     private void setupListeners() {
-        // Add items
         btnAddMaterials.setOnClickListener(v -> showAddMaterialDialog());
         btnAddLabor.setOnClickListener(v -> showAddLaborDialog());
         btnAddMisc.setOnClickListener(v -> showAddMiscDialog());
-
-        // Generate invoice (preview only)
         btnGenerateInvoice.setOnClickListener(v -> generateInvoice());
-
-        // Send proposal to client (saves to Firebase)
         btnSendProposal.setOnClickListener(v -> showSendProposalDialog());
-
-        // Back button
         fabBack.setOnClickListener(v -> finish());
     }
 
+    // Material dialogs
     private void showAddMaterialDialog() {
-        AddMaterialDialog dialog = new AddMaterialDialog(this, null, new AddMaterialDialog.OnMaterialAddedListener() {
-            @Override
-            public void onMaterialAdded(MaterialItem material) {
-                materialsList.add(material);
-                materialAdapter.notifyDataSetChanged();
-                updateTotals();
-            }
+        AddMaterialDialog dialog = new AddMaterialDialog(this, null, material -> {
+            materialsList.add(material);
+            materialAdapter.notifyDataSetChanged();
+            updateTotals();
         });
         dialog.show();
         if (dialog.getWindow() != null) {
-            dialog.getWindow().setLayout(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-            );
+            dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         }
     }
 
     private void editMaterial(int position) {
         MaterialItem material = materialsList.get(position);
-        AddMaterialDialog dialog = new AddMaterialDialog(this, material, new AddMaterialDialog.OnMaterialAddedListener() {
-            @Override
-            public void onMaterialAdded(MaterialItem updatedMaterial) {
-                materialsList.set(position, updatedMaterial);
-                materialAdapter.notifyDataSetChanged();
-                updateTotals();
-            }
+        AddMaterialDialog dialog = new AddMaterialDialog(this, material, updatedMaterial -> {
+            materialsList.set(position, updatedMaterial);
+            materialAdapter.notifyDataSetChanged();
+            updateTotals();
         });
         dialog.show();
         if (dialog.getWindow() != null) {
-            dialog.getWindow().setLayout(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-            );
+            dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         }
     }
 
@@ -229,40 +296,29 @@ public class ProjectCostQuote extends AppCompatActivity {
         Toast.makeText(this, "Material deleted", Toast.LENGTH_SHORT).show();
     }
 
+    // Labor dialogs
     private void showAddLaborDialog() {
-        AddLaborDialog dialog = new AddLaborDialog(this, null, new AddLaborDialog.OnLaborAddedListener() {
-            @Override
-            public void onLaborAdded(LaborItem labor) {
-                laborList.add(labor);
-                laborAdapter.notifyDataSetChanged();
-                updateTotals();
-            }
+        AddLaborDialog dialog = new AddLaborDialog(this, null, labor -> {
+            laborList.add(labor);
+            laborAdapter.notifyDataSetChanged();
+            updateTotals();
         });
         dialog.show();
         if (dialog.getWindow() != null) {
-            dialog.getWindow().setLayout(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-            );
+            dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         }
     }
 
     private void editLabor(int position) {
         LaborItem labor = laborList.get(position);
-        AddLaborDialog dialog = new AddLaborDialog(this, labor, new AddLaborDialog.OnLaborAddedListener() {
-            @Override
-            public void onLaborAdded(LaborItem updatedLabor) {
-                laborList.set(position, updatedLabor);
-                laborAdapter.notifyDataSetChanged();
-                updateTotals();
-            }
+        AddLaborDialog dialog = new AddLaborDialog(this, labor, updatedLabor -> {
+            laborList.set(position, updatedLabor);
+            laborAdapter.notifyDataSetChanged();
+            updateTotals();
         });
         dialog.show();
         if (dialog.getWindow() != null) {
-            dialog.getWindow().setLayout(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-            );
+            dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         }
     }
 
@@ -273,40 +329,29 @@ public class ProjectCostQuote extends AppCompatActivity {
         Toast.makeText(this, "Labor item deleted", Toast.LENGTH_SHORT).show();
     }
 
+    // Misc dialogs
     private void showAddMiscDialog() {
-        AddMiscDialog dialog = new AddMiscDialog(this, null, new AddMiscDialog.OnMiscAddedListener() {
-            @Override
-            public void onMiscAdded(MiscItem misc) {
-                miscList.add(misc);
-                miscAdapter.notifyDataSetChanged();
-                updateTotals();
-            }
+        AddMiscDialog dialog = new AddMiscDialog(this, null, misc -> {
+            miscList.add(misc);
+            miscAdapter.notifyDataSetChanged();
+            updateTotals();
         });
         dialog.show();
         if (dialog.getWindow() != null) {
-            dialog.getWindow().setLayout(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-            );
+            dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         }
     }
 
     private void editMisc(int position) {
         MiscItem misc = miscList.get(position);
-        AddMiscDialog dialog = new AddMiscDialog(this, misc, new AddMiscDialog.OnMiscAddedListener() {
-            @Override
-            public void onMiscAdded(MiscItem updatedMisc) {
-                miscList.set(position, updatedMisc);
-                miscAdapter.notifyDataSetChanged();
-                updateTotals();
-            }
+        AddMiscDialog dialog = new AddMiscDialog(this, misc, updatedMisc -> {
+            miscList.set(position, updatedMisc);
+            miscAdapter.notifyDataSetChanged();
+            updateTotals();
         });
         dialog.show();
         if (dialog.getWindow() != null) {
-            dialog.getWindow().setLayout(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-            );
+            dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         }
     }
 
@@ -317,16 +362,46 @@ public class ProjectCostQuote extends AppCompatActivity {
         Toast.makeText(this, "Miscellaneous charge deleted", Toast.LENGTH_SHORT).show();
     }
 
+    /**
+     * 🔥 UPDATE TOTALS WITH VAT AND STORE RAW VALUES
+     */
     private void updateTotals() {
         double totalMaterials = calculateTotalMaterials();
         double totalLabor = calculateTotalLabor();
         double totalMisc = calculateTotalMisc();
-        double grandTotal = totalMaterials + totalLabor + totalMisc;
 
+        // Subtotal (before VAT)
+        rawSubtotal = totalMaterials + totalLabor + totalMisc;
+
+        // VAT (12%)
+        rawVAT = rawSubtotal * 0.12;
+
+        // Grand Total (Subtotal + VAT)
+        rawGrandTotal = rawSubtotal + rawVAT;
+
+        // Update UI
         tvTotalMaterials.setText("₱" + currencyFormat.format(totalMaterials));
         tvTotalLabor.setText("₱" + currencyFormat.format(totalLabor));
         tvTotalMisc.setText("₱" + currencyFormat.format(totalMisc));
-        tvGrandTotal.setText("₱" + currencyFormat.format(grandTotal));
+        tvSubtotal.setText("₱" + currencyFormat.format(rawSubtotal));
+        tvVAT.setText("₱" + currencyFormat.format(rawVAT));
+        tvGrandTotal2.setText("₱" + currencyFormat.format(rawGrandTotal));
+
+        Log.d(TAG, String.format("Totals - Subtotal: %.2f, VAT: %.2f, Grand Total: %.2f",
+                rawSubtotal, rawVAT, rawGrandTotal));
+    }
+
+    // 🔥 HELPER METHODS TO GET RAW NUMERIC VALUES
+    public double getRawSubtotal() {
+        return rawSubtotal;
+    }
+
+    public double getRawVAT() {
+        return rawVAT;
+    }
+
+    public double getRawGrandTotal() {
+        return rawGrandTotal;
     }
 
     private double calculateTotalMaterials() {
@@ -353,9 +428,6 @@ public class ProjectCostQuote extends AppCompatActivity {
         return total;
     }
 
-    /**
-     * Generate invoice HTML for preview/download
-     */
     private void generateInvoice() {
         if (!validateInputs()) {
             return;
@@ -375,9 +447,6 @@ public class ProjectCostQuote extends AppCompatActivity {
         }
     }
 
-    /**
-     * Show dialog to confirm sending proposal to client
-     */
     private void showSendProposalDialog() {
         if (!validateInputs()) {
             return;
@@ -392,42 +461,49 @@ public class ProjectCostQuote extends AppCompatActivity {
     }
 
     /**
-     * Send proposal to Firebase (client will receive notification)
+     * 🔥 SEND PROPOSAL WITH VAT AND GRAND TOTAL TO WORKERINPUT
      */
     private void sendProposalToClient() {
         Toast.makeText(this, "Sending proposal...", Toast.LENGTH_SHORT).show();
 
         Invoice invoice = createInvoiceObject();
 
-        // IMPORTANT: Get the projectId from intent
-        String projectId = getIntent().getStringExtra("projectId");
+        // 🔥 USE RAW VALUES FOR CALCULATIONS
+        invoice.setVat(rawVAT);
+        invoice.setGrandTotalWithVat(rawGrandTotal);
+
+        Log.d(TAG, String.format("Creating proposal - Subtotal: %.2f, VAT: %.2f, Grand Total: %.2f",
+                rawSubtotal, rawVAT, rawGrandTotal));
 
         InvoiceProposalModel proposal = new InvoiceProposalModel(invoice, workerId, clientId);
+        proposal.setProjectId(projectId);
 
-        // Link proposal to the project
-        proposal.setProjectId(projectId);  // ← ADD THIS LINE
+        // 🔥 EXPLICITLY SET VAT AND GRAND TOTAL
+        proposal.setVat(rawVAT);
+        proposal.setGrandTotalWithVat(rawGrandTotal);
+        proposal.setTotalCost(rawSubtotal);  // Set subtotal as totalCost
+
+        Log.d(TAG, "Proposal VAT: " + proposal.getVat());
+        //Log.d(TAG, "Proposal Grand Total: " + proposal.setGrandTotalWithVat());
 
         proposalManager.submitProposal(proposal, new ProposalFirebaseManager.OnProposalSubmitListener() {
             @Override
             public void onSuccess(String proposalId) {
+                Log.d(TAG, "Proposal submitted successfully: " + proposalId);
                 Toast.makeText(ProjectCostQuote.this,
-                        "Proposal sent successfully! Waiting for client approval.",
+                        "Proposal sent successfully!",
                         Toast.LENGTH_LONG).show();
                 finish();
             }
 
             @Override
             public void onFailure(String error) {
+                Log.e(TAG, "Proposal submission failed: " + error);
                 Toast.makeText(ProjectCostQuote.this,
                         "Failed to send proposal: " + error,
                         Toast.LENGTH_LONG).show();
             }
         });
-    }
-
-    private void sendNotificationToClient(String proposalId) {
-        // TODO: Implement FCM notification to client
-        // You'll need to have the client's FCM token stored in their user document
     }
 
     private boolean validateInputs() {
@@ -454,10 +530,10 @@ public class ProjectCostQuote extends AppCompatActivity {
     private Invoice createInvoiceObject() {
         Invoice invoice = new Invoice();
 
-        invoice.setCompanyName(WorkerName.getText().toString());
-        invoice.setCompanyAddress(WorkerAddress.getText().toString());
-        invoice.setCompanyPhone(WorkerPhone.getText().toString());
-        invoice.setCompanyEmail(WorkerEmail.getText().toString());
+        invoice.setWorkerName(WorkerName.getText().toString());
+        invoice.setWorkerAddress(WorkerAddress.getText().toString());
+        invoice.setWorkerPhone(WorkerPhone.getText().toString());
+        invoice.setWorkerEmail(WorkerEmail.getText().toString());
 
         invoice.setClientName(etClientName.getText().toString());
         invoice.setClientAddress(etClientAddress.getText().toString());

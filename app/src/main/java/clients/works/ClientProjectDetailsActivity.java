@@ -175,26 +175,14 @@ public class ClientProjectDetailsActivity extends AppCompatActivity {
 
         // Notes (NULL-SAFE FIX 🔥)
         if (tvNotes != null) {
-            if (project.getNotes() != null && !project.getNotes().isEmpty()) {
+            if (project.getWorkDescription() != null && !project.getWorkDescription().isEmpty()) {
                 tvNotes.setVisibility(View.VISIBLE);
-                tvNotes.setText(project.getNotes());
+                tvNotes.setText(project.getWorkDescription());
             } else {
                 tvNotes.setVisibility(View.GONE);
             }
         }
 
-        // Dates (NULL-SAFE)
-        if (tvStartDate != null) {
-            tvStartDate.setText(project.getStartDate() != null
-                    ? dateFormat.format(project.getStartDate().toDate())
-                    : "Not set");
-        }
-
-        if (tvCompletionDate != null) {
-            tvCompletionDate.setText(project.getCompletionDate() != null
-                    ? dateFormat.format(project.getCompletionDate().toDate())
-                    : "Not set");
-        }
 
         updateActions(project.getStatus());
     }

@@ -195,8 +195,8 @@ public class WorkerProjectListFragment extends Fragment {
                         model.setProposal(true); // This is a WorkerInput proposal
 
                         model.setProjectId(doc.getId());
-                        model.setVat(doc.getDouble("vat"));
-                        model.setGrandTotalWithVat(doc.getDouble("grandTotalWithVat"));
+                        //model.setVat(doc.getDouble("vat"));
+                        //model.setGrandTotalWithVat(doc.getDouble("grandTotalWithVat"));
                         model.setTotalCost(doc.getDouble("grandTotal"));
                         model.setCreatedAt(doc.getString("createdAt"));
                         model.setClientName(doc.getString("clientName"));
