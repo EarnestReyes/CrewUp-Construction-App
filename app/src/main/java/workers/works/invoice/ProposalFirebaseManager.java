@@ -183,7 +183,7 @@ public class ProposalFirebaseManager {
                         InvoiceProposalModel proposal = documentSnapshot.toObject(InvoiceProposalModel.class);
                         if (listener != null) {
                             listener.onSuccess(proposal);
-                        }
+                        }//
                     } else {
                         if (listener != null) {
                             listener.onFailure("Proposal not found");
