@@ -90,12 +90,12 @@ public class NotificationsWorker extends AppCompatActivity {
 
     private void loadNotifications() {
 
-        String uid = FirebaseAuth.getInstance().getUid();
+        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
         if (uid == null) return;
 
         FirebaseFirestore.getInstance()
                 .collection("notifications")
-                .whereEqualTo("userId", uid)
+                .whereEqualTo("toUserId", uid)
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .addSnapshotListener((value, error) -> {
 
@@ -138,7 +138,6 @@ public class NotificationsWorker extends AppCompatActivity {
                     updateEmptyState();
                 });
     }
-
     private void updateEmptyState() {
         boolean isEmpty =
                 recentList.isEmpty()

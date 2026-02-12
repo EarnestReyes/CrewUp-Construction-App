@@ -29,6 +29,9 @@
             android:name="workers.works.invoice.ProjectCostQuote"
             android:exported="false" />
         <activity
+            android:name="workers.app.UserAroundLocation"
+            android:exported="false" />
+        <activity
             android:name="clients.chat.RealTimeLocation"
             android:exported="false" />
         <activity

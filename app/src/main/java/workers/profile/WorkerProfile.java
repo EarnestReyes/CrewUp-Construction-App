@@ -22,6 +22,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -205,6 +206,64 @@ public class WorkerProfile extends Fragment {
                     .addToBackStack(null)
                     .commit();
         });
+
+        btnAddPost.setOnTouchListener(new View.OnTouchListener() {
+
+            float dX, dY;
+            float downRawX, downRawY;
+            private static final int CLICK_DRAG_TOLERANCE = 10; // px
+
+            @Override
+            public boolean onTouch(View view, MotionEvent event) {
+
+                switch (event.getActionMasked()) {
+
+                    case MotionEvent.ACTION_DOWN:
+                        downRawX = event.getRawX();
+                        downRawY = event.getRawY();
+
+                        dX = view.getX() - downRawX;
+                        dY = view.getY() - downRawY;
+                        return true;
+
+                    case MotionEvent.ACTION_MOVE:
+                        view.setX(event.getRawX() + dX);
+                        view.setY(event.getRawY() + dY);
+                        return true;
+
+                    case MotionEvent.ACTION_UP:
+                        float upRawX = event.getRawX();
+                        float upRawY = event.getRawY();
+
+                        float deltaX = Math.abs(upRawX - downRawX);
+                        float deltaY = Math.abs(upRawY - downRawY);
+
+                        View parent = (View) view.getParent();
+                        int middle = parent.getWidth() / 2;
+
+                        // 🔥 SNAP TO EDGE
+                        if (view.getX() >= middle) {
+                            view.animate()
+                                    .x(parent.getWidth() - view.getWidth())
+                                    .setDuration(200)
+                                    .start();
+                        } else {
+                            view.animate()
+                                    .x(0)
+                                    .setDuration(200)
+                                    .start();
+                        }
+
+                        // 🔥 CLICK vs DRAG
+                        if (deltaX < CLICK_DRAG_TOLERANCE && deltaY < CLICK_DRAG_TOLERANCE) {
+                            view.performClick();
+                        }
+                        return true;
+                }
+                return false;
+            }
+        });
+
 
 
         return view;

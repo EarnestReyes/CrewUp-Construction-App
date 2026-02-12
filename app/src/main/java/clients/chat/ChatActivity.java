@@ -47,7 +47,7 @@ public class ChatActivity extends AppCompatActivity {
     private String chatroomId;
     private ChatRecyclerAdapter adapter;
     private EditText messageInput;
-    private ImageButton sendMessageBtn, backBtn, hire_btn;
+    private ImageButton sendMessageBtn, backBtn, hire_btn, globe_btn;
     private TextView otherUsername;
     private RecyclerView recyclerView;
     private ImageView profilePic;
@@ -82,6 +82,7 @@ public class ChatActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.chat_recycler_view);
         profilePic = findViewById(R.id.profile_pic_image_view);
         hire_btn = findViewById(R.id.hire_btn);
+        globe_btn = findViewById(R.id.globe_btn);
 
         View root = findViewById(R.id.main);
         View bottomLayout = findViewById(R.id.bottom_layout);
@@ -132,6 +133,11 @@ public class ChatActivity extends AppCompatActivity {
             );
 
             return insets;
+        });
+
+        globe_btn.setOnClickListener(v -> {
+            startActivity(new Intent(this, RealTimeLocation.class));
+            finish();
         });
 
         backBtn.setOnClickListener((v) -> finish());
