@@ -16,6 +16,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.ConstructionApp.R;
 import com.google.android.material.card.MaterialCardView;
+import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.DecimalFormat;
@@ -108,7 +109,9 @@ public class ClientProjectDetailsActivity extends AppCompatActivity {
         btnDeclineProposal = findViewById(R.id.btnDeclineProposal);
 
         if (btnAcceptProposal != null) {
-            btnAcceptProposal.setOnClickListener(v -> showCompleteDialog());
+            btnAcceptProposal.setOnClickListener(v -> {
+                showCompleteDialog();
+            });
         }
 
         if (btnDeclineProposal != null) {
@@ -170,8 +173,7 @@ public class ClientProjectDetailsActivity extends AppCompatActivity {
         tvTotalMaterials.setText(nonNull(String.valueOf(project.getMaterialsCost()), "0.00"));
         tvTotalLabor.setText(nonNull(String.valueOf(project.getLaborCost()), "0.00"));
         tvTotalMisc.setText(nonNull(String.valueOf(project.getMiscCost()), "0.00"));
-        tvGrandTotal.setText(nonNull(String.valueOf(project.getMiscCost()), "0.00"));
-
+        tvGrandTotal.setText(currencyFormat.format(project.getGrandTotalWithVat()));
 
         // Notes (NULL-SAFE FIX 🔥)
         if (tvNotes != null) {
@@ -182,8 +184,6 @@ public class ClientProjectDetailsActivity extends AppCompatActivity {
                 tvNotes.setVisibility(View.GONE);
             }
         }
-
-
         updateActions(project.getStatus());
     }
 
@@ -211,7 +211,11 @@ public class ClientProjectDetailsActivity extends AppCompatActivity {
         new AlertDialog.Builder(this)
                 .setTitle("Accept Proposal")
                 .setMessage("Do you want to accept this proposal?")
-                .setPositiveButton("Yes", (d, w) -> updateStatus("active"))
+                .setPositiveButton("Yes", (d, w) -> {
+                    updateStatus("active");
+                    updateAcceptButtonVisibility();
+                    acceptProposal(projectId);
+                })
                 .setNegativeButton("No", null)
                 .show();
     }
@@ -234,4 +238,39 @@ public class ClientProjectDetailsActivity extends AppCompatActivity {
     private String nonNull(String v, String fallback) {
         return v != null ? v : fallback;
     }
+    private void acceptProposal(String proposalId) {
+
+        if (proposalId == null) {
+            Toast.makeText(this, "Invalid proposal ID", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        FirebaseFirestore.getInstance()
+                .collection("WorkerInput")
+                .document(proposalId)
+                .update(
+                        "status", "active",
+                        "isAccepted", true,
+                        "respondedAt", Timestamp.now(),
+                        "responseMessage", "Accepted"
+                )
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(this, "Proposal accepted successfully", Toast.LENGTH_SHORT).show();
+                    finish(); // Close screen after accept
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Failed to accept proposal", Toast.LENGTH_SHORT).show();
+                });
+    }
+    private void updateAcceptButtonVisibility() {
+
+        if (project == null) return;
+
+        if ("active".equals(project.getStatus())) {
+            btnAcceptProposal.setVisibility(View.GONE);
+        } else {
+            btnAcceptProposal.setVisibility(View.VISIBLE);
+        }
+    }
+
 }

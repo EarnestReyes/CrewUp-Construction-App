@@ -105,12 +105,10 @@ public class Posts extends Fragment {
                     });
         }
 
-
         gallery.setOnClickListener(v -> {
             //open camera
             imagePickerLauncher.launch("image/*");
         });
-
 
         btnSend.setOnClickListener(v -> createPost());
 

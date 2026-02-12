@@ -216,7 +216,7 @@ public class ReviewDetails extends AppCompatActivity {
         // Project metadata
         bookingData.put("projectId", projectId);
         bookingData.put("userId", currentUser.getUid());
-        bookingData.put("workerId", otherId); // Worker ID if assigned
+        bookingData.put("workerId", otherId);
         bookingData.put("status", "pending");
         bookingData.put("createdAt", Timestamp.now());
 

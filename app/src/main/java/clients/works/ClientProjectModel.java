@@ -40,6 +40,8 @@ public class ClientProjectModel {
     private Double totalMisc;          // Total misc cost
     private Double vat;                // VAT amount
     private Double grandTotal;         // Total + VAT
+    private Double grandTotalWithVat;
+    private Boolean isAccepted;
 
     // Arrays
     private List<Map<String, Object>> labor;          // Labor items
@@ -287,5 +289,15 @@ public class ClientProjectModel {
 
     public void setCreatedAt(String createdAt) {
         this.createdAt = createdAt;
+    }
+    public double getGrandTotalWithVat() {
+        return grandTotalWithVat != null ? grandTotalWithVat : 0.0;
+    }
+
+    public void setGrandTotalWithVat(Double grandTotalWithVat) {
+        this.grandTotalWithVat = grandTotalWithVat;
+    }
+    public boolean isAccepted() {
+        return isAccepted;
     }
 }

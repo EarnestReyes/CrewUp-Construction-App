@@ -168,6 +168,7 @@ public class ProjectCostQuote extends AppCompatActivity {
                         etClientAddress.setText(doc.getString("Site_Address"));
                         etWorkDescription.setText(doc.getString("Description"));
 
+
                         Log.d(TAG, "ProjectId: " + projectId + ", ClientId: " + clientId);
                         Log.d(TAG, "Client data loaded");
                     }
