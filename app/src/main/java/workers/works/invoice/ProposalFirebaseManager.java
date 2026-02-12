@@ -27,18 +27,10 @@ public class ProposalFirebaseManager {
     }
     public void submitProposal(InvoiceProposalModel proposal, OnProposalSubmitListener listener) {
 
-        String userId = FirebaseAuth.getInstance().getUid();
 
-        if (userId == null) {
-            if (listener != null) {
-                listener.onFailure("User not logged in");
-            }
-            return;
-        }
 
         DocumentReference docRef = db.collection("WorkerInput").document();
         proposal.setProposalId(docRef.getId());
-        proposal.setUserId(userId);
 
         docRef.set(proposal)
                 .addOnSuccessListener(aVoid -> {

@@ -10,6 +10,9 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.example.ConstructionApp.R;
 import com.google.android.material.card.MaterialCardView;
@@ -18,50 +21,59 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 
-import clients.works.ClientProjectModel;
-
 /**
- * Activity for workers to view their own submitted proposals
- * Shows the proposal receipt with materials, labor, misc costs, VAT, and grand total
- * Allows marking the project as complete when status is "active"
- * Implements wallet balance checking and 10% labor fee deduction
+ * Worker's Proposal Receipt Activity
+ * Shows cost breakdown, VAT, grand total, and calculates 10% platform fee from labor
+ * Deducts fee from worker's wallet balance when marking project complete
  */
 public class WorkerProposalReceiptActivity extends AppCompatActivity {
 
     private static final String TAG = "WorkerProposalReceipt";
-    private static final double VAT_RATE = 0.12; // 12% VAT
-    private static final double PLATFORM_FEE_RATE = 0.10; // 10% platform fee from labor
-    private static final double MINIMUM_BALANCE_THRESHOLD = -200.0; // Can't complete if balance < -200
+    private static final double PLATFORM_FEE_RATE = 0.10; // 10% of labor cost
+    private static final double MINIMUM_BALANCE = -200.0; // Minimum allowed balance
 
     // Client info
     private TextView tvClientName, tvClientPhone, tvClientEmail;
 
-    // Project info
-    private TextView tvWorkDescription, tvNotes;
+    // Work details
+    private TextView tvWorkDescription, tvNotes, tvStatus;
+
+    // Cost breakdown
     private TextView tvTotalMaterials, tvTotalLabor, tvTotalMisc;
     private TextView tvSubtotal, tvVat, tvGrandTotal;
-    private TextView tvStatus, tvWalletBalance, tvDeductionAmount;
 
-    // Dates
-    private TextView tvStartDate, tvCompletionDate;
+    // Wallet info
+    private TextView tvWalletBalance, tvDeductionAmount;
+
+    // Cards
+    private MaterialCardView cardActions, cardWallet, cardStatus;
 
     // Actions
-    private MaterialCardView cardActions, cardStatus, cardWallet;
     private Button btnMarkComplete;
 
     private FirebaseFirestore db;
-    private WorkerProjectModel project;
     private String proposalId;
     private String workerId;
+
+    // Cost values
+    private double materialsCost = 0.0;
+    private double laborCost = 0.0;
+    private double miscCost = 0.0;
+    private double subtotal = 0.0;
+    private double vat = 0.0;
+    private double grandTotal = 0.0;
+    private double platformFee = 0.0; // 10% of labor
+
+    // Wallet
     private double currentBalance = 0.0;
 
+    // Status
+    private String currentStatus = "";
+
     private final DecimalFormat currencyFormat = new DecimalFormat("#,##0.00");
-    private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,20 +83,27 @@ public class WorkerProposalReceiptActivity extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
         proposalId = getIntent().getStringExtra("proposalId");
 
+        View root = findViewById(R.id.main);
+        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
+
         FirebaseAuth auth = FirebaseAuth.getInstance();
         if (auth.getCurrentUser() != null) {
             workerId = auth.getCurrentUser().getUid();
         }
 
         if (proposalId == null) {
-            Toast.makeText(this, "Invalid proposal ID", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Invalid proposal", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
         initViews();
         setupToolbar();
-        loadWorkerBalance(); // Load balance first
+        loadWorkerBalance();
         loadProposalDetails();
     }
 
@@ -94,36 +113,32 @@ public class WorkerProposalReceiptActivity extends AppCompatActivity {
         tvClientPhone = findViewById(R.id.tvClientPhone);
         tvClientEmail = findViewById(R.id.tvClientEmail);
 
-        // Project details
+        // Work details
         tvWorkDescription = findViewById(R.id.tvWorkDescription);
         tvNotes = findViewById(R.id.tvNotes);
+        tvStatus = findViewById(R.id.tvStatus);
+
+        // Cost breakdown
         tvTotalMaterials = findViewById(R.id.tvTotalMaterials);
         tvTotalLabor = findViewById(R.id.tvTotalLabor);
         tvTotalMisc = findViewById(R.id.tvTotalMisc);
-
-        // Cost summary
         tvSubtotal = findViewById(R.id.tvSubtotal);
         tvVat = findViewById(R.id.tvVat);
         tvGrandTotal = findViewById(R.id.tvGrandTotal);
 
-        tvStatus = findViewById(R.id.tvStatus);
-
-        // Wallet info
+        // Wallet
         tvWalletBalance = findViewById(R.id.tvWalletBalance);
         tvDeductionAmount = findViewById(R.id.tvDeductionAmount);
 
-        // Dates
-        tvStartDate = findViewById(R.id.tvStartDate);
-        tvCompletionDate = findViewById(R.id.tvCompletionDate);
-
-        // Action cards
+        // Cards
         cardActions = findViewById(R.id.cardActions);
-        cardStatus = findViewById(R.id.cardStatus);
         cardWallet = findViewById(R.id.cardWallet);
-        btnMarkComplete = findViewById(R.id.btnMarkComplete);
+        cardStatus = findViewById(R.id.cardStatus);
 
+        // Button
+        btnMarkComplete = findViewById(R.id.btnMarkComplete);
         if (btnMarkComplete != null) {
-            btnMarkComplete.setOnClickListener(v -> validateAndShowCompleteDialog());
+            btnMarkComplete.setOnClickListener(v -> showCompleteDialog());
         }
     }
 
@@ -133,36 +148,44 @@ public class WorkerProposalReceiptActivity extends AppCompatActivity {
 
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("My Proposal");
         }
 
         toolbar.setNavigationOnClickListener(v -> finish());
     }
 
+    /**
+     * 🔥 LOAD WORKER'S WALLET BALANCE
+     */
     private void loadWorkerBalance() {
-        if (workerId == null) {
-            Log.e(TAG, "Worker ID is null");
-            return;
-        }
+        if (workerId == null) return;
 
-        db.collection("Users")
+        Log.d(TAG, "Loading wallet balance for worker: " + workerId);
+
+        db.collection("users")
                 .document(workerId)
                 .get()
                 .addOnSuccessListener(doc -> {
                     if (doc.exists()) {
-                        Double balance = doc.getDouble("walletBalance");
+                        Double balance = doc.getDouble("balance");
                         currentBalance = balance != null ? balance : 0.0;
-                        updateWalletDisplay();
+
                         Log.d(TAG, "Current wallet balance: " + currentBalance);
+                        updateWalletDisplay();
                     }
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Failed to load wallet balance", e);
-                    Toast.makeText(this, "Failed to load wallet balance", Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, "Error loading wallet balance", e);
+                    currentBalance = 0.0;
+                    updateWalletDisplay();
                 });
     }
 
+    /**
+     * 🔥 LOAD PROPOSAL FROM WORKERINPUT COLLECTION
+     */
     private void loadProposalDetails() {
+        Log.d(TAG, "Loading proposal: " + proposalId);
+
         db.collection("WorkerInput")
                 .document(proposalId)
                 .get()
@@ -173,325 +196,222 @@ public class WorkerProposalReceiptActivity extends AppCompatActivity {
                         return;
                     }
 
-                    project = doc.toObject(WorkerProjectModel.class);
-                    if (project == null) {
-                        Toast.makeText(this, "Invalid proposal data", Toast.LENGTH_SHORT).show();
-                        finish();
-                        return;
-                    }
+                    // Get client info
+                    String clientName = doc.getString("clientName");
+                    String clientPhone = doc.getString("clientPhone");
+                    String clientEmail = doc.getString("clientEmail");
 
-                    project.setProjectId(doc.getId());
+                    // Get work description
+                    String workDesc = doc.getString("workerDescription");
+                    if (workDesc == null) workDesc = doc.getString("workDescription");
 
-                    // Calculate and set VAT and Grand Total if not already set
-                    if (project.getVat() == 0 && project.getTotalCost() > 0) {
-                        double vat = project.getTotalCost() * VAT_RATE;
-                        double grandTotal = project.getTotalCost() + vat;
-                        project.setVat(vat);
-                        project.setGrandTotalWithVat(grandTotal);
+                    // Get status
+                    currentStatus = doc.getString("status");
+                    if (currentStatus == null) currentStatus = "pending";
 
-                        // Update in Firestore
-                        updateVatAndGrandTotal(vat, grandTotal);
-                    }
+                    // 🔥 GET COST BREAKDOWN FROM FIREBASE
+                    Double materials = doc.getDouble("totalMaterials");
+                    Double labor = doc.getDouble("totalLabor");
+                    Double misc = doc.getDouble("totalMisc");
+                    Double total = doc.getDouble("totalCost");
+                    Double vatAmount = doc.getDouble("vat");
+                    Double grand = doc.getDouble("grandTotal");
 
-                    displayProposalDetails();
+                    materialsCost = materials != null ? materials : 0.0;
+                    laborCost = labor != null ? labor : 0.0;
+                    miscCost = misc != null ? misc : 0.0;
+                    subtotal = total != null ? total : (materialsCost + laborCost + miscCost);
+                    vat = vatAmount != null ? vatAmount : (subtotal * 0.12);
+                    grandTotal = grand != null ? grand : (subtotal + vat);
+
+                    // 🔥 CALCULATE 10% PLATFORM FEE FROM LABOR COST
+                    platformFee = laborCost * PLATFORM_FEE_RATE;
+
+                    Log.d(TAG, String.format("Costs - Materials: %.2f, Labor: %.2f, Misc: %.2f",
+                            materialsCost, laborCost, miscCost));
+                    Log.d(TAG, String.format("Totals - Subtotal: %.2f, VAT: %.2f, Grand: %.2f",
+                            subtotal, vat, grandTotal));
+                    Log.d(TAG, String.format("Platform Fee (10%% of labor): %.2f", platformFee));
+
+                    // Display everything
+                    displayProposalDetails(clientName, clientPhone, clientEmail, workDesc);
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Failed to load proposal", e);
-                    Toast.makeText(this, "Failed to load proposal", Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, "Error loading proposal", e);
+                    Toast.makeText(this, "Failed to load proposal: " + e.getMessage(),
+                            Toast.LENGTH_SHORT).show();
                     finish();
                 });
     }
 
-    private void updateVatAndGrandTotal(double vat, double grandTotal) {
-        Map<String, Object> updates = new HashMap<>();
-        updates.put("vat", vat);
-        updates.put("grandTotal", grandTotal);
-
-        db.collection("WorkerInput")
-                .document(proposalId)
-                .update(updates)
-                .addOnSuccessListener(aVoid -> Log.d(TAG, "VAT and Grand Total updated"))
-                .addOnFailureListener(e -> Log.e(TAG, "Failed to update VAT/Grand Total", e));
-    }
-
-    private void displayProposalDetails() {
+    private void displayProposalDetails(String clientName, String clientPhone,
+                                        String clientEmail, String workDesc) {
         // Client info
-        String clientDisplay = "Client";
-        if (project.getWorkerName() != null && !project.getWorkerName().isEmpty()) {
-            clientDisplay = project.getWorkerName();
-        }
-
-        tvClientName.setText(clientDisplay);
-        tvClientPhone.setText(nonNull(project.getClientPhone(), "N/A"));
-        tvClientEmail.setText(nonNull(project.getClientEmail(), "N/A"));
+        tvClientName.setText(clientName != null ? clientName : "N/A");
+        tvClientPhone.setText(clientPhone != null ? clientPhone : "N/A");
+        tvClientEmail.setText(clientEmail != null ? clientEmail : "N/A");
 
         // Work description
-        tvWorkDescription.setText(nonNull(project.getWorkDescription(), "No description"));
+        tvWorkDescription.setText(workDesc != null ? workDesc : "No description");
 
-        // Cost breakdown
-        tvTotalMaterials.setText("₱" + currencyFormat.format(project.getMaterialsCost()));
-        tvTotalLabor.setText("₱" + currencyFormat.format(project.getLaborCost()));
-        tvTotalMisc.setText("₱" + currencyFormat.format(project.getMiscCost()));
+        // Status
+        tvStatus.setText(getStatusText(currentStatus));
+        tvStatus.setBackgroundResource(getStatusBackground(currentStatus));
 
-        // Subtotal, VAT, Grand Total
-        if (tvSubtotal != null) {
-            tvSubtotal.setText("₱" + currencyFormat.format(project.getTotalCost()));
-        }
+        // 🔥 COST BREAKDOWN
+        tvTotalMaterials.setText("₱" + currencyFormat.format(materialsCost));
+        tvTotalLabor.setText("₱" + currencyFormat.format(laborCost));
+        tvTotalMisc.setText("₱" + currencyFormat.format(miscCost));
+        tvSubtotal.setText("₱" + currencyFormat.format(subtotal));
+        tvVat.setText("₱" + currencyFormat.format(vat));
+        tvGrandTotal.setText("₱" + currencyFormat.format(grandTotal));
 
-        if (tvVat != null) {
-            tvVat.setText("₱" + currencyFormat.format(project.getVat()));
-        }
-
-        tvGrandTotal.setText("₱" + currencyFormat.format(project.getGrandTotalWithVat()));
-
-        // Notes
-        if (tvNotes != null) {
-            if (project.getWorkDescription() != null && !project.getWorkDescription().isEmpty()) {
-                tvNotes.setVisibility(View.VISIBLE);
-                tvNotes.setText(project.getWorkDescription());
-            } else {
-                tvNotes.setVisibility(View.GONE);
-            }
-        }
-
-
-        // Status and actions
-        String status = project.getStatus() != null ? project.getStatus() : "pending";
-        updateStatusAndActions(status);
+        // Update wallet display with platform fee
         updateWalletDisplay();
+
+        // Show/hide action buttons based on status
+        updateActionButtons();
     }
 
+    /**
+     * 🔥 UPDATE WALLET DISPLAY WITH PLATFORM FEE
+     */
     private void updateWalletDisplay() {
-        if (cardWallet != null && project != null && "active".equals(project.getStatus())) {
-            cardWallet.setVisibility(View.VISIBLE);
-
-            if (tvWalletBalance != null) {
-                tvWalletBalance.setText("₱" + currencyFormat.format(currentBalance));
-
-                // Color code the balance
-                if (currentBalance >= 0) {
-                    tvWalletBalance.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
-                } else if (currentBalance > MINIMUM_BALANCE_THRESHOLD) {
-                    tvWalletBalance.setTextColor(getResources().getColor(android.R.color.holo_orange_dark));
-                } else {
-                    tvWalletBalance.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
-                }
-            }
-
-            if (tvDeductionAmount != null) {
-                double deduction = calculatePlatformFee();
-                tvDeductionAmount.setText("₱" + currencyFormat.format(deduction));
-            }
-        } else if (cardWallet != null) {
-            cardWallet.setVisibility(View.GONE);
-        }
-    }
-
-    private double calculatePlatformFee() {
-        return project.getLaborCost() * PLATFORM_FEE_RATE;
-    }
-
-    private void updateStatusAndActions(String status) {
-        // Show status
-        if (cardStatus != null && tvStatus != null) {
-            cardStatus.setVisibility(View.VISIBLE);
-            tvStatus.setText(getStatusText(status));
-            tvStatus.setBackgroundResource(getStatusBackground(status));
+        if (tvWalletBalance != null) {
+            tvWalletBalance.setText("₱" + currencyFormat.format(currentBalance));
         }
 
-        // Show/hide action button based on status
-        if (cardActions != null && btnMarkComplete != null) {
-            if ("active".equals(status)) {
-                cardActions.setVisibility(View.VISIBLE);
-                btnMarkComplete.setVisibility(View.VISIBLE);
+        if (tvDeductionAmount != null) {
+            tvDeductionAmount.setText("₱" + currencyFormat.format(platformFee));
+        }
 
-                // Update button state based on balance
-                if (currentBalance <= MINIMUM_BALANCE_THRESHOLD) {
-                    btnMarkComplete.setEnabled(false);
-                    btnMarkComplete.setText("Insufficient Balance");
-                    btnMarkComplete.setAlpha(0.5f);
-                } else {
-                    btnMarkComplete.setEnabled(true);
-                    btnMarkComplete.setText("Mark Project Complete");
-                    btnMarkComplete.setAlpha(1.0f);
-                }
+        // Show wallet card only if status is active
+        if (cardWallet != null) {
+            if ("active".equals(currentStatus)) {
+                cardWallet.setVisibility(View.VISIBLE);
             } else {
-                cardActions.setVisibility(View.GONE);
+                cardWallet.setVisibility(View.GONE);
             }
         }
     }
 
-    private void validateAndShowCompleteDialog() {
-        double platformFee = calculatePlatformFee();
-        double balanceAfterDeduction = currentBalance - platformFee;
+    private void updateActionButtons() {
+        if (cardActions == null) return;
 
-        // Check if balance is below threshold
-        if (currentBalance <= MINIMUM_BALANCE_THRESHOLD) {
-            showInsufficientBalanceDialog();
-            return;
-        }
-
-        // Show warning if balance will be negative but above threshold
-        if (balanceAfterDeduction < 0 && balanceAfterDeduction > MINIMUM_BALANCE_THRESHOLD) {
-            showNegativeBalanceWarningDialog(platformFee, balanceAfterDeduction);
+        // Only show "Mark Complete" button if status is active
+        if ("active".equals(currentStatus)) {
+            cardActions.setVisibility(View.VISIBLE);
         } else {
-            showCompleteDialog(platformFee, balanceAfterDeduction);
+            cardActions.setVisibility(View.GONE);
         }
     }
 
-    private void showInsufficientBalanceDialog() {
-        new AlertDialog.Builder(this)
-                .setTitle("Insufficient Balance")
-                .setMessage("Your wallet balance is below ₱" + currencyFormat.format(Math.abs(MINIMUM_BALANCE_THRESHOLD)) +
-                        ". You cannot complete this project or book new appointments until you add funds to your wallet.\n\n" +
-                        "Current Balance: ₱" + currencyFormat.format(currentBalance))
-                .setPositiveButton("OK", null)
-                .setIcon(android.R.drawable.ic_dialog_alert)
-                .show();
-    }
+    /**
+     * 🔥 SHOW DIALOG TO CONFIRM PROJECT COMPLETION
+     */
+    private void showCompleteDialog() {
+        // Calculate new balance after fee deduction
+        double newBalance = currentBalance - platformFee;
 
-    private void showNegativeBalanceWarningDialog(double platformFee, double balanceAfterDeduction) {
-        new AlertDialog.Builder(this)
-                .setTitle("⚠️ Balance Will Be Negative")
-                .setMessage("Completing this project will make your balance negative:\n\n" +
-                        "Current Balance: ₱" + currencyFormat.format(currentBalance) + "\n" +
-                        "Platform Fee (10%): -₱" + currencyFormat.format(platformFee) + "\n" +
-                        "Balance After: ₱" + currencyFormat.format(balanceAfterDeduction) + "\n\n" +
-                        "⚠️ WARNING: You will NOT be able to book new appointments until you add funds.\n\n" +
-                        "Do you want to proceed?")
-                .setPositiveButton("Yes, Complete", (dialog, which) -> markProjectComplete())
-                .setNegativeButton("Cancel", null)
-                .setIcon(android.R.drawable.ic_dialog_info)
-                .show();
-    }
-
-    private void showCompleteDialog(double platformFee, double balanceAfterDeduction) {
-        new AlertDialog.Builder(this)
-                .setTitle("Mark Project Complete")
-                .setMessage("Have you finished all work for this project?\n\n" +
-                        "Platform Fee (10% of labor): ₱" + currencyFormat.format(platformFee) + "\n" +
-                        "Current Balance: ₱" + currencyFormat.format(currentBalance) + "\n" +
-                        "Balance After: ₱" + currencyFormat.format(balanceAfterDeduction) + "\n\n" +
-                        "This will notify the client that the project is complete.")
-                .setPositiveButton("Mark Complete", (dialog, which) -> markProjectComplete())
-                .setNegativeButton("Not Yet", null)
-                .show();
-    }
-
-    private void markProjectComplete() {
-        double platformFee = calculatePlatformFee();
-
-        // First, deduct from wallet
-        deductFromWallet(platformFee, success -> {
-            if (success) {
-                // Then update proposal status
-                db.collection("WorkerInput")
-                        .document(proposalId)
-                        .update("status", "completed")
-                        .addOnSuccessListener(aVoid -> {
-                            Toast.makeText(this, "Project marked as completed!", Toast.LENGTH_SHORT).show();
-
-                            // Update the original BookingOrder status
-                            updateBookingOrderStatus();
-
-                            // Reload to update UI
-                            loadWorkerBalance();
-                            loadProposalDetails();
-                        })
-                        .addOnFailureListener(e -> {
-                            Log.e(TAG, "Failed to mark complete", e);
-                            Toast.makeText(this, "Failed to update status", Toast.LENGTH_SHORT).show();
-
-                            // Refund the deduction since status update failed
-                            refundWallet(platformFee);
-                        });
-            } else {
-                Toast.makeText(this, "Failed to process payment. Please try again.", Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
-    private void deductFromWallet(double amount, OnWalletUpdateListener listener) {
-        if (workerId == null) {
-            listener.onComplete(false);
+        // Check if balance will go below minimum threshold
+        if (newBalance < MINIMUM_BALANCE) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Insufficient Balance")
+                    .setMessage(String.format(
+                            "Cannot complete project.\n\n" +
+                                    "Current Balance: ₱%.2f\n" +
+                                    "Platform Fee (10%% of labor): ₱%.2f\n" +
+                                    "New Balance: ₱%.2f\n\n" +
+                                    "Your balance cannot go below ₱%.2f.\n" +
+                                    "Please top up your wallet first.",
+                            currentBalance, platformFee, newBalance, MINIMUM_BALANCE))
+                    .setPositiveButton("OK", null)
+                    .show();
             return;
         }
 
-        db.collection("Users")
-                .document(workerId)
-                .update("walletBalance", FieldValue.increment(-amount))
-                .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Wallet deducted: ₱" + amount);
-
-                    // Log transaction
-                    logTransaction(amount, "Platform Fee - Project Completion");
-
-                    listener.onComplete(true);
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Failed to deduct from wallet", e);
-                    listener.onComplete(false);
-                });
+        // Show confirmation dialog
+        new AlertDialog.Builder(this)
+                .setTitle("Complete Project")
+                .setMessage(String.format(
+                        "Mark this project as complete?\n\n" +
+                                "Platform Fee (10%% of ₱%.2f labor): ₱%.2f\n" +
+                                "Current Balance: ₱%.2f\n" +
+                                "New Balance: ₱%.2f",
+                        laborCost, platformFee, currentBalance, newBalance))
+                .setPositiveButton("Complete", (d, w) -> completeProject())
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
-    private void refundWallet(double amount) {
-        if (workerId == null) return;
-
-        db.collection("Users")
-                .document(workerId)
-                .update("walletBalance", FieldValue.increment(amount))
-                .addOnSuccessListener(aVoid -> Log.d(TAG, "Wallet refunded: ₱" + amount))
-                .addOnFailureListener(e -> Log.e(TAG, "Failed to refund wallet", e));
-    }
-
-    private void logTransaction(double amount, String description) {
-        Map<String, Object> transaction = new HashMap<>();
-        transaction.put("workerId", workerId);
-        transaction.put("amount", -amount); // Negative for deduction
-        transaction.put("description", description);
-        transaction.put("proposalId", proposalId);
-        transaction.put("timestamp", FieldValue.serverTimestamp());
-        transaction.put("type", "deduction");
-
-        db.collection("Transactions")
-                .add(transaction)
-                .addOnSuccessListener(docRef -> Log.d(TAG, "Transaction logged"))
-                .addOnFailureListener(e -> Log.e(TAG, "Failed to log transaction", e));
-    }
-
-    private void updateBookingOrderStatus() {
-        if (project.getUserId() != null && workerId != null) {
-            db.collection("BookingOrder")
-                    .whereEqualTo("userId", project.getUserId())
-                    .whereEqualTo("workerId", workerId)
-                    .get()
-                    .addOnSuccessListener(querySnapshot -> {
-                        if (!querySnapshot.isEmpty()) {
-                            String bookingId = querySnapshot.getDocuments().get(0).getId();
-                            db.collection("BookingOrder")
-                                    .document(bookingId)
-                                    .update("status", "completed")
-                                    .addOnSuccessListener(aVoid ->
-                                            Log.d(TAG, "BookingOrder status updated"))
-                                    .addOnFailureListener(e ->
-                                            Log.e(TAG, "Failed to update BookingOrder", e));
-                        }
-                    });
+    /**
+     * 🔥 MARK PROJECT COMPLETE AND DEDUCT PLATFORM FEE FROM WALLET
+     */
+    private void completeProject() {
+        if (workerId == null) {
+            Toast.makeText(this, "Worker ID not found", Toast.LENGTH_SHORT).show();
+            return;
         }
+
+        Log.d(TAG, "Completing project and deducting platform fee: ₱" + platformFee);
+
+        // Start Firestore batch operation
+        db.runTransaction(transaction -> {
+            // 1. Update proposal status to completed
+            transaction.update(
+                    db.collection("WorkerInput").document(proposalId),
+                    "status", "completed"
+            );
+
+            // 2. Deduct platform fee from worker's balance
+            transaction.update(
+                    db.collection("users").document(workerId),
+                    "balance", FieldValue.increment(-platformFee)
+            );
+
+            // 3. Log the transaction
+            Map<String, Object> transactionLog = new HashMap<>();
+            transactionLog.put("userId", workerId);
+            transactionLog.put("proposalId", proposalId);
+            transactionLog.put("type", "platform_fee");
+            transactionLog.put("amount", -platformFee);
+            transactionLog.put("laborCost", laborCost);
+            transactionLog.put("description", "10% platform fee from labor cost");
+            transactionLog.put("timestamp", com.google.firebase.Timestamp.now());
+            transactionLog.put("previousBalance", currentBalance);
+            transactionLog.put("newBalance", currentBalance - platformFee);
+
+            transaction.set(
+                    db.collection("transactions").document(),
+                    transactionLog
+            );
+
+            return null;
+        }).addOnSuccessListener(aVoid -> {
+            Log.d(TAG, "Project completed successfully, fee deducted");
+            Toast.makeText(this,
+                    "Project completed! Platform fee of ₱" + currencyFormat.format(platformFee) +
+                            " deducted from wallet.",
+                    Toast.LENGTH_LONG).show();
+            finish();
+        }).addOnFailureListener(e -> {
+            Log.e(TAG, "Error completing project", e);
+            Toast.makeText(this, "Failed to complete project: " + e.getMessage(),
+                    Toast.LENGTH_SHORT).show();
+        });
     }
 
     private String getStatusText(String status) {
         if (status == null) return "Unknown";
-
         switch (status.toLowerCase()) {
             case "pending":
-                return "⏳ Pending Client Response";
+                return "Pending";
             case "active":
-                return "🔨 In Progress";
+                return "Active";
             case "completed":
-                return "✅ Completed";
+                return "Completed";
             case "cancelled":
-                return "❌ Cancelled";
+                return "Cancelled";
             default:
                 return "Unknown";
         }
@@ -499,7 +419,6 @@ public class WorkerProposalReceiptActivity extends AppCompatActivity {
 
     private int getStatusBackground(String status) {
         if (status == null) return R.drawable.bg_status_pending;
-
         switch (status.toLowerCase()) {
             case "pending":
                 return R.drawable.bg_status_pending;
@@ -512,14 +431,5 @@ public class WorkerProposalReceiptActivity extends AppCompatActivity {
             default:
                 return R.drawable.bg_status_pending;
         }
-    }
-
-    private String nonNull(String value, String fallback) {
-        return value != null ? value : fallback;
-    }
-
-    // Interface for wallet update callback
-    private interface OnWalletUpdateListener {
-        void onComplete(boolean success);
     }
 }

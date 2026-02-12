@@ -1,5 +1,10 @@
 package workers.works.invoice;
 
+import static androidx.fragment.app.FragmentManager.TAG;
+
+import android.annotation.SuppressLint;
+import android.util.Log;
+
 import com.google.firebase.Timestamp;
 import java.util.List;
 
@@ -54,10 +59,12 @@ public class InvoiceProposalModel {
         this.createdAt = Timestamp.now().toString();
     }
 
+    @SuppressLint("RestrictedApi")
     public InvoiceProposalModel(Invoice invoice, String workerId) {
         this();
         this.workerId = workerId;
         this.userId = invoice.getUserId();
+        Log.d(TAG, String.format("Creating UserId - dito " + userId));
 
         // Copy invoice data
         this.workerName = invoice.getWorkerName();

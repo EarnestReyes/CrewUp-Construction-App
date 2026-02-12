@@ -485,6 +485,7 @@ public class ProjectCostQuote extends AppCompatActivity {
 
         // 🔥 EXPLICITLY SET VAT AND GRAND TOTAL
         proposal.setVat(rawVAT);
+        proposal.setUserId(userId.toString());
         proposal.setGrandTotalWithVat(rawGrandTotal);
         proposal.setTotalCost(rawSubtotal);  // Set subtotal as totalCost
 
