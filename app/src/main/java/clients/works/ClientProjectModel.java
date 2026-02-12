@@ -41,6 +41,7 @@ public class ClientProjectModel {
     private Double vat;                // VAT amount
     private Double grandTotal;         // Total + VAT
     private Double grandTotalWithVat;
+    private Boolean isAccepted;
 
     // Arrays
     private List<Map<String, Object>> labor;          // Labor items
@@ -295,5 +296,8 @@ public class ClientProjectModel {
 
     public void setGrandTotalWithVat(Double grandTotalWithVat) {
         this.grandTotalWithVat = grandTotalWithVat;
+    }
+    public boolean isAccepted() {
+        return isAccepted;
     }
 }

@@ -27,18 +27,22 @@ public class ProposalFirebaseManager {
     }
     public void submitProposal(InvoiceProposalModel proposal, OnProposalSubmitListener listener) {
 
-        String userId = FirebaseAuth.getInstance().getUid();
-
-        if (userId == null) {
+        if (proposal.getUserId() == null) {
             if (listener != null) {
-                listener.onFailure("User not logged in");
+                listener.onFailure("Client ID is missing");
+            }
+            return;
+        }
+
+        if (proposal.getWorkerId() == null) {
+            if (listener != null) {
+                listener.onFailure("Worker ID is missing");
             }
             return;
         }
 
         DocumentReference docRef = db.collection("WorkerInput").document();
         proposal.setProposalId(docRef.getId());
-        proposal.setUserId(userId);
 
         docRef.set(proposal)
                 .addOnSuccessListener(aVoid -> {
