@@ -55,7 +55,7 @@ public class WorkerProposalReceiptActivity extends AppCompatActivity {
     private Button btnMarkComplete;
 
     private FirebaseFirestore db;
-    private ClientProjectModel project;
+    private WorkerProjectModel project;
     private String proposalId;
     private String workerId;
     private double currentBalance = 0.0;
@@ -173,7 +173,7 @@ public class WorkerProposalReceiptActivity extends AppCompatActivity {
                         return;
                     }
 
-                    project = doc.toObject(ClientProjectModel.class);
+                    project = doc.toObject(WorkerProjectModel.class);
                     if (project == null) {
                         Toast.makeText(this, "Invalid proposal data", Toast.LENGTH_SHORT).show();
                         finish();
@@ -187,7 +187,7 @@ public class WorkerProposalReceiptActivity extends AppCompatActivity {
                         double vat = project.getTotalCost() * VAT_RATE;
                         double grandTotal = project.getTotalCost() + vat;
                         project.setVat(vat);
-                        project.setGrandTotal(grandTotal);
+                        project.setGrandTotalWithVat(grandTotal);
 
                         // Update in Firestore
                         updateVatAndGrandTotal(vat, grandTotal);
@@ -222,8 +222,8 @@ public class WorkerProposalReceiptActivity extends AppCompatActivity {
         }
 
         tvClientName.setText(clientDisplay);
-        tvClientPhone.setText(nonNull(project.getWorkerPhone(), "N/A"));
-        tvClientEmail.setText(nonNull(project.getWorkerEmail(), "N/A"));
+        tvClientPhone.setText(nonNull(project.getClientPhone(), "N/A"));
+        tvClientEmail.setText(nonNull(project.getClientEmail(), "N/A"));
 
         // Work description
         tvWorkDescription.setText(nonNull(project.getWorkDescription(), "No description"));
@@ -242,7 +242,7 @@ public class WorkerProposalReceiptActivity extends AppCompatActivity {
             tvVat.setText("₱" + currencyFormat.format(project.getVat()));
         }
 
-        tvGrandTotal.setText("₱" + currencyFormat.format(project.getGrandTotal()));
+        tvGrandTotal.setText("₱" + currencyFormat.format(project.getGrandTotalWithVat()));
 
         // Notes
         if (tvNotes != null) {

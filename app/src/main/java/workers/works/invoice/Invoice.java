@@ -8,6 +8,7 @@ public class Invoice {
     private String workerAddress;
     private String workerPhone;
     private String workerEmail;
+    private String userId;
 
     
     // Client Information
@@ -187,4 +188,11 @@ public class Invoice {
     }
 
 
+    public String getUserId() {
+return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
 }

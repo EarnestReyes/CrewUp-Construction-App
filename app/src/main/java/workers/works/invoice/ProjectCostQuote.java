@@ -78,7 +78,7 @@ public class ProjectCostQuote extends AppCompatActivity {
     private FirebaseFirestore db;
     private ProposalFirebaseManager proposalManager;
     private String workerId;
-    private String clientId;
+    public static String userId;
     private String projectId;
 
     @Override
@@ -96,9 +96,8 @@ public class ProjectCostQuote extends AppCompatActivity {
 
         // Get data from intent
         projectId = getIntent().getStringExtra("projectId");
-        clientId = getIntent().getStringExtra("clientId");
 
-        Log.d(TAG, "ProjectId: " + projectId + ", ClientId: " + clientId);
+
 
         proposalManager = new ProposalFirebaseManager();
 
@@ -160,12 +159,16 @@ public class ProjectCostQuote extends AppCompatActivity {
                 .get()
                 .addOnSuccessListener(doc -> {
                     if (doc.exists()) {
+                        String clientId = doc.getString("userId");
+
+                        userId = clientId;
                         etClientName.setText(doc.getString("Name"));
                         etClientEmail.setText(doc.getString("Email"));
                         etClientPhone.setText(doc.getString("Mobile Number"));
                         etClientAddress.setText(doc.getString("Site_Address"));
                         etWorkDescription.setText(doc.getString("Description"));
 
+                        Log.d(TAG, "ProjectId: " + projectId + ", ClientId: " + clientId);
                         Log.d(TAG, "Client data loaded");
                     }
                 })
@@ -471,11 +474,13 @@ public class ProjectCostQuote extends AppCompatActivity {
         // 🔥 USE RAW VALUES FOR CALCULATIONS
         invoice.setVat(rawVAT);
         invoice.setGrandTotalWithVat(rawGrandTotal);
+        invoice.setUserId(userId);
 
         Log.d(TAG, String.format("Creating proposal - Subtotal: %.2f, VAT: %.2f, Grand Total: %.2f",
                 rawSubtotal, rawVAT, rawGrandTotal));
+        Log.d(TAG, String.format("Creating UserId - " + userId));
 
-        InvoiceProposalModel proposal = new InvoiceProposalModel(invoice, workerId, clientId);
+        InvoiceProposalModel proposal = new InvoiceProposalModel(invoice, workerId);
         proposal.setProjectId(projectId);
 
         // 🔥 EXPLICITLY SET VAT AND GRAND TOTAL
@@ -483,7 +488,7 @@ public class ProjectCostQuote extends AppCompatActivity {
         proposal.setGrandTotalWithVat(rawGrandTotal);
         proposal.setTotalCost(rawSubtotal);  // Set subtotal as totalCost
 
-        Log.d(TAG, "Proposal VAT: " + proposal.getVat());
+        //Log.d(TAG, "Proposal VAT: " + proposal.getVat());
         //Log.d(TAG, "Proposal Grand Total: " + proposal.setGrandTotalWithVat());
 
         proposalManager.submitProposal(proposal, new ProposalFirebaseManager.OnProposalSubmitListener() {

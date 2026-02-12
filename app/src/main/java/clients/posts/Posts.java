@@ -55,6 +55,7 @@ public class Posts extends Fragment {
     private FirebaseFirestore db;
     private TextView txtName;
     private Uri selectedImageUri;
+
     private String currentUserProfilePicUrl;
 
     private final ActivityResultLauncher<String> imagePickerLauncher =
