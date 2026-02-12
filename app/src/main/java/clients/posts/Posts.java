@@ -50,7 +50,7 @@ import java.util.Map;
 public class Posts extends Fragment {
     private EditText txtContent;
     private Button btnSend;
-    private ImageView imgProfile, captureimg, imgPreview;
+    private ImageView imgProfile, imgPreview;
     private ImageButton photo, gallery;
     private FirebaseFirestore db;
     private TextView txtName;
@@ -86,7 +86,6 @@ public class Posts extends Fragment {
         txtName = view.findViewById(R.id.txtName);
         txtContent = view.findViewById(R.id.edtPost);
         btnSend = view.findViewById(R.id.btnPost);
-        photo = view.findViewById(R.id.photo);
         gallery = view.findViewById(R.id.gallery);
         imgPreview = view.findViewById(R.id.imgPreview);
 

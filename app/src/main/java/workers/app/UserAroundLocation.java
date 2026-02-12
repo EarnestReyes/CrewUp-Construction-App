@@ -191,14 +191,12 @@ public class UserAroundLocation extends AppCompatActivity {
             marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
             marker.setTitle("Client");
 
-            // 🔥 STORE WORKER ID INSIDE MARKER
             marker.setRelatedObject(workerId);
 
-            // 🔥 TAP LISTENER
             marker.setOnMarkerClickListener((m, mapView) -> {
                 String id = (String) m.getRelatedObject();
                 openWorkerProfile(id);
-                return true; // consume click
+                return true;
             });
 
             map.getOverlays().add(marker);
