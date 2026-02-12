@@ -192,12 +192,12 @@ public class WorkerProjectListFragment extends Fragment {
 
                     for (DocumentSnapshot doc : querySnapshot) {
                         WorkerProjectModel model = new WorkerProjectModel();
-                        model.setProposal(true); // This is a WorkerInput proposal
+                        model.setProposal(true);
 
                         model.setProjectId(doc.getId());
-                        //model.setVat(doc.getDouble("vat"));
-                        //model.setGrandTotalWithVat(doc.getDouble("grandTotalWithVat"));
-                        model.setTotalCost(doc.getDouble("grandTotal"));
+                        model.setVat(doc.getDouble("vat"));
+                        model.setGrandTotalWithVat(doc.getDouble("grandTotalWithVat"));
+                        model.setTotalCost(doc.getDouble("totalCost"));
                         model.setCreatedAt(doc.getString("createdAt"));
                         model.setClientName(doc.getString("clientName"));
                         model.setClientPhone(doc.getString("clientPhone"));

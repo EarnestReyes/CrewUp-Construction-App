@@ -54,10 +54,10 @@ public class InvoiceProposalModel {
         this.createdAt = Timestamp.now().toString();
     }
 
-    public InvoiceProposalModel(Invoice invoice, String workerId, String userId) {
+    public InvoiceProposalModel(Invoice invoice, String workerId) {
         this();
         this.workerId = workerId;
-        this.userId = userId;
+        this.userId = invoice.getUserId();
 
         // Copy invoice data
         this.workerName = invoice.getWorkerName();

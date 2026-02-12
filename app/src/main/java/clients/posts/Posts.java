@@ -51,7 +51,7 @@ public class Posts extends Fragment {
     private EditText txtContent;
     private Button btnSend;
     private ImageView imgProfile, imgPreview;
-    private ImageButton photo, gallery;
+    private ImageButton gallery;
     private FirebaseFirestore db;
     private TextView txtName;
     private Uri selectedImageUri;
@@ -105,13 +105,10 @@ public class Posts extends Fragment {
                     });
         }
 
+
         gallery.setOnClickListener(v -> {
             //open camera
             imagePickerLauncher.launch("image/*");
-        });
-
-        photo.setOnClickListener(v -> {
-
         });
 
 
