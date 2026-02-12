@@ -9,6 +9,7 @@ import java.util.List;
  */
 public class WorkerProjectModel {
 
+    private String proposalId;
     private String projectId;
     private String userId; // Maps to userId in Firebase
     private String clientName; // Maps to Name
@@ -42,15 +43,20 @@ public class WorkerProjectModel {
     private Double laborCost;
     private Double miscCost;
 
+    private Double vat;
+
+    private Double totalcostwVat;
+
     public WorkerProjectModel() {
         // Required empty constructor for Firestore
         this.isProposal = false; // Default to project
     }
 
-    public WorkerProjectModel(String projectId, String userId, String clientName,
+    public WorkerProjectModel( String proposalId, String projectId, String userId, String clientName,
                               String clientPhone, String clientEmail, String workerId,
                               String workerName, String workDescription, String location,
-                              String status, double totalCost, String createdAt) {
+                              String status, double vat, double totalcostwVat, double totalCost, String createdAt) {
+        this.proposalId = proposalId;
         this.projectId = projectId;
         this.userId = userId;
         this.clientName = clientName;
@@ -63,9 +69,34 @@ public class WorkerProjectModel {
         this.status = status;
         this.totalCost = totalCost;
         this.createdAt = createdAt;
+        this.vat = vat;
+        this.totalcostwVat = totalcostwVat;
         this.isProposal = false;
     }
 
+    public double getVat() {
+        return vat;
+    }
+
+    public void setVat(double vat) {
+        this.vat = vat;
+    }
+
+    public double getGrandTotalWithVat() {
+        return totalcostwVat;
+    }
+
+    public void setGrandTotalWithVat(double totalcostwVat) {
+        this.totalcostwVat = totalcostwVat;
+    }
+    public String getProposalId() {
+
+        return proposalId;
+    }
+
+    public void setProposalId(String proposalId) {
+        this.proposalId = proposalId;
+    }
     // Getters and Setters
     public String getProjectId() {
         return projectId;

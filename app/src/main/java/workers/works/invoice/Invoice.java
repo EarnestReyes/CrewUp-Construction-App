@@ -23,12 +23,30 @@ public class Invoice {
     private List<MaterialItem> materials;
     private List<LaborItem> labor;
     private List<MiscItem> miscellaneous;
+
+    private double vat;
+    private double grandTotalWithVat;
     
 
     // Constructors
     public Invoice() {
     }
-    
+
+    public double getVat() {
+        return vat;
+    }
+
+    public void setVat(double vat) {
+        this.vat = vat;
+    }
+
+    public double getGrandTotalWithVat() {
+        return grandTotalWithVat;
+    }
+
+    public void setGrandTotalWithVat(double grandTotalWithVat) {
+        this.grandTotalWithVat = grandTotalWithVat;
+    }
     // Getters and Setters
     public String getWorkerName() {
         return workerName;

@@ -106,7 +106,7 @@ public class WorkerProjectAdapter extends RecyclerView.Adapter<RecyclerView.View
 
             h.itemView.setOnClickListener(v -> {
                 Intent intent = new Intent(v.getContext(), WorkerProposalReceiptActivity.class);
-                intent.putExtra("projectId", project.getProjectId());
+                intent.putExtra("proposalId", project.getProposalId());
                 v.getContext().startActivity(intent);
             });
         }

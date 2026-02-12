@@ -40,6 +40,8 @@ public class InvoiceProposalModel {
     private double totalMisc;
     private double grandTotal;
 
+    private double vat;
+    private double grandTotalWithVat;
 
 
     // Status tracking
@@ -80,8 +82,8 @@ public class InvoiceProposalModel {
         this.totalLabor = calculateLaborTotal();
         this.totalMisc = calculateMiscTotal();
         this.grandTotal = totalMaterials + totalLabor + totalMisc;
-        this.VAT = calculateVatAmount(grandTotal);
-        this.GRAND = grandTotal2(grandTotal, calculateVatAmount(grandTotal));
+        this.vat = invoice.getVat();
+        this.grandTotalWithVat = invoice.getGrandTotalWithVat();
     }
 
     private double calculateMaterialsTotal() {
@@ -113,21 +115,6 @@ public class InvoiceProposalModel {
         }
         return total;
     }
-
-    private double calculateVatAmount(double grandTotal) {
-        Double VAT = grandTotal * 1.2;
-
-        return VAT;
-    }
-    private double grandTotal2(double grandTotal, double VAT) {
-
-        Double Grand = grandTotal + VAT;
-
-        return Grand;
-    }
-
-
-
 
 
     public String getProposalId() {

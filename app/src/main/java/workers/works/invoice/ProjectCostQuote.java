@@ -146,16 +146,7 @@ public class ProjectCostQuote extends AppCompatActivity {
         tvGrandTotal2 = findViewById(R.id.tv_grand_total2);
     }
 
-    /**
-     * 🔥 LOAD PROJECT DETAILS FROM BOOKINGORDER
-     * Firebase fields based on your screenshot:
-     * - Name
-     * - Email
-     * - Mobile Number
-     * - Site_Address
-     * - Home_Address
-     * - Description
-     */
+
     private void loadProjectDetails() {
         if (projectId == null) {
             Log.e(TAG, "ProjectId is null");
@@ -591,6 +582,8 @@ public class ProjectCostQuote extends AppCompatActivity {
         invoice.setMaterials(new ArrayList<>(materialsList));
         invoice.setLabor(new ArrayList<>(laborList));
         invoice.setMiscellaneous(new ArrayList<>(miscList));
+        invoice.setVat(Double.parseDouble(tvVAT.getText().toString()));
+        invoice.setGrandTotalWithVat(Double.parseDouble(tvGrandTotal2.getText().toString()));
 
         return invoice;
     }

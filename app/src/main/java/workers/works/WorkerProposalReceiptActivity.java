@@ -246,22 +246,14 @@ public class WorkerProposalReceiptActivity extends AppCompatActivity {
 
         // Notes
         if (tvNotes != null) {
-            if (project.getNotes() != null && !project.getNotes().isEmpty()) {
+            if (project.getWorkDescription() != null && !project.getWorkDescription().isEmpty()) {
                 tvNotes.setVisibility(View.VISIBLE);
-                tvNotes.setText(project.getNotes());
+                tvNotes.setText(project.getWorkDescription());
             } else {
                 tvNotes.setVisibility(View.GONE);
             }
         }
 
-        // Dates
-        if (tvStartDate != null && project.getStartDate() != null) {
-            tvStartDate.setText(dateFormat.format(project.getStartDate().toDate()));
-        }
-
-        if (tvCompletionDate != null && project.getCompletionDate() != null) {
-            tvCompletionDate.setText(dateFormat.format(project.getCompletionDate().toDate()));
-        }
 
         // Status and actions
         String status = project.getStatus() != null ? project.getStatus() : "pending";

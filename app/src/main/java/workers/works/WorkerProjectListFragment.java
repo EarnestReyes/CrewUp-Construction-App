@@ -172,13 +172,13 @@ public class WorkerProjectListFragment extends Fragment {
                     loadWorkerInputProposals();
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error loading BookingOrder projects", e);
+
                     loadWorkerInputProposals(); // Continue to load proposals even if projects fail
                 });
     }
 
     private void loadWorkerInputProposals() {
-        // Build query for WorkerInput (proposals created by worker)
+
         Query query = db.collection("WorkerInput")
                 .whereEqualTo("workerId", workerId);
 
@@ -195,9 +195,16 @@ public class WorkerProjectListFragment extends Fragment {
                         model.setProposal(true); // This is a WorkerInput proposal
 
                         model.setProjectId(doc.getId());
+                        model.setVat(doc.getDouble("vat"));
+                        model.setGrandTotalWithVat(doc.getDouble("grandTotalWithVat"));
+                        model.setTotalCost(doc.getDouble("grandTotal"));
+                        model.setCreatedAt(doc.getString("createdAt"));
+                        model.setClientName(doc.getString("clientName"));
+                        model.setClientPhone(doc.getString("clientPhone"));
+                        model.setProposalId(doc.getString("proposalId"));
                         model.setUserId(doc.getString("userId"));
                         model.setWorkDescription(doc.getString("workDescription"));
-                        model.setLocation(doc.getString("location"));
+                        model.setLocation(doc.getString("clientAddress"));
                         model.setStatus(doc.getString("status"));
                         model.setWorkerId(doc.getString("workerId"));
                         model.setWorkerName(doc.getString("workerName"));

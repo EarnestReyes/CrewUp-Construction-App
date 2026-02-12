@@ -2,44 +2,57 @@ package clients.works;
 
 import com.google.firebase.Timestamp;
 
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Model for WorkerInput collection (worker proposals to clients)
+ * Based on actual Firebase structure
+ */
 public class ClientProjectModel {
 
-    private String projectId;
-    private String userId;
-    private String workerId;
+    // IDs
+    private String projectId;          // Document ID
+    private String userId;             // Client ID
+    private String workerId;           // Worker ID
+    private String proposalId;         // Proposal ID
 
+    // Client info
+    private String clientName;
+    private String clientEmail;
+    private String clientPhone;
+    private String clientAddress;
+
+    // Worker info
     private String workerName;
-    private String workerPhone;
     private String workerEmail;
+    private String workerPhone;
+    private String workerAddress;
+    private String workerDescription;  // Work description from worker
 
-    private String workDescription;
-    private String location;
-    private String status;
-    private String notes;
+    // Project details
+    private String status;             // pending, active, completed, cancelled
 
-    // Firestore stores this as STRING
-    private String Budget;
+    // Cost breakdown
+    private Double totalCost;          // Subtotal
+    private Double totalLabor;         // Total labor cost
+    private Double totalMaterials;     // Total materials cost (field name: totalMaterials, not materialsCost)
+    private Double totalMisc;          // Total misc cost
+    private Double vat;                // VAT amount
+    private Double grandTotal;         // Total + VAT
 
-    // Optional numeric costs (if present)
-    private Double materialsCost;
-    private Double laborCost;
-    private Double miscCost;
-    private Double totalCost;
+    // Arrays
+    private List<Map<String, Object>> labor;          // Labor items
+    private List<Map<String, Object>> materials;      // Material items
+    private List<Map<String, Object>> miscellaneous;  // Misc items
 
-    // NEW: VAT and Grand Total
-    private Double vat;           // VAT amount (calculated from totalCost)
-    private Double grandTotal;    // Total + VAT
-
+    // Timestamps
     private String createdAt;
-    private Timestamp startDate;
-    private Timestamp completionDate;
 
-    public ClientProjectModel() {}
+    public ClientProjectModel() {
+    }
 
-    // -------------------------
-    // GETTERS AND SETTERS
-    // -------------------------
-
+    // Getters and Setters
     public String getProjectId() {
         return projectId;
     }
@@ -64,69 +77,55 @@ public class ClientProjectModel {
         this.workerId = workerId;
     }
 
-    public double getMaterialsCost() {
-        return materialsCost != null ? materialsCost : 0;
+
+    public String getProposalId() {
+        return proposalId;
     }
 
-    public void setMaterialsCost(Double materialsCost) {
-        this.materialsCost = materialsCost;
+    public void setProposalId(String proposalId) {
+        this.proposalId = proposalId;
     }
 
-    public double getLaborCost() {
-        return laborCost != null ? laborCost : 0;
+    // Client info
+    public String getClientName() {
+        return clientName;
     }
 
-    public void setLaborCost(Double laborCost) {
-        this.laborCost = laborCost;
+    public void setClientName(String clientName) {
+        this.clientName = clientName;
     }
 
-    public double getMiscCost() {
-        return miscCost != null ? miscCost : 0;
+    public String getClientEmail() {
+        return clientEmail;
     }
 
-    public void setMiscCost(Double miscCost) {
-        this.miscCost = miscCost;
+    public void setClientEmail(String clientEmail) {
+        this.clientEmail = clientEmail;
     }
 
-    public double getTotalCost() {
-        return totalCost != null ? totalCost : 0;
+    public String getClientPhone() {
+        return clientPhone;
     }
 
-    public void setTotalCost(Double totalCost) {
-        this.totalCost = totalCost;
+    public void setClientPhone(String clientPhone) {
+        this.clientPhone = clientPhone;
     }
 
-    // NEW: VAT getters/setters
-    public double getVat() {
-        return vat != null ? vat : 0;
+    public String getClientAddress() {
+        return clientAddress;
     }
 
-    public void setVat(Double vat) {
-        this.vat = vat;
+    public void setClientAddress(String clientAddress) {
+        this.clientAddress = clientAddress;
     }
 
-    public double getGrandTotal() {
-        return grandTotal != null ? grandTotal : 0;
-    }
-
-    public void setGrandTotal(Double grandTotal) {
-        this.grandTotal = grandTotal;
-    }
-
+    // Worker info
     public String getWorkerName() {
         return workerName;
     }
 
     public void setWorkerName(String workerName) {
         this.workerName = workerName;
-    }
-
-    public String getWorkerPhone() {
-        return workerPhone;
-    }
-
-    public void setWorkerPhone(String workerPhone) {
-        this.workerPhone = workerPhone;
     }
 
     public String getWorkerEmail() {
@@ -137,22 +136,40 @@ public class ClientProjectModel {
         this.workerEmail = workerEmail;
     }
 
+    public String getWorkerPhone() {
+        return workerPhone;
+    }
+
+    public void setWorkerPhone(String workerPhone) {
+        this.workerPhone = workerPhone;
+    }
+
+    public String getWorkerAddress() {
+        return workerAddress;
+    }
+
+    public void setWorkerAddress(String workerAddress) {
+        this.workerAddress = workerAddress;
+    }
+
+    public String getWorkerDescription() {
+        return workerDescription;
+    }
+
+    public void setWorkerDescription(String workerDescription) {
+        this.workerDescription = workerDescription;
+    }
+
+    // For compatibility with adapter (uses getWorkDescription)
     public String getWorkDescription() {
-        return workDescription;
+        return workerDescription;
     }
 
     public void setWorkDescription(String workDescription) {
-        this.workDescription = workDescription;
+        this.workerDescription = workDescription;
     }
 
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
-    }
-
+    // Status
     public String getStatus() {
         return status;
     }
@@ -161,43 +178,114 @@ public class ClientProjectModel {
         this.status = status;
     }
 
-    public String getNotes() {
-        return notes;
+    // Costs - safe getters return 0 if null
+    public double getTotalCost() {
+        return totalCost != null ? totalCost : 0.0;
     }
 
-    public void setNotes(String notes) {
-        this.notes = notes;
+    public void setTotalCost(Double totalCost) {
+        this.totalCost = totalCost;
     }
 
-    public String getBudget() {
-        return Budget;
+    public double getTotalLabor() {
+        return totalLabor != null ? totalLabor : 0.0;
     }
 
-    public void setBudget(String budget) {
-        Budget = budget;
+    public void setTotalLabor(Double totalLabor) {
+        this.totalLabor = totalLabor;
     }
 
+    // Note: Firebase field is "totalMaterials", not "materialsCost"
+    public double getTotalMaterials() {
+        return totalMaterials != null ? totalMaterials : 0.0;
+    }
+
+    public void setTotalMaterials(Double totalMaterials) {
+        this.totalMaterials = totalMaterials;
+    }
+
+    // For compatibility with adapter (uses getMaterialsCost)
+    public double getMaterialsCost() {
+        return getTotalMaterials();
+    }
+
+    public void setMaterialsCost(Double materialsCost) {
+        this.totalMaterials = materialsCost;
+    }
+
+    // For compatibility with adapter (uses getLaborCost)
+    public double getLaborCost() {
+        return getTotalLabor();
+    }
+
+    public void setLaborCost(Double laborCost) {
+        this.totalLabor = laborCost;
+    }
+
+    public double getTotalMisc() {
+        return totalMisc != null ? totalMisc : 0.0;
+    }
+
+    public void setTotalMisc(Double totalMisc) {
+        this.totalMisc = totalMisc;
+    }
+
+    // For compatibility with adapter (uses getMiscCost)
+    public double getMiscCost() {
+        return getTotalMisc();
+    }
+
+    public void setMiscCost(Double miscCost) {
+        this.totalMisc = miscCost;
+    }
+
+    public double getVat() {
+        return vat != null ? vat : 0.0;
+    }
+
+    public void setVat(Double vat) {
+        this.vat = vat;
+    }
+
+    public double getGrandTotal() {
+        return grandTotal != null ? grandTotal : 0.0;
+    }
+
+    public void setGrandTotal(Double grandTotal) {
+        this.grandTotal = grandTotal;
+    }
+
+    // Arrays
+    public List<Map<String, Object>> getLabor() {
+        return labor;
+    }
+
+    public void setLabor(List<Map<String, Object>> labor) {
+        this.labor = labor;
+    }
+
+    public List<Map<String, Object>> getMaterials() {
+        return materials;
+    }
+
+    public void setMaterials(List<Map<String, Object>> materials) {
+        this.materials = materials;
+    }
+
+    public List<Map<String, Object>> getMiscellaneous() {
+        return miscellaneous;
+    }
+
+    public void setMiscellaneous(List<Map<String, Object>> miscellaneous) {
+        this.miscellaneous = miscellaneous;
+    }
+
+    // Timestamp
     public String getCreatedAt() {
         return createdAt;
     }
 
     public void setCreatedAt(String createdAt) {
         this.createdAt = createdAt;
-    }
-
-    public Timestamp getStartDate() {
-        return startDate;
-    }
-
-    public void setStartDate(Timestamp startDate) {
-        this.startDate = startDate;
-    }
-
-    public Timestamp getCompletionDate() {
-        return completionDate;
-    }
-
-    public void setCompletionDate(Timestamp completionDate) {
-        this.completionDate = completionDate;
     }
 }

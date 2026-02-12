@@ -38,7 +38,7 @@ public class ProposalFirebaseManager {
 
         DocumentReference docRef = db.collection("WorkerInput").document();
         proposal.setProposalId(docRef.getId());
-        proposal.setUserId(userId);   // ✅ SAVE USER ID TO FIREBASE
+        proposal.setUserId(userId);
 
         docRef.set(proposal)
                 .addOnSuccessListener(aVoid -> {
